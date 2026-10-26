@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Pamplemousse.slnx
+
+      - name: Build
+        run: dotnet build Pamplemousse.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Pamplemousse.slnx -c Release --no-build --logger "trx" --results-directory TestResults
+
+      - name: Docker image builds
+        run: docker build -t pamplemousse:ci .

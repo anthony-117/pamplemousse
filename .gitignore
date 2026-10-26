@@ -1,0 +1,30 @@
+# Build output
+bin/
+obj/
+out/
+publish/
+artifacts/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# Tests
+TestResults/
+coverage*/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+*.pfx
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini

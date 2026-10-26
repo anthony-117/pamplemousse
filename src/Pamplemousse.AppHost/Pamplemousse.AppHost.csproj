@@ -1,0 +1,23 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pamplemousse.Api\Pamplemousse.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Uses the dashboard/DCP NuGet packages; switch to true after installing the Aspire CLI (https://get.aspire.dev). -->
+    <AspireUseCliBundle>false</AspireUseCliBundle>
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+    <UserSecretsId>8290d4d0-c791-447f-b9f1-2e02f62c84bc</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

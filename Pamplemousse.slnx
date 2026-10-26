@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Pamplemousse.Api/Pamplemousse.Api.csproj" />
+    <Project Path="src/Pamplemousse.AppHost/Pamplemousse.AppHost.csproj" />
+    <Project Path="src/Pamplemousse.Domain/Pamplemousse.Domain.csproj" />
+    <Project Path="src/Pamplemousse.Infrastructure/Pamplemousse.Infrastructure.csproj" />
+    <Project Path="src/Pamplemousse.ServiceDefaults/Pamplemousse.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Pamplemousse.Api.Tests/Pamplemousse.Api.Tests.csproj" />
+    <Project Path="tests/Pamplemousse.Domain.Tests/Pamplemousse.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
