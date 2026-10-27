@@ -1,5 +1,5 @@
 #!/bin/sh
-# Blocks `git push` unless formatting, the analyzers and EVERY test pass (the same checks as CI).
+# Blocks `git push` unless every CI step passes locally: formatting, analyzers, EVERY test and the Docker image build.
 # Installed by scripts/install-hooks.sh (git config core.hooksPath .githooks).
 # Emergency bypass, only if you know CI will catch it: git push --no-verify
 set -e
@@ -15,5 +15,12 @@ dotnet build Pamplemousse.slnx -c Release -nologo -v quiet
 
 step "tests (every test must pass)"
 dotnet test Pamplemousse.slnx -c Release --no-build -nologo -v quiet
+
+step "Docker image (the Cloud Run build CI runs)"
+if ! docker info >/dev/null 2>&1; then
+  printf '\033[31mpre-push: Docker is not running. Start Docker Desktop and push again.\033[0m\n'
+  exit 1
+fi
+docker build -q -t pamplemousse:pre-push .
 
 printf '\n\033[32mpre-push: all checks passed, pushing.\033[0m\n'

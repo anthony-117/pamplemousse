@@ -6,7 +6,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore first so the package layer is cached between builds.
-COPY Directory.Build.props Directory.Packages.props ./
+# .editorconfig carries the analyzer configuration (deliberate exceptions, generated-code folders);
+# without it the analyzers in the image would flag things the local build accepts.
+COPY .editorconfig Directory.Build.props Directory.Packages.props ./
 COPY src/Pamplemousse.Api/Pamplemousse.Api.csproj src/Pamplemousse.Api/
 COPY src/Pamplemousse.Domain/Pamplemousse.Domain.csproj src/Pamplemousse.Domain/
 COPY src/Pamplemousse.Infrastructure/Pamplemousse.Infrastructure.csproj src/Pamplemousse.Infrastructure/

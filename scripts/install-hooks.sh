@@ -4,4 +4,4 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 git config core.hooksPath .githooks
 chmod +x .githooks/* 2>/dev/null || true
-echo "Git hooks installed: pre-push runs format, analyzers and all tests before every push."
+echo "Git hooks installed: pre-push runs format, analyzers, all tests and the Docker image build before every push."

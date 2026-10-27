@@ -86,8 +86,8 @@ Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzi
 ```bash
 sh scripts/install-hooks.sh
 ```
-This sets `core.hooksPath` to the versioned `.githooks/` folder. The **pre-push** hook runs `dotnet format --verify-no-changes`, the build with all analyzers, and every test
-— the same checks as CI — and **blocks the push if any of them fails**. (Emergency bypass: `git push --no-verify`; CI still runs.)
+This sets `core.hooksPath` to the versioned `.githooks/` folder. The **pre-push** hook runs `dotnet format --verify-no-changes`, the build with all analyzers, every test and the Docker image build
+— every CI step; Docker Desktop must be running — and **blocks the push if any of them fails**. (Emergency bypass: `git push --no-verify`; CI still runs.)
 
 ## Linting (like Rust's clippy)
 Every project builds with the .NET analyzers (`AnalysisLevel=latest-recommended`), **Roslynator** and **Meziantou.Analyzer**,
