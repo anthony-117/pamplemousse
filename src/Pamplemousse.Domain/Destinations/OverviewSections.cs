@@ -17,9 +17,14 @@ public sealed record ExchangeRate(string Base, string Quote, decimal Rate, DateO
 
 public sealed record Holiday(DateOnly Date, string Name, string LocalName);
 
-/// <param name="Requirement">"visa required", "e-visa", "visa on arrival", "eta", "visa free" or "own country".</param>
-/// <param name="VisaFreeDays">Days allowed without a visa, when the source gives a number.</param>
+/// <summary>
+/// Entry rule for a passport (ISO country code) visiting a destination country.
+/// <c>Requirement</c> is "visa required", "e-visa", "visa on arrival", "eta", "visa free" or "own country";
+/// <c>VisaFreeDays</c> is the number of days allowed without a visa, when the source gives one.
+/// </summary>
 public sealed record VisaRequirement(string Passport, string Destination, string Requirement, int? VisaFreeDays);
 
-/// <param name="Level">1 (normal precautions) to 4 (do not travel), from the US State Department.</param>
+/// <summary>
+/// US State Department advisory: <c>Level</c> 1 (normal precautions) to 4 (do not travel), its label, a short summary and the source page.
+/// </summary>
 public sealed record TravelAdvisory(int Level, string Label, string Summary, string SourceUrl);

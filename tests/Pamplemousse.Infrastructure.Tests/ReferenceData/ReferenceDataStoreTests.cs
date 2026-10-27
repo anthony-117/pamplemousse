@@ -1,6 +1,6 @@
 using Pamplemousse.Infrastructure.ReferenceData;
 
-namespace Pamplemousse.Api.Tests.ReferenceData;
+namespace Pamplemousse.Infrastructure.Tests.ReferenceData;
 
 public class ReferenceDataStoreTests
 {

@@ -69,7 +69,7 @@ public sealed partial class DestinationService(
     public async Task<(Place? Place, string? Warning)> GetPlaceAsync(string id, CancellationToken ct)
     {
         var separator = id.IndexOf(':', StringComparison.Ordinal);
-        var provider = separator > 0 ? placeProviders.FirstOrDefault(p => p.Source == id[..separator]) : null;
+        var provider = separator > 0 ? placeProviders.FirstOrDefault(p => string.Equals(p.Source, id[..separator], StringComparison.Ordinal)) : null;
         if (provider is null)
         {
             return (null, null);

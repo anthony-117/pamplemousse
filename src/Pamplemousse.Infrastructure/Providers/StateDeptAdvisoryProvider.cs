@@ -19,7 +19,7 @@ public sealed partial class StateDeptAdvisoryProvider(HttpClient http, JsonCache
         ArgumentNullException.ThrowIfNull(country);
 
         var all = await cache.GetOrCreateAsync("advisories:us", TimeSpan.FromHours(12), FetchAllAsync, ct);
-        var names = new[] { country.Name, country.OfficialName }.Select(ReferenceDataStore.Normalize).ToHashSet();
+        var names = new[] { country.Name, country.OfficialName }.Select(ReferenceDataStore.Normalize).ToHashSet(StringComparer.Ordinal);
         return all.FirstOrDefault(a => names.Contains(ReferenceDataStore.Normalize(a.CountryName)))?.Advisory;
     }
 
@@ -51,21 +51,22 @@ public sealed partial class StateDeptAdvisoryProvider(HttpClient http, JsonCache
     private static string Summarize(string html)
     {
         var text = WhitespacePattern().Replace(WebUtility.HtmlDecode(TagPattern().Replace(html, " ")), " ").Trim();
-        text = SpaceBeforePunctuationPattern().Replace(text, "$1"); // "terrorism ." → "terrorism."
+        text = SpaceBeforePunctuationPattern().Replace(text, "${punct}"); // "terrorism ." → "terrorism."
         return text.Length <= SummaryLength ? text : string.Concat(text.AsSpan(0, SummaryLength).TrimEnd(), "…");
     }
 
     public sealed record CountryAdvisory(string CountryName, TravelAdvisory Advisory);
 
-    [GeneratedRegex(@"^(?<country>.+?)\s+-\s+Level\s+(?<level>[1-4]):\s*(?<label>.+)$")]
+    // Every pattern has a timeout so a malformed response cannot hang a request (ReDoS).
+    [GeneratedRegex(@"^(?<country>.+?)\s+-\s+Level\s+(?<level>[1-4]):\s*(?<label>.+)$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
     private static partial Regex TitlePattern();
 
-    [GeneratedRegex("<[^>]+>")]
+    [GeneratedRegex("<[^>]+>", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
     private static partial Regex TagPattern();
 
-    [GeneratedRegex(@"\s+")]
+    [GeneratedRegex(@"\s+", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
     private static partial Regex WhitespacePattern();
 
-    [GeneratedRegex(@"\s+([.,;:!?])")]
+    [GeneratedRegex(@"\s+(?<punct>[.,;:!?])", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
     private static partial Regex SpaceBeforePunctuationPattern();
 }

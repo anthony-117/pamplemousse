@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Code coverage settings for dotnet test (see README: "Tests and coverage"). -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Our code only: no tests, no Aspire template projects. -->
+          <Include>[Pamplemousse.Api]*,[Pamplemousse.Domain]*,[Pamplemousse.Infrastructure]*</Include>
+          <!-- Source-generated code (regex, logging, OpenAPI XML comments) is not ours to test. -->
+          <ExcludeByFile>**/*.g.cs,**/*.generated.cs,**/obj/**</ExcludeByFile>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <SkipAutoProps>true</SkipAutoProps>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

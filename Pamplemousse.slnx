@@ -9,5 +9,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Pamplemousse.Api.Tests/Pamplemousse.Api.Tests.csproj" />
     <Project Path="tests/Pamplemousse.Domain.Tests/Pamplemousse.Domain.Tests.csproj" />
+    <Project Path="tests/Pamplemousse.Infrastructure.Tests/Pamplemousse.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

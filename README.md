@@ -82,6 +82,30 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 
 Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzip, embedded in the assembly).
 
+## Linting (like Rust's clippy)
+Every project builds with the .NET analyzers (`AnalysisLevel=latest-recommended`), **Roslynator** and **Meziantou.Analyzer**,
+plus the `.editorconfig` style rules (`EnforceCodeStyleInBuild`). `TreatWarningsAsErrors` makes any finding a build error.
+Deliberate exceptions are listed, with a reason, at the bottom of `.editorconfig`.
+```bash
+dotnet format Pamplemousse.slnx --verify-no-changes   # formatting + style (CI fails if anything would change)
+dotnet format Pamplemousse.slnx                       # fix formatting and style automatically
+dotnet build Pamplemousse.slnx                        # analyzers
+```
+
+## Tests and coverage
+Every feature ships with tests:
+
+| Project | Kind | What it covers |
+|---|---|---|
+| `Pamplemousse.Domain.Tests` | Unit | Pure domain logic (Money, weather codes) |
+| `Pamplemousse.Infrastructure.Tests` | Unit | Each provider against canned JSON (`StubHttp`, no internet), the cache, reference data |
+| `Pamplemousse.Api.Tests` | Unit + integration | Service with fakes, date rules, `Env`; every endpoint through HTTP (`WebApplicationFactory`) |
+
+```bash
+dotnet test Pamplemousse.slnx --settings coverage.runsettings --collect "XPlat Code Coverage" --results-directory coverage
+```
+CI fails when line coverage drops below **85%** (generated code excluded).
+
 ## Conventions
 - Package versions live only in `Directory.Packages.props`; shared build settings in `Directory.Build.props` (nullable on, warnings as errors).
 - The AppHost uses Aspire's NuGet packages (`AspireUseCliBundle=false`). After installing the Aspire CLI (https://get.aspire.dev), switch it to `true`.
