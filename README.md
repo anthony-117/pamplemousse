@@ -23,7 +23,7 @@ tests/
 ```
 
 ## Requirements
-- .NET SDK 10.0.403+ (pinned in `global.json`)
+- .NET SDK 10.0.113 (pinned in `global.json`, patch roll-forward only; runtime 10.0.13)
 - Docker Desktop (only for the Aspire AppHost: Postgres and Redis run as containers)
 
 ## Commands
