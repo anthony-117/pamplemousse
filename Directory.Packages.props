@@ -7,6 +7,7 @@
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.4" />
+    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.6.4" />
   </ItemGroup>
 
   <!-- Matches runtime 10.0.13, which ships with the pinned SDK 10.0.113. -->
