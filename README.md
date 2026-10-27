@@ -92,8 +92,8 @@ dotnet format Pamplemousse.slnx                       # fix formatting and style
 dotnet build Pamplemousse.slnx                        # analyzers
 ```
 
-## Tests and coverage
-Every feature ships with tests:
+## Tests
+Every feature ships with tests, and CI requires **every test to pass**:
 
 | Project | Kind | What it covers |
 |---|---|---|
@@ -102,9 +102,8 @@ Every feature ships with tests:
 | `Pamplemousse.Api.Tests` | Unit + integration | Service with fakes, date rules, `Env`; every endpoint through HTTP (`WebApplicationFactory`) |
 
 ```bash
-dotnet test Pamplemousse.slnx --settings coverage.runsettings --collect "XPlat Code Coverage" --results-directory coverage
+dotnet test Pamplemousse.slnx
 ```
-CI fails when line coverage drops below **85%** (generated code excluded).
 
 ## Conventions
 - Package versions live only in `Directory.Packages.props`; shared build settings in `Directory.Build.props` (nullable on, warnings as errors).

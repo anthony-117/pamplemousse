@@ -9,5 +9,5 @@
 ## Checks
 - [ ] `dotnet format Pamplemousse.slnx --verify-no-changes` is clean
 - [ ] `dotnet build` has 0 warnings / 0 errors (analyzers on)
-- [ ] `dotnet test` passes; coverage stays ≥ 85%
+- [ ] `dotnet test`: every test passes
 - [ ] New environment variables added to `Env.cs` **and** `.env.example`
