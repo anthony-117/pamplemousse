@@ -40,6 +40,23 @@ public class TicketmasterEventProviderTests
     }
 
     [Fact]
+    public async Task The_same_show_listed_twice_appears_once_but_other_dates_stay()
+    {
+        static string Show(string id, string date) =>
+            "{\"id\":\"" + id + "\",\"name\":\"SHIVA - Tour\",\"url\":\"https://tm/s\"," +
+            "\"_embedded\":{\"venues\":[{\"name\":\"Palazzo dello Sport\"}]},\"classifications\":[{\"segment\":{\"name\":\"Music\"}}]," +
+            "\"dates\":{\"start\":{\"localDate\":\"" + date + "\",\"localTime\":\"21:00:00\"}}}";
+        var http = new StubHttp().On(
+            "events.json",
+            "{\"_embedded\":{\"events\":[" + Show("A", "2026-11-27") + "," + Show("B", "2026-11-27") + "," + Show("C", "2026-11-29") + "]}}");
+        var provider = new TicketmasterEventProvider(http.Client(), TestDoubles.Cache(), TestDoubles.Keys());
+
+        var events = await provider.SearchAsync(Rome, From, To, 10, CancellationToken.None);
+
+        Assert.Equal(["tm:A", "tm:C"], events.Select(e => e.Id), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task No_events_means_an_empty_list()
     {
         var http = new StubHttp().On("events.json", """{"page":{"totalElements":0}}""");
