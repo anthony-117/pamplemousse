@@ -82,6 +82,13 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 
 Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzip, embedded in the assembly).
 
+## Git hooks (run once per clone)
+```bash
+sh scripts/install-hooks.sh
+```
+This sets `core.hooksPath` to the versioned `.githooks/` folder. The **pre-push** hook runs `dotnet format --verify-no-changes`, the build with all analyzers, and every test
+— the same checks as CI — and **blocks the push if any of them fails**. (Emergency bypass: `git push --no-verify`; CI still runs.)
+
 ## Linting (like Rust's clippy)
 Every project builds with the .NET analyzers (`AnalysisLevel=latest-recommended`), **Roslynator** and **Meziantou.Analyzer**,
 plus the `.editorconfig` style rules (`EnforceCodeStyleInBuild`). `TreatWarningsAsErrors` makes any finding a build error.
