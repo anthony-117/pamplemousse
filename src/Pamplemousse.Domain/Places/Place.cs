@@ -8,7 +8,7 @@ public enum PlaceCategory
     Restaurant,
 }
 
-/// <summary>An attraction or restaurant. <see cref="Id"/> is "{source}:{providerId}", e.g. "otm:W12345" or "gp:ChIJ…".</summary>
+/// <summary>An attraction or restaurant. <see cref="Id"/> is "{source}:{providerId}", e.g. "otm:W12345".</summary>
 public sealed record Place(
     string Id,
     string Name,

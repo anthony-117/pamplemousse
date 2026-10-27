@@ -111,7 +111,7 @@ public class DestinationEndpointsTests : IClassFixture<TestApiFactory>
     }
 
     [Theory]
-    [InlineData("restaurant", "GOOGLE_PLACES_API_KEY")]
+    [InlineData("restaurant", "OPENTRIPMAP_API_KEY")]
     [InlineData("attraction", "OPENTRIPMAP_API_KEY")]
     public async Task Places_without_a_key_return_a_warning(string category, string variable)
     {

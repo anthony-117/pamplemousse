@@ -9,8 +9,7 @@ namespace Pamplemousse.Api;
 public static class Env
 {
     // External data providers. Empty means "not configured": the matching section returns a warning instead of data.
-    public static string GooglePlacesApiKey => Get("GOOGLE_PLACES_API_KEY", "");
-    public static string OpenTripMapApiKey => Get("OPENTRIPMAP_API_KEY", "");
+    public static string OpenTripMapApiKey => Get("OPENTRIPMAP_API_KEY", ""); // attractions and restaurants
     public static string TicketmasterApiKey => Get("TICKETMASTER_API_KEY", "");
 
     // Comma-separated browser origins allowed to call the API (e.g. the Firebase Hosting domain).

@@ -18,7 +18,6 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Ad
 
 builder.AddInfrastructure(keys =>
 {
-    keys.GooglePlacesApiKey = Env.GooglePlacesApiKey;
     keys.OpenTripMapApiKey = Env.OpenTripMapApiKey;
     keys.TicketmasterApiKey = Env.TicketmasterApiKey;
 });

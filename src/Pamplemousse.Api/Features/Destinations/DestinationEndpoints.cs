@@ -70,7 +70,7 @@ public static class DestinationEndpoints
                 return TypedResults.Ok(await service.GetPlacesAsync(d, kind, Math.Clamp(limit ?? 20, 1, 20), ct));
             })
             .WithName("GetDestinationPlaces")
-            .WithSummary("Top attractions (OpenTripMap) or restaurants (Google Places).");
+            .WithSummary("Top attractions or restaurants (OpenTripMap).");
 
         destinations.MapGet("/{id}/events", async Task<Results<Ok<EventsResponse>, NotFound, ValidationProblem>> (
                 string id, DateOnly? from, DateOnly? to, int? limit, IReferenceData data, DestinationService service, TimeProvider clock, CancellationToken ct) =>
@@ -94,7 +94,7 @@ public static class DestinationEndpoints
             })
             .WithTags("Destinations")
             .WithName("GetPlace")
-            .WithSummary("Place details by id, e.g. otm:W123 or gp:ChIJ….");
+            .WithSummary("Place details by id, e.g. otm:W123.");
 
         routes.MapGet("/countries", (IReferenceData data) =>
                 TypedResults.Ok<IReadOnlyList<CountryOption>>([.. data.Countries.Select(c => new CountryOption(c.Code, c.Name, c.Flag, [.. c.Currencies.Select(x => x.Code)]))]))

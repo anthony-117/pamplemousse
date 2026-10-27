@@ -41,7 +41,7 @@ public interface IAdvisoryProvider
     Task<TravelAdvisory?> GetAsync(Country country, CancellationToken ct);
 }
 
-/// <summary>Source of places for one category (attractions from OpenTripMap, restaurants from Google Places).</summary>
+/// <summary>Source of places for one category (attractions and restaurants both come from OpenTripMap today).</summary>
 public interface IPlaceProvider
 {
     /// <summary>Prefix used in place ids, e.g. "otm" or "gp".</summary>

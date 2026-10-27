@@ -11,7 +11,7 @@ namespace Pamplemousse.Api.Tests;
 
 /// <summary>
 /// Hosts the API with fake free-data providers (no internet) and no API keys, so keyed providers
-/// (Google Places, OpenTripMap, Ticketmaster) take their "not configured" path.
+/// (OpenTripMap, Ticketmaster) take their "not configured" path.
 /// </summary>
 public sealed class TestApiFactory : WebApplicationFactory<Program>
 {
@@ -23,7 +23,6 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
         {
             services.PostConfigure<ExternalApiOptions>(o =>
             {
-                o.GooglePlacesApiKey = "";
                 o.OpenTripMapApiKey = "";
                 o.TicketmasterApiKey = "";
             });

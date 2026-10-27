@@ -35,10 +35,10 @@ public static class DependencyInjection
         services.AddHttpClient<IHolidayProvider, NagerHolidayProvider>();
         services.AddHttpClient<IAdvisoryProvider, StateDeptAdvisoryProvider>();
         services.AddHttpClient<IEventProvider, TicketmasterEventProvider>();
-        services.AddHttpClient<OpenTripMapPlaceProvider>();
-        services.AddHttpClient<GooglePlacesRestaurantProvider>();
-        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapPlaceProvider>());
-        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<GooglePlacesRestaurantProvider>());
+        services.AddHttpClient<OpenTripMapAttractionProvider>();
+        services.AddHttpClient<OpenTripMapRestaurantProvider>();
+        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapAttractionProvider>());
+        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapRestaurantProvider>());
 
         return builder;
     }
