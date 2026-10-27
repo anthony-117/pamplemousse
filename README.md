@@ -82,6 +82,36 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 
 Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzip, embedded in the assembly).
 
+## Git hooks (run once per clone)
+```bash
+sh scripts/install-hooks.sh
+```
+This sets `core.hooksPath` to the versioned `.githooks/` folder. The **pre-push** hook runs `dotnet format --verify-no-changes`, the build with all analyzers, every test and the Docker image build
+— every CI step; Docker Desktop must be running — and **blocks the push if any of them fails**. (Emergency bypass: `git push --no-verify`; CI still runs.)
+
+## Linting (like Rust's clippy)
+Every project builds with the .NET analyzers (`AnalysisLevel=latest-recommended`), **Roslynator** and **Meziantou.Analyzer**,
+plus the `.editorconfig` style rules (`EnforceCodeStyleInBuild`). `TreatWarningsAsErrors` makes any finding a build error.
+Deliberate exceptions are listed, with a reason, at the bottom of `.editorconfig`.
+```bash
+dotnet format Pamplemousse.slnx --verify-no-changes   # formatting + style (CI fails if anything would change)
+dotnet format Pamplemousse.slnx                       # fix formatting and style automatically
+dotnet build Pamplemousse.slnx                        # analyzers
+```
+
+## Tests
+Every feature ships with tests, and CI requires **every test to pass**:
+
+| Project | Kind | What it covers |
+|---|---|---|
+| `Pamplemousse.Domain.Tests` | Unit | Pure domain logic (Money, weather codes) |
+| `Pamplemousse.Infrastructure.Tests` | Unit | Each provider against canned JSON (`StubHttp`, no internet), the cache, reference data |
+| `Pamplemousse.Api.Tests` | Unit + integration | Service with fakes, date rules, `Env`; every endpoint through HTTP (`WebApplicationFactory`) |
+
+```bash
+dotnet test Pamplemousse.slnx
+```
+
 ## Conventions
 - Package versions live only in `Directory.Packages.props`; shared build settings in `Directory.Build.props` (nullable on, warnings as errors).
 - The AppHost uses Aspire's NuGet packages (`AspireUseCliBundle=false`). After installing the Aspire CLI (https://get.aspire.dev), switch it to `true`.

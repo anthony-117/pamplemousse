@@ -23,7 +23,7 @@ public sealed record Money
     public Money Add(Money other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        if (other.Currency != Currency)
+        if (!string.Equals(other.Currency, Currency, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Cannot add {other.Currency} to {Currency}.");
         }

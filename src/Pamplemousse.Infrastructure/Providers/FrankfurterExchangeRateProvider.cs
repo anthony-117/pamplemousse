@@ -16,7 +16,7 @@ public sealed class FrankfurterExchangeRateProvider(HttpClient http, JsonCache c
     {
         var from = baseCurrency.ToUpperInvariant();
         var to = quoteCurrency.ToUpperInvariant();
-        if (from == to)
+        if (string.Equals(from, to, StringComparison.Ordinal))
         {
             return new ExchangeRate(from, to, 1m, DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime), SourceName);
         }

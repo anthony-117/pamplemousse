@@ -4,6 +4,12 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <!-- Linters for every project (like Rust's clippy): any finding fails the build (TreatWarningsAsErrors). -->
+  <ItemGroup Label="Analyzers">
+    <GlobalPackageReference Include="Roslynator.Analyzers" Version="5.0.1" />
+    <GlobalPackageReference Include="Meziantou.Analyzer" Version="3.0.317" />
+  </ItemGroup>
+
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.4" />

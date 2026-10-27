@@ -26,7 +26,7 @@ public interface IWeatherProvider
 
 public interface IExchangeRateProvider
 {
-    /// <returns>null when the source does not publish this currency pair.</returns>
+    /// <summary>Latest rate from <paramref name="baseCurrency"/> to <paramref name="quoteCurrency"/>; null when the source does not publish the pair.</summary>
     Task<ExchangeRate?> GetAsync(string baseCurrency, string quoteCurrency, CancellationToken ct);
 }
 
@@ -37,7 +37,7 @@ public interface IHolidayProvider
 
 public interface IAdvisoryProvider
 {
-    /// <returns>null when no advisory exists for the country.</returns>
+    /// <summary>Current advisory for <paramref name="country"/>; null when none exists.</summary>
     Task<TravelAdvisory?> GetAsync(Country country, CancellationToken ct);
 }
 

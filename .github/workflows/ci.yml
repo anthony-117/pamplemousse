@@ -18,11 +18,17 @@ jobs:
       - name: Restore
         run: dotnet restore Pamplemousse.slnx
 
-      - name: Build
+      # Formatting and .editorconfig style rules (like `cargo fmt --check`).
+      - name: Check formatting
+        run: dotnet format Pamplemousse.slnx --verify-no-changes --no-restore
+
+      # Roslynator, Meziantou and .NET analyzers run in the build; any finding is an error (like `cargo clippy -D warnings`).
+      - name: Build and lint
         run: dotnet build Pamplemousse.slnx -c Release --no-restore
 
+      # Every test must pass; a single failing test fails the build.
       - name: Test
-        run: dotnet test Pamplemousse.slnx -c Release --no-build --logger "trx" --results-directory TestResults
+        run: dotnet test Pamplemousse.slnx -c Release --no-build --logger "console;verbosity=normal"
 
       - name: Docker image builds
         run: docker build -t pamplemousse:ci .

@@ -44,7 +44,7 @@ public class DestinationEndpointsTests : IClassFixture<TestApiFactory>
 
         Assert.NotNull(results);
         Assert.Equal("São Paulo", results[0].Name);
-        Assert.Equal(results.Count, results.Select(r => r.Id).Distinct().Count());
+        Assert.Equal(results.Count, results.Select(r => r.Id).Distinct(StringComparer.Ordinal).Count());
     }
 
     [Fact]
@@ -54,6 +54,35 @@ public class DestinationEndpointsTests : IClassFixture<TestApiFactory>
 
         Assert.NotNull(results);
         Assert.Empty(results);
+    }
+
+    [Fact]
+    public async Task Destination_details_include_the_country()
+    {
+        var details = await _client.GetFromJsonAsync<DestinationDetails>($"/api/v1/destinations/{Rome}", Json);
+
+        Assert.NotNull(details);
+        Assert.Equal("Rome", details.Destination.Name);
+        Assert.Equal("EUR", details.Country?.Currencies[0].Code);
+    }
+
+    [Theory]
+    [InlineData("/api/v1/places/gp%3Aabc")]
+    [InlineData("/api/v1/places/no-prefix")]
+    public async Task Unknown_place_returns_404(string url)
+    {
+        var response = await _client.GetAsync(new Uri(url, UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Place_details_without_a_key_explain_why()
+    {
+        var response = await _client.GetAsync(new Uri("/api/v1/places/otm%3AW3", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("OPENTRIPMAP_API_KEY", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -147,6 +176,6 @@ public class DestinationEndpointsTests : IClassFixture<TestApiFactory>
         var countries = await _client.GetFromJsonAsync<List<CountryOption>>("/api/v1/countries", Json);
 
         Assert.NotNull(countries);
-        Assert.Contains(countries, c => c.Code == "LB" && c.Currencies.Contains("LBP"));
+        Assert.Contains(countries, c => string.Equals(c.Code, "LB", StringComparison.Ordinal) && c.Currencies.Contains("LBP", StringComparer.Ordinal));
     }
 }

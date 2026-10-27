@@ -38,7 +38,7 @@ public sealed class OpenMeteoWeatherProvider(HttpClient http, JsonCache cache, T
             async token => new WeatherReport(WeatherKind.LastYear, await FetchAsync(lastYearUrl, 1, token)), ct);
     }
 
-    /// <param name="shiftYears">Moves the returned dates forward so last year's days line up with the trip.</param>
+    /// <summary>Reads Open-Meteo's daily arrays; <paramref name="shiftYears"/> moves dates forward so last year's days line up with the trip.</summary>
     private async Task<IReadOnlyList<WeatherDay>> FetchAsync(string url, int shiftYears, CancellationToken ct)
     {
         using var doc = JsonDocument.Parse(await http.GetStringAsync(new Uri(url), ct));

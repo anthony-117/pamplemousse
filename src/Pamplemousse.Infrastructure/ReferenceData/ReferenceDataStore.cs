@@ -36,7 +36,7 @@ public sealed class ReferenceDataStore : IReferenceData
         }
 
         return _cities.Value.Entries
-            .Select(e => (e.City, Rank: e.Key == q ? 0 : e.Key.StartsWith(q, StringComparison.Ordinal) ? 1 : e.Key.Contains(q, StringComparison.Ordinal) ? 2 : 3))
+            .Select(e => (e.City, Rank: string.Equals(e.Key, q, StringComparison.Ordinal) ? 0 : e.Key.StartsWith(q, StringComparison.Ordinal) ? 1 : e.Key.Contains(q, StringComparison.Ordinal) ? 2 : 3))
             .Where(x => x.Rank < 3)
             .GroupBy(x => x.City.Id, StringComparer.Ordinal)
             .Select(g => g.MinBy(x => x.Rank))
@@ -51,7 +51,7 @@ public sealed class ReferenceDataStore : IReferenceData
     {
         var passport = passportCountry.ToUpperInvariant();
         var destination = destinationCountry.ToUpperInvariant();
-        if (passport == destination)
+        if (string.Equals(passport, destination, StringComparison.Ordinal))
         {
             return new VisaRequirement(passport, destination, "own country", null);
         }
@@ -108,7 +108,7 @@ public sealed class ReferenceDataStore : IReferenceData
             byId[city.Id] = city;
             entries.Add((Normalize(c[1]), city));
             var ascii = Normalize(c[2]);
-            if (ascii != entries[^1].Item1)
+            if (!string.Equals(ascii, entries[^1].Item1, StringComparison.Ordinal))
             {
                 entries.Add((ascii, city));
             }

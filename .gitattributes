@@ -1,0 +1,3 @@
+# Hook and shell scripts must keep LF line endings or "#!/bin/sh" breaks on Linux/macOS.
+.githooks/* text eol=lf
+*.sh text eol=lf
