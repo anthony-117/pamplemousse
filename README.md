@@ -4,7 +4,7 @@
 
 - Hosting: Docker on Google Cloud Run
 - Data: Postgres + pgvector (Neon/Supabase), Redis (Upstash)
-- External sources: OctoTrip MCP (flights, cars, Sprint 2), Travelpayouts (hotels, Sprint 2), OpenTripMap (attractions + restaurants), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
+- External sources: Travelpayouts (flights + hotels, Sprint 2), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
 - Clients: `chocomousse` (Flutter, sibling repo) via OpenAPI; Telegram bot via webhook
 
 Project docs (studies, architecture, ADRs, schemas) live in the OneDrive FYP folder: `Final Year Project - USEK - 2026-2027`.
@@ -41,7 +41,7 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 
 | Variable | Used for | Without it |
 |---|---|---|
-| `OPENTRIPMAP_API_KEY` | Attractions, restaurants, place details | Places sections return a warning |
+| `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details | Restaurants return a warning; attractions still come from Wikidata |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
 
@@ -76,7 +76,7 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB) | no key |
 | Holidays | [Nager.Date](https://date.nager.at) | no key |
 | Safety | US State Department travel advisories | public domain, no key |
-| Attractions | OpenTripMap (`interesting_places`) | free key |
+| Attractions | Wikidata, ranked by number of Wikipedia editions; details from the Wikipedia summary; OpenTripMap fills in when Wikidata is down or has too few (ADR 0011) | free, no key |
 | Restaurants | OpenTripMap (`foods`: restaurants, cafés, bars; no ratings, prices or hours) | free key |
 | Events | Ticketmaster Discovery | free key |
 

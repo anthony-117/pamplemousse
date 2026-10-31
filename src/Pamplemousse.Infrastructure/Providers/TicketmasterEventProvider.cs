@@ -31,6 +31,8 @@ public sealed class TicketmasterEventProvider(HttpClient http, JsonCache cache, 
                 .Select(e => (JsonElement?)e)
                 .Where(e => e.Prop("dates").Prop("start").Prop("localDate").Str() is not null)
                 .Select(ToEvent)
+                // Ticketmaster sometimes lists one show twice (e.g. two ticket offers); separate dates or times stay.
+                .DistinctBy(e => (e.Name, e.Date, e.Time, e.Venue))
                 .ToList();
         }, ct);
     }

@@ -151,6 +151,19 @@ public class DestinationEndpointsTests : IClassFixture<TestApiFactory>
         Assert.Contains(places.Warnings, w => w.Contains(variable, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task Attractions_come_from_wikidata_and_need_no_key()
+    {
+        var places = await _client.GetFromJsonAsync<PlacesResponse>("/api/v1/destinations/2988507/places?category=attraction&limit=1", Json);
+
+        Assert.NotNull(places);
+        Assert.Empty(places.Warnings);
+        var tower = Assert.Single(places.Items);
+        Assert.Equal("wd:Q243", tower.Id);
+        Assert.Equal("Eiffel Tower", tower.Name);
+        Assert.Equal("Observation tower", tower.Kind);
+    }
+
     [Theory]
     [InlineData("/api/v1/destinations/3169070/places?category=museum")]
     [InlineData("/api/v1/destinations/3169070/places?limit=abc")]

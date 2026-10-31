@@ -37,6 +37,15 @@ public static class DependencyInjection
         services.AddHttpClient<IEventProvider, TicketmasterEventProvider>();
         services.AddHttpClient<OpenTripMapAttractionProvider>();
         services.AddHttpClient<OpenTripMapRestaurantProvider>();
+        services.AddHttpClient<WikidataAttractionProvider>(c =>
+        {
+            // Wikimedia asks API clients to identify themselves. A slow query falls back to OpenTripMap instead of hanging the page.
+            c.DefaultRequestHeaders.UserAgent.ParseAdd("TravelGenie/0.1 (https://github.com/anthony-117/pamplemousse)");
+            c.Timeout = TimeSpan.FromSeconds(12);
+        });
+
+        // The first provider of a category serves its list; every provider serves details for its own ids.
+        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<WikidataAttractionProvider>());
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapAttractionProvider>());
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapRestaurantProvider>());
 

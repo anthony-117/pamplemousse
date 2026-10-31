@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -6,12 +8,13 @@ using Pamplemousse.Domain.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Infrastructure;
+using Pamplemousse.Infrastructure.Providers;
 
 namespace Pamplemousse.Api.Tests;
 
 /// <summary>
 /// Hosts the API with fake free-data providers (no internet) and no API keys, so keyed providers
-/// (OpenTripMap, Ticketmaster) take their "not configured" path.
+/// (OpenTripMap, Ticketmaster) take their "not configured" path. Wikidata only answers for Paris.
 /// </summary>
 public sealed class TestApiFactory : WebApplicationFactory<Program>
 {
@@ -30,7 +33,25 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IExchangeRateProvider>(Exchange);
             services.AddSingleton<IHolidayProvider, FakeHolidays>();
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
+            services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
+    }
+
+    /// <summary>Knows one landmark in Paris; everywhere else Wikidata is "down", so attractions fall back to OpenTripMap.</summary>
+    private sealed class FakeWikidata : HttpMessageHandler
+    {
+        private const string ParisLandmark = """
+            {"results":{"bindings":[{"item":{"value":"http://www.wikidata.org/entity/Q243"},"label":{"value":"Eiffel Tower"},
+             "articles":{"value":"191"},"coord":{"value":"Point(2.2945 48.8583)"},"typeLabel":{"value":"observation tower"}}]}}
+            """;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var paris = Uri.UnescapeDataString(request.RequestUri!.Query).Contains("Point(2.3", StringComparison.Ordinal);
+            return Task.FromResult(paris
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(ParisLandmark, Encoding.UTF8, "application/json") }
+                : new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        }
     }
 
     private sealed class FakeWeather : IWeatherProvider
