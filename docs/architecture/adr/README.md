@@ -26,3 +26,4 @@ Date: YYYY-MM-DD · Status: Proposed | Accepted | Superseded by NNNN
 | [0011](0011-attractions-from-wikidata.md) | Attractions from Wikidata ranked by fame, OpenTripMap as fallback; one event per show | Accepted |
 | [0012](0012-clean-architecture-layers.md) | Four layers (Api, Application, Domain, Infrastructure), one service, plain handlers | Accepted |
 | [0013](0013-code-docs-in-the-repo.md) | Code documentation lives in the repo; OneDrive keeps non-code material | Accepted |
+| [0014](0014-no-live-flight-source-for-mvp.md) | No live flight source for the MVP; thin routes link to live prices | Accepted |

@@ -104,6 +104,6 @@ Also tried: Beirut–Rome had no round trips in the month; Perugia–Paris had 1
 
 **Owner's decision (2026-11-02)**: add same-month fares after ±3 days, clearly labelled, and keep Travelpayouts as the only source for now. See R-4.
 
-**Owner's decision on Beirut (2026-11-02)**: add a last level for round trips, departure in the same month with any return date. Beirut–Paris had 1 fare with the return in December and 5 with any return. `market` made no difference. A live second source stays a later decision. **Result**: this helps only a little. Beirut to 11 cities for a January and a February trip: 3 of 22 searches returned a fare (see the sprint review).
+**Owner's decision on Beirut (2026-11-02)**: add a last level for round trips, departure in the same month with any return date. Beirut–Paris had 1 fare with the return in December and 5 with any return. `market` made no difference. The owner later decided against a live source for the MVP (ADR 0014). **Result**: this helps only a little. Beirut to 11 cities for a January and a February trip: 3 of 22 searches returned a fare (see the sprint review).
 
 Sources: [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163-Aviasales-Data-API), [API rate limits](https://support.travelpayouts.com/hc/en-us/articles/4402565416594-API-rate-limits), `api.travelpayouts.com/data/en/{cities,airports,airlines}.json`.
