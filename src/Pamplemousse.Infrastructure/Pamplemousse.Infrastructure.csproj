@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Pamplemousse.Application\Pamplemousse.Application.csproj" />
     <ProjectReference Include="..\Pamplemousse.Domain\Pamplemousse.Domain.csproj" />
   </ItemGroup>
 

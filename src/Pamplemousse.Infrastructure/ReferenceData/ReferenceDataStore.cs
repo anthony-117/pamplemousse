@@ -2,7 +2,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Pamplemousse.Domain.Abstractions;
+using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 

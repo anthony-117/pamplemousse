@@ -2,7 +2,7 @@
 <!-- What changed and why, in a few bullets. -->
 
 ## Tests (required for every feature)
-- [ ] Unit tests for new logic (Domain / Infrastructure providers with canned JSON / service with fakes)
+- [ ] Unit tests for new logic (Domain / handlers with fakes in Application.Tests / Infrastructure providers with canned JSON)
 - [ ] Integration tests for new or changed endpoints (`Pamplemousse.Api.Tests`, WebApplicationFactory)
 - [ ] Failure paths covered (source down, missing key, bad input → 400/404)
 

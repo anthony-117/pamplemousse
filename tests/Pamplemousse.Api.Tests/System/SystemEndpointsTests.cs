@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Pamplemousse.Api.Features.System;
+using Pamplemousse.Api.ViewModels;
 
 namespace Pamplemousse.Api.Tests.System;
 
@@ -12,7 +12,7 @@ public class SystemEndpointsTests(WebApplicationFactory<Program> factory) : ICla
     [Fact]
     public async Task Ping_returns_service_name()
     {
-        var response = await _client.GetFromJsonAsync<PingResponse>("/api/v1/system/ping");
+        var response = await _client.GetFromJsonAsync<PingViewModel>("/api/v1/system/ping");
 
         Assert.NotNull(response);
         Assert.Equal("pamplemousse", response.Name);

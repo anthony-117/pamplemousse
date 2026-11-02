@@ -14,13 +14,16 @@ Project docs (studies, architecture, ADRs, schemas) live in the OneDrive FYP fol
 src/
   Pamplemousse.AppHost/         Aspire: runs the API + Postgres (pgvector) + Redis locally
   Pamplemousse.ServiceDefaults/ logging, health checks, telemetry
-  Pamplemousse.Api/             endpoints, grouped under Features/<feature>/
-  Pamplemousse.Domain/          entities + scoring engine (pure C#)
-  Pamplemousse.Infrastructure/  persistence, cache, providers, AI
+  Pamplemousse.Api/             HTTP only: Controllers/, Contracts/, ViewModels/, Mappings/, Errors/, Middleware/
+  Pamplemousse.Application/     use cases: Destinations/Queries/<UseCase>/ (query, handler, response), Abstractions/
+  Pamplemousse.Domain/          entities, value objects, business rules; no dependencies
+  Pamplemousse.Infrastructure/  implements Application's interfaces: providers, cache, reference data
 tests/
-  Pamplemousse.Domain.Tests/    unit tests
-  Pamplemousse.Api.Tests/       integration tests (WebApplicationFactory)
+  Pamplemousse.Domain.Tests/ · Application.Tests/ · Infrastructure.Tests/ · Api.Tests/ · Architecture.Tests/
 ```
+Dependencies point inwards: `Api → Application → Domain`, and `Infrastructure → Application`. `Pamplemousse.Architecture.Tests` fails the build pipeline if a layer breaks this (ADR 0012).
+
+To add a use case: create its folder under `Application/.../Queries/` (query, handler, response), register the handler in `Application/DependencyInjection.cs`, add a controller action with a view model and mapping, and tests for each layer.
 
 ## Requirements
 - .NET SDK 10.0.113 (pinned in `global.json`, patch roll-forward only; runtime 10.0.13)
@@ -104,9 +107,11 @@ Every feature ships with tests, and CI requires **every test to pass**:
 
 | Project | Kind | What it covers |
 |---|---|---|
-| `Pamplemousse.Domain.Tests` | Unit | Pure domain logic (Money, weather codes) |
+| `Pamplemousse.Domain.Tests` | Unit | Pure domain logic (Money, DateRange, weather codes) |
+| `Pamplemousse.Application.Tests` | Unit | Each use-case handler with fake providers |
 | `Pamplemousse.Infrastructure.Tests` | Unit | Each provider against canned JSON (`StubHttp`, no internet), the cache, reference data |
-| `Pamplemousse.Api.Tests` | Unit + integration | Service with fakes, date rules, `Env`; every endpoint through HTTP (`WebApplicationFactory`) |
+| `Pamplemousse.Api.Tests` | Unit + integration | `Env`, error mapping; every endpoint through HTTP (`WebApplicationFactory`) |
+| `Pamplemousse.Architecture.Tests` | Rules | Layer dependencies, handler naming |
 
 ```bash
 dotnet test Pamplemousse.slnx

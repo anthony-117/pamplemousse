@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Pamplemousse.Domain.Abstractions;
+using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Infrastructure.Caching;
 using Pamplemousse.Infrastructure.Providers;
 using Pamplemousse.Infrastructure.ReferenceData;

@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
-using Pamplemousse.Domain.Abstractions;
+using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Infrastructure.Caching;

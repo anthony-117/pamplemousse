@@ -1,9 +1,9 @@
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
-using Pamplemousse.Domain.Events;
 using Pamplemousse.Domain.Places;
+using Pamplemousse.Domain.TravelEvents;
 
-namespace Pamplemousse.Domain.Abstractions;
+namespace Pamplemousse.Application.Abstractions;
 
 /// <summary>Bundled reference data: cities, countries and visa rules. Works offline.</summary>
 public interface IReferenceData
@@ -41,10 +41,10 @@ public interface IAdvisoryProvider
     Task<TravelAdvisory?> GetAsync(Country country, CancellationToken ct);
 }
 
-/// <summary>Source of places for one category (attractions and restaurants both come from OpenTripMap today).</summary>
+/// <summary>Source of places for one category.</summary>
 public interface IPlaceProvider
 {
-    /// <summary>Prefix used in place ids, e.g. "otm" or "gp".</summary>
+    /// <summary>Prefix used in place ids, e.g. "otm" or "wd".</summary>
     string Source { get; }
 
     PlaceCategory Category { get; }
@@ -57,13 +57,4 @@ public interface IPlaceProvider
 public interface IEventProvider
 {
     Task<IReadOnlyList<TravelEvent>> SearchAsync(Destination destination, DateOnly firstDay, DateOnly lastDay, int limit, CancellationToken ct);
-}
-
-/// <summary>Thrown when a provider needs an API key that is not set.</summary>
-public sealed class ProviderNotConfiguredException(string provider, string environmentVariable)
-    : InvalidOperationException($"{provider} is not configured. Set {environmentVariable} in the environment or .env file.")
-{
-    public string Provider { get; } = provider;
-
-    public string EnvironmentVariable { get; } = environmentVariable;
 }

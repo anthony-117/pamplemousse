@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Pamplemousse.Domain.Abstractions;
+using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Infrastructure.Caching;
 using Pamplemousse.Infrastructure.ReferenceData;

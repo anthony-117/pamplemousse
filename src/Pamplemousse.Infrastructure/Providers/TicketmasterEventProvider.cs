@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Pamplemousse.Domain.Abstractions;
+using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
-using Pamplemousse.Domain.Events;
+using Pamplemousse.Domain.TravelEvents;
 using Pamplemousse.Infrastructure.Caching;
 
 namespace Pamplemousse.Infrastructure.Providers;
