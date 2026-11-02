@@ -63,7 +63,7 @@ site for that route and those dates and carries the project's partner identifier
 
 1. **Given** a flight in the list, **When** Fares opens its link, **Then** they reach the booking site for that route and those dates.
 2. **Given** any booking link, **When** it is inspected, **Then** it carries the project's partner identifier.
-3. **Given** the partner identifier is not configured, **When** Fares asks for flights, **Then** flights still appear with working links, and a warning says commission tracking is off.
+3. **Given** the partner identifier is not configured, **When** Fares asks for flights, **Then** flights still appear with working links, and the server log says commission tracking is off.
 
 ---
 

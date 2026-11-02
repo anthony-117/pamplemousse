@@ -63,7 +63,7 @@ public interface IFlightCities
 }
 ```
 
-`FlightResults` holds the fares plus, when the partner marker is missing, the warning for Story 2. The provider works out the date level, because the search strategy depends on the source.
+`FlightResults` holds the fares and a link to search the booking site. A missing partner marker is logged, because only developers can act on it. The provider works out the date level, because the search strategy depends on the source.
 
 ## State
 

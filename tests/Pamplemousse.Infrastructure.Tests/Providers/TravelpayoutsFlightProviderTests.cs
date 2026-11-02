@@ -1,4 +1,6 @@
 using System.Net;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
@@ -30,12 +32,26 @@ public class TravelpayoutsFlightProviderTests
     private static FlightSearch Search(string from = "2026-12-16", string to = "2026-12-20", TripType type = TripType.RoundTrip, bool direct = false, string currency = "USD") =>
         FlightSearch.Create("PAR", "ROM", DateRange.ForTrip(DateOnly.Parse(from, System.Globalization.CultureInfo.InvariantCulture), DateOnly.Parse(to, System.Globalization.CultureInfo.InvariantCulture), Today), type, direct, currency);
 
-    private static TravelpayoutsFlightProvider Provider(StubHttp http, string token = "secret-token", string marker = "796702", JsonCache? cache = null) => new(
+    private static TravelpayoutsFlightProvider Provider(StubHttp http, string token = "secret-token", string marker = "796702", JsonCache? cache = null, ILogger<TravelpayoutsFlightProvider>? logger = null) => new(
         http.Client(),
         cache ?? TestDoubles.Cache(),
         Options.Create(new ExternalApiOptions { TravelpayoutsApiToken = token, TravelpayoutsMarker = marker }),
         Cities,
-        Clock);
+        Clock,
+        logger ?? NullLogger<TravelpayoutsFlightProvider>.Instance);
+
+    private sealed class RecordingLogger : ILogger<TravelpayoutsFlightProvider>
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            Messages.Add(formatter(state, exception));
+    }
 
     [Fact]
     public async Task Maps_the_real_fields()
@@ -313,19 +329,30 @@ public class TravelpayoutsFlightProviderTests
         var results = await Provider(http).SearchAsync(Search(), CancellationToken.None);
 
         Assert.Equal("https://www.aviasales.com/search/PAR1612ROM20121?t=abc&expected_price=56&marker=796702", results.Offers[0].BookingUrl);
-        Assert.Empty(results.Warnings);
     }
 
     [Fact]
-    public async Task Without_a_marker_links_still_work_and_a_warning_says_so()
+    public async Task Without_a_marker_links_still_work_and_the_log_says_so()
     {
         var http = new StubHttp().On("prices_for_dates", Answer(Fare("2026-12-16", "2026-12-20")));
+        var logger = new RecordingLogger();
 
-        var results = await Provider(http, marker: "").SearchAsync(Search(), CancellationToken.None);
+        var results = await Provider(http, marker: "", logger: logger).SearchAsync(Search(), CancellationToken.None);
 
         Assert.Equal("https://www.aviasales.com/search/PAR1612ROM20121?t=abc&expected_price=56", results.Offers[0].BookingUrl);
         Assert.Equal("https://www.aviasales.com/search/PAR1612ROM20121", results.SearchUrl);
-        Assert.Contains(results.Warnings, w => w.Contains("TRAVELPAYOUTS_MARKER", StringComparison.Ordinal));
+        Assert.Contains(logger.Messages, m => m.Contains("TRAVELPAYOUTS_MARKER", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task With_a_marker_nothing_is_logged()
+    {
+        var http = new StubHttp().On("prices_for_dates", Answer(Fare("2026-12-16", "2026-12-20")));
+        var logger = new RecordingLogger();
+
+        await Provider(http, logger: logger).SearchAsync(Search(), CancellationToken.None);
+
+        Assert.Empty(logger.Messages);
     }
 
     [Fact]

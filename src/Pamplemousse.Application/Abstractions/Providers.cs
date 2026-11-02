@@ -61,8 +61,8 @@ public interface IFlightProvider
     Task<FlightResults> SearchAsync(FlightSearch search, CancellationToken ct);
 }
 
-/// <summary>The fares found, a link to search the booking site for the same trip, and anything the traveller should know.</summary>
-public sealed record FlightResults(IReadOnlyList<FlightOffer> Offers, string SearchUrl, IReadOnlyList<string> Warnings);
+/// <summary>The fares found, and a link to search the booking site for the same trip.</summary>
+public sealed record FlightResults(IReadOnlyList<FlightOffer> Offers, string SearchUrl);
 
 /// <summary>Maps a place to the nearest city with a real airport.</summary>
 public interface IFlightCities

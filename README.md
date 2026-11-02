@@ -45,7 +45,7 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | Variable | Used for | Without it |
 |---|---|---|
 | `TRAVELPAYOUTS_API_TOKEN` | Flights | Flights return a warning |
-| `TRAVELPAYOUTS_MARKER` | Partner ID on booking links | Links work, but earn no commission; a warning says so |
+| `TRAVELPAYOUTS_MARKER` | Partner ID on booking links | Links work, but earn no commission; the server log says so |
 | `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details | Restaurants return a warning; attractions still come from Wikidata |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |

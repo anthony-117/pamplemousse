@@ -3,6 +3,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
@@ -18,12 +19,13 @@ namespace Pamplemousse.Infrastructure.Providers;
 /// Exact dates are often missing from this data, so a search falls back to nearby dates, then to other dates in the same months,
 /// then, for round trips, to any return date.
 /// </summary>
-public sealed class TravelpayoutsFlightProvider(
+public sealed partial class TravelpayoutsFlightProvider(
     HttpClient http,
     JsonCache cache,
     IOptions<ExternalApiOptions> options,
     FlightCityStore cities,
-    TimeProvider clock) : IFlightProvider
+    TimeProvider clock,
+    ILogger<TravelpayoutsFlightProvider> logger) : IFlightProvider
 {
     private const string ApiUrl = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates";
     private const string BookingSite = "https://www.aviasales.com";
@@ -44,9 +46,17 @@ public sealed class TravelpayoutsFlightProvider(
         // Identical searches reuse the answer for an hour: the data is itself a cache and the source asks partners to limit calls.
         var offers = await cache.GetOrCreateAsync<IReadOnlyList<FlightOffer>>(key, TimeSpan.FromHours(1), c => FindOffersAsync(search, token, marker, c), ct);
 
-        IReadOnlyList<string> warnings = marker.Length > 0 ? [] : ["Booking links have no partner marker. Set TRAVELPAYOUTS_MARKER in the environment or .env file."];
-        return new FlightResults(offers, WithMarker(BookingSite + SearchPath(search), marker), warnings);
+        // Only developers can act on this, so it goes to the log and not to the traveller.
+        if (marker.Length == 0)
+        {
+            LogMarkerMissing(logger);
+        }
+
+        return new FlightResults(offers, WithMarker(BookingSite + SearchPath(search), marker));
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Booking links have no partner marker. Set TRAVELPAYOUTS_MARKER in the environment or .env file.")]
+    private static partial void LogMarkerMissing(ILogger logger);
 
     private async Task<IReadOnlyList<FlightOffer>> FindOffersAsync(FlightSearch search, string token, string marker, CancellationToken ct)
     {

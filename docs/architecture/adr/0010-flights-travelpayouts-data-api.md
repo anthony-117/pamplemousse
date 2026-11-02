@@ -12,7 +12,7 @@ ADR 0003 chose the OctoTrip MCP for flights. Live checks return 403 `ua_blocked`
 ## Decision
 Flights come from the **Travelpayouts (Aviasales) Data API**, `prices_for_dates` (v3), behind `IFlightProvider`.
 - Auth: partner token (`X-Access-Token` header). Booking links carry the partner marker.
-- Env variables in `pamplemousse/.env`: `TRAVELPAYOUTS_API_TOKEN`, `TRAVELPAYOUTS_MARKER`. Missing values produce a warning, like the other providers (ADR 0008).
+- Env variables in `pamplemousse/.env`: `TRAVELPAYOUTS_API_TOKEN`, `TRAVELPAYOUTS_MARKER`. A missing token produces a warning, like the other providers (ADR 0008). A missing marker is only logged, because a traveller can do nothing about it.
 - Results are cached in Redis/memory (the data is itself a cache).
 
 ## Consequences
