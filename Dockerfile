@@ -1,4 +1,4 @@
-# Builds the TravelGenie API for Google Cloud Run.
+# Builds the TravelGenie API. Releases run it on an ARM64 Oracle server (ADR 0015).
 # Locally and in CI the SDK is pinned to 10.0.113 by global.json. Microsoft publishes no SDK image for
 # that exact version, so the build stage uses the .NET 10 SDK image and skips global.json; the runtime
 # image is pinned to 10.0.13, the runtime that ships with SDK 10.0.113.
@@ -17,12 +17,13 @@ COPY src/Pamplemousse.ServiceDefaults/Pamplemousse.ServiceDefaults.csproj src/Pa
 RUN dotnet restore src/Pamplemousse.Api/Pamplemousse.Api.csproj
 
 COPY src/ src/
-RUN dotnet publish src/Pamplemousse.Api/Pamplemousse.Api.csproj -c Release -o /app --no-restore
+# The release workflow passes the tag's version, which GET /api/v1/system/ping reports.
+ARG APP_VERSION=0.0.0-dev
+RUN dotnet publish src/Pamplemousse.Api/Pamplemousse.Api.csproj -c Release -o /app --no-restore -p:Version=$APP_VERSION
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0.13 AS runtime
 WORKDIR /app
 COPY --from=build /app .
-# Cloud Run sends traffic to $PORT (8080 by default).
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 USER $APP_UID

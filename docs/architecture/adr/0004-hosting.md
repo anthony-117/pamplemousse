@@ -1,5 +1,5 @@
 # 0004 — Hosting
-Date: 2026-10-26 · Status: Accepted
+Date: 2026-10-26 · Status: Backend and data parts replaced by [ADR 0015](0015-factory-mousse-and-oracle-hosting.md)
 
 ## Decision
 - Backend: Docker container on **Google Cloud Run** (alternative: Azure Container Apps with student credit).
