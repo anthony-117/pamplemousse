@@ -1,7 +1,6 @@
 # Research: Flight prices for a trip
 
-Checked on 2026-11-02. No Travelpayouts token exists yet, and its help pages block automated reading.
-**Confirmed** means seen directly. **From a search snippet** means a search result quoted the official article. **Unconfirmed** must be checked in the first implementation step.
+Checked on 2026-11-02. Travelpayouts' help pages block automated reading, so R-1 to R-6 were written before a token existed; R-7 and R-8 are the results with a real token, and they take precedence.
 
 ## R-1: Which endpoint
 
@@ -51,14 +50,51 @@ Checked on 2026-11-02. No Travelpayouts token exists yet, and its help pages blo
 
 - **Decision**: A 5-second client timeout, and the standard resilience handler ServiceDefaults already adds to every client (Confirmed in `Extensions.cs`) for retries on 429 and 5xx. A timeout or failure becomes a warning through `SectionLoader`. Failures are not cached; empty results are, for 1 hour.
 
-## R-7: To confirm with a token (first implementation step)
+## R-7: Checked with a real token (2026-11-02)
 
-1. Response field names, including `link`, `flight_number`, `transfers`, `return_transfers`, `duration`, `airline`.
-2. Whether a month-level search works for round trips, and the behaviour of `unique` and `sorting`.
-3. Which currencies are supported, and the error for an unsupported one.
-4. How the marker attaches to links, and that the links open the right route and dates.
-5. Whether prices vary by passenger or cabin (the spec assumes one adult, economy).
-6. Whether the fare's data says when the price was seen, to show in the response.
-7. The terms for using and embedding the public lists.
+Token added to the git-ignored `.env`. The marker is still missing.
+
+| Question | Result |
+|---|---|
+| Field names | `airline` (code), `flight_number` (number only), `departure_at`, `return_at`, `transfers`, `return_transfers`, `duration`, `duration_to`, `duration_back`, `price`, `link`, `origin_airport`, `destination_airport`, `gate` |
+| Times | Local time with an offset, e.g. `2026-12-16T06:20:00+01:00` |
+| Month search, round trip | Works: `departure_at=2026-12&return_at=2026-12` |
+| One way | Works: `one_way=true`, no `return_at` needed |
+| Direct only | Works: `direct=true`, all results had 0 transfers |
+| Currency | `usd`, `eur`, `lbp` work. Unknown code returns 400. **No currency returns rubles**, so it must always be sent |
+| Link | Relative path such as `/search/PAR1612ROM20121?t=...`, to be added to `https://www.aviasales.com` |
+| When a price was seen | No field for it; the link has `search_date`, e.g. 30102026, about 3 days old in the sample |
+| Airports | `origin_airport` can be far from the city (Paris fare from BVA, Beauvais), so the response should show it |
+| Speed | 52 calls in a row, none over 5 s, most under 1 s. One earlier call exceeded 25 s: the 5 s timeout is needed |
+
+Still open: how the marker attaches (needs the real marker), that links open the right route in a browser, whether prices vary by passengers, and the terms for embedding the public lists.
+
+## R-8: Fare coverage, a problem for FR-009 and SC-001
+
+Round trips for 10–14 Dec 2026, about 5 weeks ahead, on one day's data:
+
+| Route | Exact dates | Within ±3 days (both ways) | Same month |
+|---|---|---|---|
+| Paris–Rome | 0 | 3 | 15 |
+| Beirut–Paris | 0 | 0 | 0 |
+| London–New York | 0 | 1 | 18 |
+| Beirut–Dubai | 0 | 0 | 5 |
+| Madrid–Rome | 16 | 5 | 11 |
+| Berlin–Istanbul | 0 | 6 | 39 |
+| Rome–Athens | 0 | 0 | 3 |
+| Beirut–Istanbul | 0 | 1 | 11 |
+| Paris–Tokyo | 0 | 3 | 15 |
+| Dubai–London | 57 | 4 | 19 |
+| **Routes with a fare** | **2 of 10** | **7 of 10** (with exact) | **9 of 10** |
+
+Also tried: Beirut–Rome had no round trips in the month; Perugia–Paris had 1; Sion–London had none.
+
+- Exact dates alone would look empty on most routes, so nearby dates matter more than expected.
+- ±3 days reaches 7 of 10, below SC-001's 8 of 10.
+- Same-month fares reach 9 of 10, but the dates may be far from the trip.
+- **Beirut is weak in this source**: Beirut–Paris and Beirut–Rome have no round trips in the whole month.
+- This is one date range on one day, so it is an indication, not a measurement.
+
+**Decision needed from the owner** before the plan is approved.
 
 Sources: [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163-Aviasales-Data-API), [API rate limits](https://support.travelpayouts.com/hc/en-us/articles/4402565416594-API-rate-limits), `api.travelpayouts.com/data/en/{cities,airports,airlines}.json`.
