@@ -44,6 +44,8 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 
 | Variable | Used for | Without it |
 |---|---|---|
+| `TRAVELPAYOUTS_API_TOKEN` | Flights | Flights return a warning |
+| `TRAVELPAYOUTS_MARKER` | Partner ID on booking links | Links work, but earn no commission; a warning says so |
 | `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details | Restaurants return a warning; attractions still come from Wikidata |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
@@ -58,6 +60,7 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/api/v1/destinations/{id}/overview?passport=LB&currency=USD&from=&to=` | Weather, exchange rate, holidays, visa, safety advisory for the dates |
 | GET | `/api/v1/destinations/{id}/places?category=attraction\|restaurant&limit=20` | Top attractions or restaurants |
 | GET | `/api/v1/destinations/{id}/events?from=&to=` | Events during the dates |
+| GET | `/api/v1/destinations/{id}/flights?origin=&from=&to=&tripType=&directOnly=&currency=&limit=` | Recent flight prices, cheapest first ([contract](specs/001-flights/contracts/flights-api.md)) |
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
 | GET | `/api/v1/system/ping` | Name, version, environment, server time |
@@ -79,6 +82,8 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB) | no key |
 | Holidays | [Nager.Date](https://date.nager.at) | no key |
 | Safety | US State Department travel advisories | public domain, no key |
+| Flights | [Travelpayouts](https://www.travelpayouts.com) (Aviasales) Data API: recent prices, not live | free partner token |
+| Flight cities, airlines | Travelpayouts public lists, bundled; rebuild with `python scripts/update-flight-data.py` | terms to confirm |
 | Attractions | Wikidata, ranked by number of Wikipedia editions; details from the Wikipedia summary; OpenTripMap fills in when Wikidata is down or has too few (ADR 0011) | free, no key |
 | Restaurants | OpenTripMap (`foods`: restaurants, cafés, bars; no ratings, prices or hours) | free key |
 | Events | Ticketmaster Discovery | free key |

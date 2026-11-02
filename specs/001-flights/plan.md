@@ -2,7 +2,7 @@
 
 **Branch**: `001-flights` | **Date**: 2026-11-02 | **Spec**: [spec.md](spec.md)
 
-**Status**: Approved by the owner on 2026-11-02
+**Status**: Approved by the owner on 2026-11-02; implemented
 
 ## Summary
 

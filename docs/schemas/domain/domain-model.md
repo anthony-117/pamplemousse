@@ -52,6 +52,7 @@ classDiagram
       DateTimeOffset FetchedAt
       DateTimeOffset ExpiresAt
     }
+    %% As built, see specs/001-flights/data-model.md
     class FlightOffer {
       string Origin
       string Destination

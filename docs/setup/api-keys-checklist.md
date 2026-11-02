@@ -12,7 +12,7 @@ You create these accounts yourself. Store keys in the git-ignored `.env` (local)
 | 6 | OpenTripMap key → `OPENTRIPMAP_API_KEY` | Attractions **and restaurants** | 1 | dev.opentripmap.org | Free | ✅ 27 Oct (in pamplemousse `.env`, verified live) |
 | 7 | Ticketmaster Discovery key → `TICKETMASTER_API_KEY` | Events | 1 | developer.ticketmaster.com | Free (use the Consumer Key) | ✅ 27 Oct (in pamplemousse `.env`, verified live) |
 | 8 | ~~OctoTrip access request~~ (optional since ADR 0010) | Flights, cars | before 2 | xltnapps@gmail.com | Live check returned 403 `ua_blocked` for automated clients. Explain it's a university project and ask for server access | ☐ |
-| 9 | Travelpayouts account → `TRAVELPAYOUTS_API_TOKEN` + `TRAVELPAYOUTS_MARKER` | **Flights** (Data API, ADR 0010) + hotels | 2 | travelpayouts.com → Profile → API token; marker = partner ID | Free. Check whether hotel **data** API or only links/widgets | ☐ |
+| 9 | Travelpayouts account → `TRAVELPAYOUTS_API_TOKEN` + `TRAVELPAYOUTS_MARKER` (done 2 Nov 2026, verified live) | **Flights** (Data API, ADR 0010) + hotels | 2 | travelpayouts.com → Profile → API token; marker = partner ID | Free. Check whether hotel **data** API or only links/widgets | ☐ |
 | 10 | Gemini API key (Google AI Studio) | Chatbot, embeddings | 5 | aistudio.google.com | Free tier may train on prompts | ☐ |
 | 11 | Neon or Supabase | Cloud Postgres + pgvector | 0 | neon.tech / supabase.com | Free tier | ☐ |
 | 12 | Upstash | Cloud Redis | 2 | upstash.com | Free tier | ☐ |

@@ -33,7 +33,7 @@ Checked on 2026-11-02. Travelpayouts' help pages block automated reading, so R-1
 
 - **Decision**: Embed flight cities (about 83 KB compressed) and airline names (about 10 KB) in Infrastructure, like the existing reference data, with `scripts/update-flight-data.py` to refresh them.
 - **Rationale**: Works offline, is fast, and tests need no internet.
-- **Open**: The licence for these lists is not confirmed. Check when the account exists. If restricted, download at startup or use another open list.
+- **Open**: No published terms were found for these lists, either allowing or restricting them (checked 2026-11-02, public search only). To be asked of Travelpayouts' support. If restricted, download at startup or use another open list.
 
 ## R-4: Nearby dates (±3 days)
 
@@ -71,6 +71,8 @@ A round-trip fare's dates are checked on both legs.
 **Booking link, checked in a browser**: adding `&marker=` to the fare's link opened Paris–Rome, 16–20 Dec, 1 passenger, economy. The site removes the marker from the address and keeps it in a cookie. One link was checked; whether a booking is credited to the account can only be seen in the Travelpayouts dashboard after a real sale. The page's live price had not loaded when checked, so SC-007 is still to be measured.
 
 **Passengers**: that link opens as 1 passenger, economy, which supports the spec's assumption for this fare.
+
+**Airline field**: in 34 of 98 sampled fares, `airline` differs from the carrier code in the fare's own link, so the airline and flight number shown may not be the actual carrier. See the sprint review.
 
 Still open: the terms for embedding the public lists.
 

@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Approved by the owner on 2026-11-02
+**Status**: Approved by the owner on 2026-11-02; implemented, live checks in docs/project/sprints/sprint-02.md
 
 **Input**: User description: "TG-06: As Fares, I want to see flights for my dates."
 
