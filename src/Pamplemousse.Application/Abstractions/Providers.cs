@@ -1,5 +1,6 @@
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
+using Pamplemousse.Domain.Flights;
 using Pamplemousse.Domain.Places;
 using Pamplemousse.Domain.TravelEvents;
 
@@ -53,6 +54,24 @@ public interface IPlaceProvider
 
     Task<Place?> GetAsync(string providerId, CancellationToken ct);
 }
+
+/// <summary>Recent flight prices for a search, cheapest first.</summary>
+public interface IFlightProvider
+{
+    Task<FlightResults> SearchAsync(FlightSearch search, CancellationToken ct);
+}
+
+/// <summary>The fares found, a link to search the booking site for the same trip, and anything the traveller should know.</summary>
+public sealed record FlightResults(IReadOnlyList<FlightOffer> Offers, string SearchUrl, IReadOnlyList<string> Warnings);
+
+/// <summary>Maps a place to the nearest city with a real airport.</summary>
+public interface IFlightCities
+{
+    /// <summary>The nearest flight city within range; null when there is none.</summary>
+    CityMatch? FindNearest(GeoPoint location);
+}
+
+public sealed record CityMatch(FlightCity City, double DistanceKm);
 
 public interface IEventProvider
 {

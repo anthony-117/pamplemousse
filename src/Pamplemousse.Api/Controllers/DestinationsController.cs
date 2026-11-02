@@ -9,6 +9,7 @@ using Pamplemousse.Application.Destinations.Queries.GetOverview;
 using Pamplemousse.Application.Destinations.Queries.ListEvents;
 using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
+using Pamplemousse.Application.Flights.Queries.SearchFlights;
 
 namespace Pamplemousse.Api.Controllers;
 
@@ -77,5 +78,19 @@ public sealed class DestinationsController : ControllerBase
     {
         var events = await handler.HandleAsync(new ListEventsQuery(id, request.From, request.To, request.Limit), ct);
         return Ok(events.ToViewModel());
+    }
+
+    [HttpGet("{id}/flights")]
+    [EndpointName("SearchFlights")]
+    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first (Travelpayouts).")]
+    public async Task<ActionResult<FlightSearchViewModel>> GetFlightsAsync(
+        string id,
+        [FromQuery] SearchFlightsRequest request,
+        [FromServices] IQueryHandler<SearchFlightsQuery, SearchFlightsResponse> handler,
+        CancellationToken ct)
+    {
+        var flights = await handler.HandleAsync(
+            new SearchFlightsQuery(id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit), ct);
+        return Ok(flights.ToViewModel());
     }
 }

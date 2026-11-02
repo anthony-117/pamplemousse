@@ -8,6 +8,7 @@ using Pamplemousse.Application.Destinations.Queries.ListCountries;
 using Pamplemousse.Application.Destinations.Queries.ListEvents;
 using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
+using Pamplemousse.Application.Flights.Queries.SearchFlights;
 
 namespace Pamplemousse.Application;
 
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetPlaceQuery, PlaceDetailsResponse>, GetPlaceHandler>();
         services.AddScoped<IQueryHandler<ListEventsQuery, EventsResponse>, ListEventsHandler>();
         services.AddScoped<IQueryHandler<ListCountriesQuery, IReadOnlyList<CountryOption>>, ListCountriesHandler>();
+        services.AddScoped<IQueryHandler<SearchFlightsQuery, SearchFlightsResponse>, SearchFlightsHandler>();
         return services;
     }
 }

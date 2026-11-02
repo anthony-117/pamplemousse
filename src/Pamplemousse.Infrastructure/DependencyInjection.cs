@@ -18,6 +18,8 @@ public static class DependencyInjection
 
         services.Configure(configureKeys);
         services.AddSingleton<IReferenceData, ReferenceDataStore>();
+        services.AddSingleton<FlightCityStore>();
+        services.AddSingleton<IFlightCities>(sp => sp.GetRequiredService<FlightCityStore>());
 
         // Redis when Aspire (or the host) provides a "cache" connection string, in-memory otherwise.
         if (!string.IsNullOrEmpty(builder.Configuration.GetConnectionString("cache")))
@@ -35,6 +37,8 @@ public static class DependencyInjection
         services.AddHttpClient<IHolidayProvider, NagerHolidayProvider>();
         services.AddHttpClient<IAdvisoryProvider, StateDeptAdvisoryProvider>();
         services.AddHttpClient<IEventProvider, TicketmasterEventProvider>();
+        // A slow answer becomes a warning instead of holding up the page.
+        services.AddHttpClient<IFlightProvider, TravelpayoutsFlightProvider>(c => c.Timeout = TimeSpan.FromSeconds(5));
         services.AddHttpClient<OpenTripMapAttractionProvider>();
         services.AddHttpClient<OpenTripMapRestaurantProvider>();
         services.AddHttpClient<WikidataAttractionProvider>(c =>
