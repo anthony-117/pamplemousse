@@ -51,7 +51,7 @@ Checked on 2026-11-02. Travelpayouts' help pages block automated reading, so R-1
 
 ## R-7: Checked with a real token (2026-11-02)
 
-Token added to the git-ignored `.env`. The marker is still missing.
+Token and marker added to the git-ignored `.env`.
 
 | Question | Result |
 |---|---|
@@ -66,7 +66,13 @@ Token added to the git-ignored `.env`. The marker is still missing.
 | Airports | `origin_airport` can be far from the city (Paris fare from BVA, Beauvais), so the response should show it |
 | Speed | 52 calls in a row, none over 5 s, most under 1 s. One earlier call exceeded 25 s: the 5 s timeout is needed |
 
-A round-trip fare's dates are checked on both legs. Still open: how the marker attaches (needs the real marker), that links open the right route in a browser, whether prices vary by passengers, and the terms for embedding the public lists.
+A round-trip fare's dates are checked on both legs.
+
+**Booking link, checked in a browser**: adding `&marker=` to the fare's link opened Paris–Rome, 16–20 Dec, 1 passenger, economy. The site removes the marker from the address and keeps it in a cookie. One link was checked; whether a booking is credited to the account can only be seen in the Travelpayouts dashboard after a real sale. The page's live price had not loaded when checked, so SC-007 is still to be measured.
+
+**Passengers**: that link opens as 1 passenger, economy, which supports the spec's assumption for this fare.
+
+Still open: the terms for embedding the public lists.
 
 ## R-8: Fare coverage, a problem for FR-009 and SC-001
 

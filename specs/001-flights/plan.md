@@ -30,9 +30,9 @@ cheapest first, falling back to labelled nearby dates and then same-month dates 
 
 **Scale/Scope**: One endpoint, one provider, about 3,600 flight cities, about 1,200 airlines
 
-**Checked with a real token**: field names, currencies, month search, one way and direct only ([research.md](research.md), R-7).
+**Checked with a real token and marker**: field names, currencies, month search, one way, direct only, and one marked booking link ([research.md](research.md), R-7).
 
-**Still open**: how the marker attaches to links, that links open the right route in a browser, whether fares differ by passengers, and the terms for embedding the public lists.
+**Still open**: the terms for embedding the public lists.
 
 ## Constitution Check
 
@@ -98,7 +98,7 @@ tests/
 
 ## Delivery order
 
-1. **Confirm the open points** above, once the marker is in `.env`, and correct this plan if anything differs.
+1. **Check the terms** for the public lists, and correct this plan if they restrict embedding.
 2. **Domain and flight cities** (no external calls).
 3. **Story 1:** provider, handler, endpoint, including the three date levels and failure paths.
 4. **Story 2:** booking links and partner marker.
