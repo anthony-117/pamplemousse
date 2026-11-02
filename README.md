@@ -90,6 +90,9 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 
 Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzip, embedded in the assembly).
 
+## Releases
+Pushing a tag such as `v1.2.0` runs the tests and publishes an ARM64 image to GitHub's container registry. That doesn't make it live: [`factory_mousse`](https://github.com/anthony-117/factor_mousse) decides which version runs.
+
 ## Git hooks (run once per clone)
 ```bash
 sh scripts/install-hooks.sh

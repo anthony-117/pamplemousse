@@ -1,0 +1,58 @@
+name: Release
+
+# Pushing a tag such as v1.2.0 publishes that version. factory_mousse decides when it goes live.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Test
+        run: dotnet test Pamplemousse.slnx -c Release
+
+  publish:
+    needs: test
+    # The production server is ARM64, so the image is built natively on an ARM64 runner.
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # .NET rejects a version with the tag's leading v.
+      - name: Read the version from the tag
+        id: version
+        run: echo "number=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          build-args: APP_VERSION=${{ steps.version.outputs.number }}
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes \
+            --notes "Image: \`ghcr.io/$GITHUB_REPOSITORY@$DIGEST\`"
