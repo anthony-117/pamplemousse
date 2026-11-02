@@ -23,20 +23,22 @@ Same-city check: two different TravelGenie cities can map to one flight code (By
 |---|---|---|
 | Id | string | `tp:` + a stable hash of the fields below, as in the `{source}:{id}` convention |
 | Airline | string | Name; the code if the name is unknown |
-| FlightNumber | string? | When known |
+| FlightNumber | string? | Airline code + number, e.g. `FR166`, when known |
+| OriginAirport | string | e.g. `BVA`: it may be far from the city |
+| DestinationAirport | string | e.g. `FCO` |
 | DepartureAt | DateTimeOffset | |
 | ReturnAt | DateTimeOffset? | Null for one way |
 | Stops | int | Outbound stops |
 | ReturnStops | int? | Null for one way |
-| DurationMinutes | int? | When known |
+| DurationMinutes | int? | When known; a round trip's total |
 | Price | `Money` | Existing value object; MUST be above zero, otherwise the fare is left out |
 | BookingUrl | string | Carries the marker when configured |
-| MatchesRequestedDates | bool | False for nearby-date fares |
+| DateMatch | enum `Exact`, `Nearby`, `SameMonth` | How close to the requested dates |
 | Source | string | `Travelpayouts` |
 
 Identity for duplicates: airline + flight number + departure + return.
 
-Order: exact-date fares first, then nearby-date fares, each cheapest first.
+Order: cheapest first. A response holds one `DateMatch` level only: the first of exact, nearby, same month that has fares.
 
 ## FlightCity
 
@@ -61,7 +63,7 @@ public interface IFlightCities
 }
 ```
 
-`FlightResults` holds the fares plus, when the partner marker is missing, the warning for Story 2.
+`FlightResults` holds the fares plus, when the partner marker is missing, the warning for Story 2. The provider works out the date level, because the search strategy depends on the source.
 
 ## State
 

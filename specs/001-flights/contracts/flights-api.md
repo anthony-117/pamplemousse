@@ -35,6 +35,8 @@ Also returned when the source is down or not configured: then `items` is empty a
       "id": "tp:3f9a1c",
       "airline": "ITA Airways",
       "flightNumber": "AZ319",
+      "originAirport": "ORY",
+      "destinationAirport": "FCO",
       "departureAt": "2027-04-10T09:25:00+02:00",
       "returnAt": "2027-04-14T18:10:00+02:00",
       "stops": 0,
@@ -42,7 +44,7 @@ Also returned when the source is down or not configured: then `items` is empty a
       "durationMinutes": 130,
       "price": { "amount": 142.00, "currency": "USD" },
       "bookingUrl": "https://www.aviasales.com/...&marker=12345",
-      "matchesRequestedDates": true,
+      "dateMatch": "exact",
       "source": "Travelpayouts"
     }
   ],
@@ -54,13 +56,13 @@ Also returned when the source is down or not configured: then `items` is empty a
 ```
 
 Rules:
-- `items` is ordered exact-date fares first, then nearby dates, each cheapest first.
-- `matchesRequestedDates` is `false` on fares from up to 3 days before or after the request.
-- When nothing is found within 3 days, `items` is empty, and `message` and `searchUrl` are set.
+- `items` is ordered cheapest first and holds one level only, the first that has fares: `exact`, then `nearby` (within 3 days), then `sameMonth`. Every item has a `dateMatch`.
+- When a level other than `exact` is used, `message` says so.
+- When no level has fares, `items` is empty, and `message` and `searchUrl` are set.
 - When a city has no airport of its own, its `isNearby` is `true`, and `flightCity` and `distanceKm` say what was used.
 - When a city has no flight city within range, `items` is empty, and `message` says so.
 
-The example's field values and link format are illustrative until confirmed with a token (research R-7).
+The example's values are illustrative. Field meanings come from the real API (research R-7); the marker's place in the link is still to be confirmed.
 
 ## Errors (Problem Details)
 
@@ -69,7 +71,7 @@ The example's field values and link format are illustrative until confirmed with
 | 400 | Missing `origin` | `Origin` |
 | 400 | Origin and destination are the same flight city | `origin` |
 | 400 | Invalid dates | `to` |
-| 400 | Bad `tripType`, `currency` or `limit` value | That field |
+| 400 | Bad `tripType`, `currency` or `limit` value, or a currency the source does not know | That field |
 | 404 | Unknown `{id}` or `origin` | |
 
 ## Warnings

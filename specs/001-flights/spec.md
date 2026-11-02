@@ -15,6 +15,7 @@
 - Q: Where does the departure city come from? → A: The traveller chooses it, required on every request.
 - Q: Which trip types? → A: Round trip by default, one way as an option.
 - Q: What if no fare exists for the exact dates? → A: Show the nearest dates within ±3 days, clearly labelled as different dates.
+- Q: Real data shows exact and ±3-day fares reach only about 7 of 10 routes. What then? → A: If nothing is found within ±3 days, show fares from the same month, clearly labelled.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -38,9 +39,10 @@ the list comes back ordered by price with every field present. Works without any
 4. **Given** no currency is chosen, **When** Fares asks for flights, **Then** prices are shown in the default currency (USD), as elsewhere in the app.
 5. **Given** the same request is repeated soon after, **When** Fares asks again, **Then** they get the same results without a new call to the external source.
 6. **Given** one way is requested, **When** Fares asks for flights, **Then** the flights have no return and their prices cover one direction.
-7. **Given** no fare exists for the exact dates but one exists 2 days later, **When** Fares asks for flights, **Then** that fare is shown with its actual dates and labelled as different from the request.
-8. **Given** no fare exists within 3 days of the dates, **When** Fares asks for flights, **Then** the list is empty, with a message and a link to search the booking site.
-9. **Given** no departure city, **When** Fares asks for flights, **Then** the request is rejected, naming the missing field.
+7. **Given** no fare exists for the exact dates but one exists 2 days later, **When** Fares asks for flights, **Then** that fare is shown with its actual dates and labelled as a nearby date.
+8. **Given** no fare exists within 3 days but one exists later in the same month, **When** Fares asks for flights, **Then** that fare is shown with its actual dates and labelled as another date in the month.
+9. **Given** no fare exists in the same month, **When** Fares asks for flights, **Then** the list is empty, with a message and a link to search the booking site.
+10. **Given** no departure city, **When** Fares asks for flights, **Then** the request is rejected, naming the missing field.
 
 ---
 
@@ -89,7 +91,7 @@ Fares does not want connections, so asks only for direct flights.
 - **A price the source reports as zero or negative, or a flight with no price**: left out of the list.
 - **The same flight reported twice**: shown once.
 - **Dates far in the future**: treated like any other date; few or no prices are expected.
-- **Nearby dates that fall in the past**: never shown.
+- **Nearby or same-month dates that fall in the past**: never shown.
 - **A one-way request with a return date**: the return date is ignored.
 - **Unexpected or broken answer from the source**: same as source down.
 
@@ -101,11 +103,11 @@ Fares does not want connections, so asks only for direct flights.
 - **FR-002**: The traveller MUST choose the departure city on every flight request; a request without one MUST be rejected as bad input. System MUST NOT guess it. Clients MAY remember the last choice.
 - **FR-003**: Trips MUST be round trip by default, and users MUST be able to ask for one way instead. A one-way flight has no return time, and its price covers one direction only.
 - **FR-004**: System MUST return flights ordered by price, cheapest first, up to a maximum of 50, defaulting to 20.
-- **FR-005**: Each flight MUST include: airline, departure time, return time when it has one, stops, duration when known, price with currency, booking link, and when known, the flight number.
+- **FR-005**: Each flight MUST include: airline, departure and arrival airports, departure time, return time when it has one, stops, duration when known, price with currency, booking link, and when known, the flight number.
 - **FR-006**: System MUST mark every price as a recent price, not a live or guaranteed one.
 - **FR-007**: Booking links MUST lead to the booking site for that flight's route and dates, and carry the partner identifier when configured.
 - **FR-008**: Users MUST be able to ask for direct flights only.
-- **FR-009**: When no fare exists for the exact dates, System MUST return fares from the nearest dates, up to 3 days before or after, each clearly labelled with its actual dates and as not matching the request. Exact-date fares MUST always come first. If nothing is found within 3 days, the response MUST be an empty list with a message saying so and a link to search the booking site, not an error.
+- **FR-009**: System MUST look for fares in this order and return the first level that has any: (1) the exact dates; (2) dates up to 3 days before or after; (3) other dates in the same months as the requested dates. Every fare MUST state which level it came from and show its actual dates. Fares in the past MUST never be shown. If no level has fares, the response MUST be an empty list with a message saying so and a link to search the booking site, not an error.
 - **FR-010**: Users MUST be able to choose the currency; the default MUST be USD.
 - **FR-011**: A failing or unconfigured flight source MUST produce a warning and an empty list, never a failed response.
 - **FR-012**: Results MUST be reused for about an hour for identical requests, to stay within the source's limits.
@@ -116,7 +118,7 @@ Fares does not want connections, so asks only for direct flights.
 
 ### Key Entities
 
-- **Flight offer**: One priced option for a route and dates: airline, flight number, times, stops, duration, price, booking link, source, and whether it matches the exact dates.
+- **Flight offer**: One priced option for a route and dates: airline, flight number, departure and arrival airports, times, stops, duration, price, booking link, source, and how closely it matches the requested dates (exact, nearby, same month).
 - **Flight search**: What was asked: departure city (required), destination, dates, trip type (round trip by default), currency, direct-only.
 - **Airport city**: A city as the flight source knows it, with its code, linked to a TravelGenie destination; it may be a nearby city.
 
@@ -124,8 +126,8 @@ Fares does not want connections, so asks only for direct flights.
 
 ### Measurable Outcomes
 
-- **SC-001**: For at least 8 of 10 popular routes checked by hand (e.g. Paris–Rome, Beirut–Paris, London–New York), a request for dates 1–3 months ahead returns at least one flight, counting nearby dates.
-- **SC-002**: 100% of returned flights have a price, a booking link and the recent-price marking, and 100% of flights from nearby dates are labelled as such.
+- **SC-001**: For at least 8 of 10 popular routes checked by hand (e.g. Paris–Rome, Beirut–Paris, London–New York), a request for dates 1–3 months ahead returns at least one flight, counting nearby and same-month dates.
+- **SC-002**: 100% of returned flights have a price, a booking link and the recent-price marking, and 100% of flights not on the exact dates are labelled as such.
 - **SC-003**: A repeated identical request returns in under 1 second.
 - **SC-004**: A first request returns in under 5 seconds, or returns a warning instead of holding up the page.
 - **SC-005**: With the source down or no token configured, 100% of requests still succeed, with a warning that explains why.

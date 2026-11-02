@@ -37,9 +37,8 @@ Checked on 2026-11-02. Travelpayouts' help pages block automated reading, so R-1
 
 ## R-4: Nearby dates (±3 days)
 
-- **Decision**: Ask for the exact dates first. Only if that returns nothing, ask for the whole month of the departure date (plus the neighbouring month when ±3 days crosses a month boundary), keep fares within 3 days, and drop any that are in the past.
-- **Rationale**: Exact results usually avoid the second call. A snippet shows `departure_at` accepting a month (`2023-07`). Unconfirmed: how a month-level round trip behaves.
-- **Fallback if months do not work**: up to 6 extra per-date calls, cached and well inside the rate limit.
+- **Decision**: Ask for the exact dates first. If that returns nothing, ask for the month of each date (plus the neighbouring month when ±3 days crosses a month boundary). From those results, return fares within 3 days on both legs if any exist, otherwise all same-month fares. Drop anything in the past.
+- **Rationale**: The month call answers both fallback levels at once, so a search makes at most 3 calls. Month search for round trips works (R-7).
 
 ## R-5: Booking links
 
@@ -67,7 +66,7 @@ Token added to the git-ignored `.env`. The marker is still missing.
 | Airports | `origin_airport` can be far from the city (Paris fare from BVA, Beauvais), so the response should show it |
 | Speed | 52 calls in a row, none over 5 s, most under 1 s. One earlier call exceeded 25 s: the 5 s timeout is needed |
 
-Still open: how the marker attaches (needs the real marker), that links open the right route in a browser, whether prices vary by passengers, and the terms for embedding the public lists.
+A round-trip fare's dates are checked on both legs. Still open: how the marker attaches (needs the real marker), that links open the right route in a browser, whether prices vary by passengers, and the terms for embedding the public lists.
 
 ## R-8: Fare coverage, a problem for FR-009 and SC-001
 
@@ -95,6 +94,6 @@ Also tried: Beirut–Rome had no round trips in the month; Perugia–Paris had 1
 - **Beirut is weak in this source**: Beirut–Paris and Beirut–Rome have no round trips in the whole month.
 - This is one date range on one day, so it is an indication, not a measurement.
 
-**Decision needed from the owner** before the plan is approved.
+**Owner's decision (2026-11-02)**: add same-month fares after ±3 days, clearly labelled, and keep Travelpayouts as the only source for now. See R-4.
 
 Sources: [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163-Aviasales-Data-API), [API rate limits](https://support.travelpayouts.com/hc/en-us/articles/4402565416594-API-rate-limits), `api.travelpayouts.com/data/en/{cities,airports,airlines}.json`.

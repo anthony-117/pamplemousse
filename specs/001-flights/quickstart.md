@@ -25,7 +25,7 @@ Use these 10 routes, with dates 1–3 months ahead: Paris–Rome, Beirut–Paris
 | Criterion | Check | Pass when |
 |---|---|---|
 | SC-001 | Request each route | At least 8 of 10 return a flight |
-| SC-002 | Inspect the results | All have price, link and note; nearby dates are labelled |
+| SC-002 | Inspect the results | All have price, link and note; every fare has a `dateMatch` |
 | SC-003 | Repeat a request, timing it | Under 1 second |
 | SC-004 | Time first requests | Under 5 seconds, or a warning |
 | SC-005 | Remove the token and restart | Still 200, with a warning naming the variable |
