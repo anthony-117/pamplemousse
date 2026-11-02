@@ -20,6 +20,8 @@ builder.AddInfrastructure(keys =>
 {
     keys.OpenTripMapApiKey = Env.OpenTripMapApiKey;
     keys.TicketmasterApiKey = Env.TicketmasterApiKey;
+    keys.TravelpayoutsApiToken = Env.TravelpayoutsApiToken;
+    keys.TravelpayoutsMarker = Env.TravelpayoutsMarker;
 });
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)

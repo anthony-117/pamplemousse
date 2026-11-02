@@ -21,6 +21,18 @@ public class EnvTests
     }
 
     [Fact]
+    public void Travelpayouts_settings_come_from_their_variables()
+    {
+        Environment.SetEnvironmentVariable("TRAVELPAYOUTS_API_TOKEN", "t");
+        Environment.SetEnvironmentVariable("TRAVELPAYOUTS_MARKER", "m");
+
+        Assert.Equal(("t", "m"), (Env.TravelpayoutsApiToken, Env.TravelpayoutsMarker));
+
+        Environment.SetEnvironmentVariable("TRAVELPAYOUTS_API_TOKEN", null);
+        Environment.SetEnvironmentVariable("TRAVELPAYOUTS_MARKER", null);
+    }
+
+    [Fact]
     public void LoadFile_reads_values_without_overriding_existing_variables()
     {
         var path = Path.GetTempFileName();

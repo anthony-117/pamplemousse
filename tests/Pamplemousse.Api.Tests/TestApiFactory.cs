@@ -20,6 +20,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 {
     public FakeExchangeRates Exchange { get; } = new();
 
+    public FakeFlights Flights { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
@@ -33,6 +35,7 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IExchangeRateProvider>(Exchange);
             services.AddSingleton<IHolidayProvider, FakeHolidays>();
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
+            services.AddSingleton<IFlightProvider>(Flights);
             services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
     }
