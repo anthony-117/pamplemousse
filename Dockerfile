@@ -10,6 +10,7 @@ WORKDIR /src
 # without it the analyzers in the image would flag things the local build accepts.
 COPY .editorconfig Directory.Build.props Directory.Packages.props ./
 COPY src/Pamplemousse.Api/Pamplemousse.Api.csproj src/Pamplemousse.Api/
+COPY src/Pamplemousse.Application/Pamplemousse.Application.csproj src/Pamplemousse.Application/
 COPY src/Pamplemousse.Domain/Pamplemousse.Domain.csproj src/Pamplemousse.Domain/
 COPY src/Pamplemousse.Infrastructure/Pamplemousse.Infrastructure.csproj src/Pamplemousse.Infrastructure/
 COPY src/Pamplemousse.ServiceDefaults/Pamplemousse.ServiceDefaults.csproj src/Pamplemousse.ServiceDefaults/

@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Pamplemousse.Application\Pamplemousse.Application.csproj" />
     <ProjectReference Include="..\Pamplemousse.Domain\Pamplemousse.Domain.csproj" />
     <ProjectReference Include="..\Pamplemousse.Infrastructure\Pamplemousse.Infrastructure.csproj" />
     <ProjectReference Include="..\Pamplemousse.ServiceDefaults\Pamplemousse.ServiceDefaults.csproj" />

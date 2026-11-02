@@ -1,6 +1,6 @@
 using Pamplemousse.Domain.Common;
 
-namespace Pamplemousse.Domain.Events;
+namespace Pamplemousse.Domain.TravelEvents;
 
 public sealed record TravelEvent(
     string Id,

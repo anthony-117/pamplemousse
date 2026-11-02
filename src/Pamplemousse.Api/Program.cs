@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Pamplemousse.Api;
-using Pamplemousse.Api.Features.Destinations;
-using Pamplemousse.Api.Features.System;
+using Pamplemousse.Api.Middleware;
+using Pamplemousse.Application;
 using Pamplemousse.Infrastructure;
 
 Env.LoadDotEnv();
@@ -12,16 +12,15 @@ builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
-// Bad query strings return 400 Problem Details in every environment (Development would otherwise throw → 500).
-builder.Services.Configure<RouteHandlerOptions>(o => o.ThrowOnBadRequest = false);
-builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
 
+builder.Services.AddApplication();
 builder.AddInfrastructure(keys =>
 {
     keys.OpenTripMapApiKey = Env.OpenTripMapApiKey;
     keys.TicketmasterApiKey = Env.TicketmasterApiKey;
 });
-builder.Services.AddScoped<DestinationService>();
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)
 // in every environment, plus any localhost port during development (flutter run -d chrome).
@@ -40,6 +39,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(AppCorsPolicy);
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -48,9 +48,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapDefaultEndpoints();
 
-var api = app.MapGroup("/api/v1");
-api.MapSystemEndpoints();
-api.MapDestinationEndpoints();
+app.MapControllers();
 
 app.Run();
 
