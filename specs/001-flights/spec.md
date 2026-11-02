@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Approved by the owner on 2026-11-02
 
 **Input**: User description: "TG-06: As Fares, I want to see flights for my dates."
 
