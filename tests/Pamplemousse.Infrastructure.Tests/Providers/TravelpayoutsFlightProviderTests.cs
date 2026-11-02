@@ -127,6 +127,46 @@ public class TravelpayoutsFlightProviderTests
     }
 
     [Fact]
+    public async Task With_nothing_in_the_month_a_round_trip_accepts_any_return_date()
+    {
+        var http = new StubHttp()
+            .On("departure_at=2026-12&one_way=false", Answer(
+                Fare("2026-12-09", "2027-01-08", price: 214),   // returns next month
+                Fare("2027-01-09", "2027-01-20", price: 90),    // departs in another month
+                Fare("2026-11-01", "2027-01-20", price: 80)))   // in the past
+            .On("prices_for_dates", Empty);
+
+        var offer = Assert.Single((await Provider(http).SearchAsync(Search(), CancellationToken.None)).Offers);
+
+        Assert.Equal(DateMatch.AnyReturn, offer.DateMatch);
+        Assert.Equal(214m, offer.Price.Amount);
+        Assert.DoesNotContain("return_at", http.Requests[^1].Query, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Any_return_date_is_only_asked_for_when_earlier_levels_are_empty()
+    {
+        var http = new StubHttp()
+            .On("departure_at=2026-12-16", Empty)
+            .On("departure_at=2026-12", Answer(Fare("2026-12-05", "2026-12-09", price: 90)));
+
+        await Provider(http).SearchAsync(Search(), CancellationToken.None);
+
+        Assert.All(http.Requests, r => Assert.Contains("return_at", r.Query, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task One_way_has_no_any_return_level()
+    {
+        var http = new StubHttp().On("prices_for_dates", Empty);
+
+        var results = await Provider(http).SearchAsync(Search(type: TripType.OneWay), CancellationToken.None);
+
+        Assert.Empty(results.Offers);
+        Assert.Equal(2, http.Requests.Count); // exact, then the month
+    }
+
+    [Fact]
     public async Task With_nothing_at_all_the_list_is_empty_and_a_search_link_is_given()
     {
         var http = new StubHttp().On("prices_for_dates", Empty);

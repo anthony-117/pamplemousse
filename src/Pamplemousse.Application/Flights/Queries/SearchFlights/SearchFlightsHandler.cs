@@ -109,6 +109,7 @@ public sealed class SearchFlightsHandler(
         {
             DateMatch.Nearby => "No prices on your exact dates. Showing dates within 3 days.",
             DateMatch.SameMonth => "No prices within 3 days of your dates. Showing other dates in the same month.",
+            DateMatch.AnyReturn => "No prices returning in the month you asked for. Showing trips that depart that month and return on other dates.",
             _ => null,
         };
 }

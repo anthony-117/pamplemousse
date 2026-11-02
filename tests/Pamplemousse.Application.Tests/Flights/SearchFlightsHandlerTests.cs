@@ -71,6 +71,7 @@ public class SearchFlightsHandlerTests
     [Theory]
     [InlineData(DateMatch.Nearby, "within 3 days")]
     [InlineData(DateMatch.SameMonth, "same month")]
+    [InlineData(DateMatch.AnyReturn, "return on other dates")]
     public async Task Fares_on_other_dates_are_explained(DateMatch match, string text)
     {
         var result = await Handler(new FakeProvider { Offers = [Offer(90, match)] }, TwoCities()).HandleAsync(Query(), CancellationToken.None);

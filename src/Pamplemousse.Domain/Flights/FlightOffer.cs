@@ -18,6 +18,9 @@ public enum DateMatch
 
     /// <summary>Another date in the same months as the requested dates.</summary>
     SameMonth,
+
+    /// <summary>A round trip departing in the requested month and returning on any date, so its length can differ a lot.</summary>
+    AnyReturn,
 }
 
 /// <summary>One priced option for a route and dates. The price is recent, not live or guaranteed.</summary>

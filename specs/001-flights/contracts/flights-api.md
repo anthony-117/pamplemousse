@@ -56,7 +56,7 @@ Also returned when the source is down or not configured: then `items` is empty a
 ```
 
 Rules:
-- `items` is ordered cheapest first and holds one level only, the first that has fares: `exact`, then `nearby` (within 3 days), then `sameMonth`. Every item has a `dateMatch`.
+- `items` is ordered cheapest first and holds one level only, the first that has fares: `exact`, then `nearby` (within 3 days), then `sameMonth`, then, for round trips, `anyReturn` (departs in the requested month, returns on any date). Every item has a `dateMatch`.
 - When a level other than `exact` is used, `message` says so.
 - When no level has fares, `items` is empty, and `message` and `searchUrl` are set.
 - When a city has no airport of its own, its `isNearby` is `true`, and `flightCity` and `distanceKm` say what was used.

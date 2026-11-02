@@ -7,7 +7,7 @@ Hotels and cars are still to do. This records the Flights feature (TG-06), built
 
 | Story | Result |
 |---|---|
-| Recent prices for a route and dates | ✅ Cheapest first; exact dates, then within 3 days, then the same month, each labelled |
+| Recent prices for a route and dates | ✅ Cheapest first; exact dates, then within 3 days, then the same month, then for round trips any return date, each labelled |
 | Open a flight to book it | ✅ Links open the right route and dates and carry the partner marker. Commission only shows in the Travelpayouts dashboard after a real sale |
 | Direct flights only | ✅ |
 
@@ -41,10 +41,11 @@ The site figure is the first price on its results page for the same dates, not n
 
 One date range, on one day: an indication, not a measurement.
 
-Tests: 217 passing, no analyzer findings.
+Tests: 221 passing, no analyzer findings.
 
 ## Known limits
-- **Beirut:** Beirut–Paris has no fares in the source for the month, though the booking site shows live prices from $248. The owner decides whether a second source is needed.
+- **Beirut:** coverage stays thin, even with the any-return level added on 2 Nov. Beirut to 11 cities (Rome, London, Madrid, Athens, Berlin, Geneva, Amsterdam, Cairo, Doha, Larnaca, Paris), for one January and one February trip: 3 of 22 searches returned a fare, and only for Paris and Madrid. The booking site showed live prices from $248 for Beirut–Paris when the source had none. Only a live second source would fix this; the owner decides.
+- **The source is built from searches:** after the booking links were opened for the checks above, Beirut–Paris returned a fare at the price seen on the site, and other prices moved to match. Opening a route probably adds it to the data, so a re-run of the checks reads 10 of 10 routes, and that figure is not independent. The 9 of 10 above was measured first.
 - **Airline names:** in 34 of 98 sampled fares, the source's `airline` field differs from the carrier in the fare's own booking link (Rome–Athens: `GQ` in the field, `FR` in the link), so the airline and flight number shown may be wrong. The link's format is undocumented, so we do not parse it.
 - **Few options:** several routes return only 1–3 fares, because fares must be within 3 days on both legs.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.

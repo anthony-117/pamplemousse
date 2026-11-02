@@ -33,12 +33,12 @@ Same-city check: two different TravelGenie cities can map to one flight code (By
 | DurationMinutes | int? | When known; a round trip's total |
 | Price | `Money` | Existing value object; MUST be above zero, otherwise the fare is left out |
 | BookingUrl | string | Carries the marker when configured |
-| DateMatch | enum `Exact`, `Nearby`, `SameMonth` | How close to the requested dates |
+| DateMatch | enum `Exact`, `Nearby`, `SameMonth`, `AnyReturn` | How close to the requested dates |
 | Source | string | `Travelpayouts` |
 
 Identity for duplicates: airline + flight number + departure + return.
 
-Order: cheapest first. A response holds one `DateMatch` level only: the first of exact, nearby, same month that has fares.
+Order: cheapest first. A response holds one `DateMatch` level only: the first of exact, nearby, same month, any return that has fares. `AnyReturn` applies to round trips only: the departure is in the requested month, and the return can be any date.
 
 ## FlightCity
 

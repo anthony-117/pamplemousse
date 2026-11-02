@@ -8,7 +8,7 @@
 
 Add `GET /api/v1/destinations/{id}/flights`. The traveller gives a departure city and dates; the API maps both
 cities to flight codes, reads recent prices from the Travelpayouts Data API (ADR 0010), and returns them
-cheapest first, falling back to labelled nearby dates and then same-month dates when the exact dates have no fare, with booking links.
+cheapest first, falling back to labelled nearby dates, same-month dates, and then any return date when the exact dates have no fare, with booking links.
 
 ## Technical Context
 
@@ -88,7 +88,7 @@ scripts/update-flight-data.py                    # rebuilds the two embedded fil
 
 tests/
 ├── Pamplemousse.Domain.Tests/Flights/           # search rules
-├── Pamplemousse.Application.Tests/Flights/      # handler: the three date levels, labels, empty result, warnings
+├── Pamplemousse.Application.Tests/Flights/      # handler: the four date levels, labels, empty result, warnings
 ├── Pamplemousse.Infrastructure.Tests/Providers/ # canned JSON: fields, bad prices, duplicates, missing token, 429, broken JSON, cache
 ├── Pamplemousse.Infrastructure.Tests/ReferenceData/ # Rome→ROM, Byblos→BEY, nothing within range
 └── Pamplemousse.Api.Tests/Destinations/         # endpoint: 200, 400s naming the field, 404, warnings
@@ -100,7 +100,7 @@ tests/
 
 1. **Check the terms** for the public lists, and correct this plan if they restrict embedding.
 2. **Domain and flight cities** (no external calls).
-3. **Story 1:** provider, handler, endpoint, including the three date levels and failure paths.
+3. **Story 1:** provider, handler, endpoint, including the four date levels and failure paths.
 4. **Story 2:** booking links and partner marker.
 5. **Story 3:** direct-only filter.
 6. **Checks and docs:** the live checks in `quickstart.md`, README endpoints and data sources, keys checklist, sprint review.
@@ -111,7 +111,7 @@ Each step ends with all tests passing. The whole feature is one pull request unl
 
 | Risk | Effect | Response |
 |---|---|---|
-| Cached fares are sparse: exact dates reached 2 of 10 routes in testing, and Beirut–Paris and Beirut–Rome had no round trips in the month | Empty or far-off results, especially from Beirut | Three date levels and a search link. SC-001 measures it. If Beirut routes matter, the owner decides on a second source after the live checks |
+| Cached fares are sparse: exact dates reached 2 of 10 routes in testing, and Beirut–Paris and Beirut–Rome had no round trips in the month | Empty or far-off results, especially from Beirut | Four date levels and a search link. SC-001 measures it. If Beirut routes matter, the owner decides on a second source after the live checks |
 | Nearest airport is small (Assisi → Perugia) | Few or no fares although Rome has many | Accept for now; the response says which airport was used. Revisit if live checks show it matters |
 | The source changes its fields | Rework in one class | Everything source-specific stays in `TravelpayoutsFlightProvider` |
 | Use of Travelpayouts lists is restricted | Replace the embedded files | Check terms with the account (R-3) |

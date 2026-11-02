@@ -118,7 +118,7 @@ description: "Task list for flight prices for a trip"
 **Purpose**: Measure the result and update the documentation
 
 - [x] T031 Run all live checks in specs/001-flights/quickstart.md (SC-001 to SC-007) and write the results in docs/project/sprints/sprint-02.md, including what did not pass
-- [ ] T032 Bring the results for Beirut routes to the owner, to decide whether a second source is needed
+- [x] T032 Bring the results for Beirut routes to the owner, to decide whether a second source is needed
 - [x] T033 [P] Update README.md (endpoint, environment variables, data source and its attribution, updating the flight data)
 - [x] T034 [P] Tick the Travelpayouts row in docs/setup/api-keys-checklist.md, and update docs/schemas/domain/domain-model.md for `FlightOffer`
 - [x] T035 Run .githooks/pre-push (formatting, analyzers, every test, Docker image), and confirm Pamplemousse.Architecture.Tests still passes

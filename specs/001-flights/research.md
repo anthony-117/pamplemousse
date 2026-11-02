@@ -38,7 +38,7 @@ Checked on 2026-11-02. Travelpayouts' help pages block automated reading, so R-1
 ## R-4: Nearby dates (±3 days)
 
 - **Decision**: Ask for the exact dates first. If that returns nothing, ask for the month of each date (plus the neighbouring month when ±3 days crosses a month boundary). From those results, return fares within 3 days on both legs if any exist, otherwise all same-month fares. Drop anything in the past.
-- **Rationale**: The month call answers both fallback levels at once, so a search makes at most 3 calls. Month search for round trips works (R-7).
+- **Rationale**: The month call answers both fallback levels at once, so a search usually makes 2 or 3 calls. When those find nothing on a round trip, one more call asks for the departure month with no return date. Month search for round trips works (R-7).
 
 ## R-5: Booking links
 
@@ -103,5 +103,7 @@ Also tried: Beirut–Rome had no round trips in the month; Perugia–Paris had 1
 - This is one date range on one day, so it is an indication, not a measurement.
 
 **Owner's decision (2026-11-02)**: add same-month fares after ±3 days, clearly labelled, and keep Travelpayouts as the only source for now. See R-4.
+
+**Owner's decision on Beirut (2026-11-02)**: add a last level for round trips, departure in the same month with any return date. Beirut–Paris had 1 fare with the return in December and 5 with any return. `market` made no difference. A live second source stays a later decision. **Result**: this helps only a little. Beirut to 11 cities for a January and a February trip: 3 of 22 searches returned a fare (see the sprint review).
 
 Sources: [Aviasales Data API](https://support.travelpayouts.com/hc/en-us/articles/203956163-Aviasales-Data-API), [API rate limits](https://support.travelpayouts.com/hc/en-us/articles/4402565416594-API-rate-limits), `api.travelpayouts.com/data/en/{cities,airports,airlines}.json`.

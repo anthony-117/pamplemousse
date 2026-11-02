@@ -15,7 +15,8 @@ namespace Pamplemousse.Infrastructure.Providers;
 
 /// <summary>
 /// Travelpayouts (Aviasales) Data API, ADR 0010: the cheapest fares other travellers found recently, not live prices.
-/// Exact dates are often missing from this data, so a search falls back to nearby dates, then to other dates in the same months.
+/// Exact dates are often missing from this data, so a search falls back to nearby dates, then to other dates in the same months,
+/// then, for round trips, to any return date.
 /// </summary>
 public sealed class TravelpayoutsFlightProvider(
     HttpClient http,
@@ -77,7 +78,16 @@ public sealed class TravelpayoutsFlightProvider(
         }
 
         var sameMonth = upcoming.Where(f => IsSameMonth(Departs(f), from) && (oneWay || IsSameMonth(Returns(f), to))).ToList();
-        return ToOffers(sameMonth, search, DateMatch.SameMonth, marker);
+        if (sameMonth.Count > 0 || oneWay)
+        {
+            return ToOffers(sameMonth, search, DateMatch.SameMonth, marker);
+        }
+
+        // Thin routes such as Beirut–Paris mostly have fares that return in another month.
+        var anyReturn = (await FetchAsync(search, Format(from, "yyyy-MM"), returnDate: null, token, ct))
+            .Where(f => f.ReturnAt is not null && Departs(f) >= today && IsSameMonth(Departs(f), from))
+            .ToList();
+        return ToOffers(anyReturn, search, DateMatch.AnyReturn, marker);
     }
 
     private async Task<List<Fare>> FetchAsync(FlightSearch search, string departure, string? returnDate, string token, CancellationToken ct)
