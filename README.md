@@ -7,7 +7,7 @@
 - External sources: Travelpayouts (flights + hotels, Sprint 2), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
 - Clients: `chocomousse` (Flutter, sibling repo) via OpenAPI; Telegram bot via webhook
 
-Project docs (studies, architecture, ADRs, schemas) live in the OneDrive FYP folder: `Final Year Project - USEK - 2026-2027`.
+Documentation about the code is in [`docs/`](docs/README.md), and the project's rules are in the [constitution](.specify/memory/constitution.md). Non-code material (Figma, presentations, studies) is in the OneDrive FYP folder.
 
 ## Structure
 ```
