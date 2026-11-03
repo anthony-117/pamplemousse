@@ -2,7 +2,7 @@
 
 **Branch**: `002-hotels` | **Date**: 2026-11-03 | **Spec**: [spec.md](spec.md)
 
-**Status**: Draft, waiting for the owner's approval
+**Status**: Approved by the owner on 2026-11-03
 
 ## Summary
 
