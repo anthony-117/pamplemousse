@@ -38,6 +38,7 @@ are returned with their time, or `items` is empty, and `warnings` says why.
   "sort": "recommended",
   "page": 1,
   "totalItems": 20,
+  "totalPages": 12,
   "pricesFetchedAt": "2027-03-01T09:12:00Z",
   "isSavedPrice": false,
   "items": [
@@ -68,6 +69,7 @@ Rules:
 - `price.total` includes taxes and fees; it is for a room that fits `adults`.
 - Empty fields (`stars`, `reviewScore`, `stayType`, `freeCancellation`) are `null`, never `0` or `false`.
 - `filtersCheckedOn`: when `stayType` or `freeCancellation` is used, the number of hotels whose details were available to check.
+- `totalItems` counts the matching hotels on the pages fetched so far; `totalPages` is how many pages the source has for the search (at least `page`). Offer a next page while `page` < `totalPages`.
 - `isSavedPrice` is `true` when the prices come from a saved snapshot instead of a fresh call.
 - When nothing matches, `items` is empty, and `message` and `searchUrl` (the Booking.com search for the city and dates) are set.
 - When the source's city differs from the destination, `sourceName` says which was used.

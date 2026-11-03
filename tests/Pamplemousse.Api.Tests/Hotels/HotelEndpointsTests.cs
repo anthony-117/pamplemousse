@@ -43,6 +43,7 @@ public sealed class HotelEndpointsTests : IClassFixture<TestApiFactory>
         Assert.Equal((900m, 225m, "USD"), (first.Price.Total, first.Price.PerNight, first.Price.Currency));
         Assert.Equal(("https://cf.bstatic.com/square500/1.jpg", 4, 8.8, "Booking.com"), (first.PhotoUrl, first.Stars, first.ReviewScore, first.Source));
         Assert.Null(result.Items[1].Stars);
+        Assert.Equal((1, 2, 1), (result.Page, result.TotalItems, result.TotalPages));
         Assert.NotNull(result.PricesFetchedAt);
         Assert.Empty(result.Warnings);
     }

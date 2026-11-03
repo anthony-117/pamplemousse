@@ -111,13 +111,14 @@ public class SearchHotelsHandlerTests
     {
         _provider.Hotels.AddRange(Enumerable.Range(1, 25).Select(r => HotelFakes.Found(r, 100 + r)));
         _provider.TotalPages = 2;
-        await Handler().HandleAsync(Query(), CancellationToken.None);
+        var first = await Handler().HandleAsync(Query(), CancellationToken.None);
 
         var second = await Handler().HandleAsync(Query(page: 2), CancellationToken.None);
 
         Assert.Equal([1, 2], _provider.SearchedPages);
         Assert.Equal(Enumerable.Range(21, 5).Select(r => $"bk:{r}"), second.Items.Select(i => i.Hotel.Id), StringComparer.Ordinal);
-        Assert.Equal((25, 2), (second.TotalItems, second.Page));
+        Assert.Equal((20, 2), (first.TotalItems, first.TotalPages));
+        Assert.Equal((25, 2, 2), (second.TotalItems, second.Page, second.TotalPages));
         Assert.Equal(2, _store.Snapshots.Count);
     }
 

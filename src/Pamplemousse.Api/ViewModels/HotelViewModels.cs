@@ -10,6 +10,7 @@ public sealed record HotelSearchViewModel(
     HotelSort Sort,
     int Page,
     int TotalItems,
+    int TotalPages,
     DateTimeOffset? PricesFetchedAt,
     bool IsSavedPrice,
     IReadOnlyList<HotelViewModel> Items,

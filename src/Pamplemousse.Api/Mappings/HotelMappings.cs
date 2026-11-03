@@ -15,6 +15,7 @@ internal static class HotelMappings
         r.Sort,
         r.Page,
         r.TotalItems,
+        r.TotalPages,
         r.PricesFetchedAt,
         r.IsSavedPrice,
         [.. r.Items.Select(o => o.ToViewModel(r.Source))],
