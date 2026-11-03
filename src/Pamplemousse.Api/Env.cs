@@ -13,6 +13,11 @@ public static class Env
     public static string TicketmasterApiKey => Get("TICKETMASTER_API_KEY", "");
     public static string TravelpayoutsApiToken => Get("TRAVELPAYOUTS_API_TOKEN", ""); // flights
     public static string TravelpayoutsMarker => Get("TRAVELPAYOUTS_MARKER", ""); // partner ID added to booking links
+    public static string RapidApiKey => Get("RAPIDAPI_KEY", ""); // hotels (Booking COM API, ADR 0016)
+
+    // Firestore (ADR 0017). Without a project, hotel data is kept in memory only. The credentials file stays outside the repo.
+    public static string FirebaseProjectId => Get("FIREBASE_PROJECT_ID", "");
+    public static string GoogleApplicationCredentials => Get("GOOGLE_APPLICATION_CREDENTIALS", "");
 
     // Comma-separated browser origins allowed to call the API (e.g. the Firebase Hosting domain).
     public static IReadOnlyList<string> CorsAllowedOrigins =>

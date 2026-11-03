@@ -16,8 +16,6 @@ public sealed class FlightCityStore : IFlightCities
     /// <summary>A realistic trip to an airport; further than this, a city counts as having none.</summary>
     private const double MaxDistanceKm = 150;
 
-    private const double EarthRadiusKm = 6371;
-
     private readonly Lazy<List<FlightCity>> _cities = new(LoadCities);
     private readonly Lazy<Dictionary<string, string>> _airlines = new(LoadAirlines);
 
@@ -27,7 +25,7 @@ public sealed class FlightCityStore : IFlightCities
         var best = double.MaxValue;
         foreach (var city in _cities.Value)
         {
-            var distance = DistanceKm(location, city.Location);
+            var distance = location.DistanceKmTo(city.Location);
             if (distance < best)
             {
                 (nearest, best) = (city, distance);
@@ -39,16 +37,6 @@ public sealed class FlightCityStore : IFlightCities
 
     /// <summary>The airline's name; its code when the name is unknown.</summary>
     public string AirlineName(string code) => _airlines.Value.GetValueOrDefault(code, code);
-
-    private static double DistanceKm(GeoPoint a, GeoPoint b)
-    {
-        var dLat = Radians(b.Lat - a.Lat);
-        var dLng = Radians(b.Lng - a.Lng);
-        var h = (Math.Sin(dLat / 2) * Math.Sin(dLat / 2)) + (Math.Cos(Radians(a.Lat)) * Math.Cos(Radians(b.Lat)) * Math.Sin(dLng / 2) * Math.Sin(dLng / 2));
-        return 2 * EarthRadiusKm * Math.Asin(Math.Sqrt(h));
-    }
-
-    private static double Radians(double degrees) => degrees * Math.PI / 180;
 
     private static List<FlightCity> LoadCities()
     {

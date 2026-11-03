@@ -13,11 +13,46 @@
 
 ## Firestore collections
 
+Agreed with the owner on 2026-11-03.
+
 | Collection / document ID | Contents | Written |
 |---|---|---|
 | `cities/{destinationId}` | `CityMapping` | Once per city |
-| `hotels/{bookingHotelId}` | `Hotel` (typed fields + `rawSearch`, `rawDetails` as JSON strings) | Each search updates search fields; details on opening, at most weekly |
-| `priceSnapshots/{auto ID}` | `PriceSnapshot`, with `searchKey` and `fetchedAt` | Each call to the source |
+| `hotels/{bk_<sourceId>}` | `Hotel`: typed fields below, plus `rawSearch` and `rawDetails` as JSON text | Each search updates search fields; details on opening, at most weekly |
+| `hotels/{id}/prices/{fetchedAt}` | One price for that hotel: search key, dates, adults, currency, total, per night, rank | Each call to the source, one per listed hotel |
+| `priceSnapshots/{auto ID}` | `PriceSnapshot`: the whole search's prices | Each call to the source |
+
+### `cities/{destinationId}`
+
+| Field | Example |
+|---|---|
+| `locationId` | `"eyJjaXR5X25hbWUi..."` |
+| `ufi` | `-126693` (the source's city number, shared by hotels, cars and attractions) |
+| `sourceName` | `"Rome"` |
+| `matchedAt` | timestamp |
+
+### `hotels/{bk_<sourceId>}`
+
+| Group | Fields |
+|---|---|
+| Identity | `sourceId`, `name`, `stayType`, `address`, `district`, `cityUfi`, `countryCode`, `timezone` |
+| Position | `location` (geopoint), `distanceToCentreKm`, `isCityCentre` |
+| Ratings | `stars`, `starsEstimated`, `reviewScore`, `reviewCount`, `reviewWord`, `breakfastScore`, `wifiScore` |
+| Photos | `photoUrls` |
+| Stay rules | `checkInFrom`, `checkInUntil`, `checkOutFrom`, `checkOutUntil`, `breakfastIncluded`, `familyFriendly`, `freeCancellation` |
+| Facilities | `facilities`, `languages` |
+| Booking | `bookingPageUrl` |
+| Last known price | `lastPrice`: total, per night, currency, check-in, check-out, adults, `fetchedAt` |
+| Raw data | `rawSearch`, `rawDetails` (the source's full answers as JSON text) |
+| Times | `searchUpdatedAt`, `detailsUpdatedAt` |
+
+Rooms and their prices depend on the dates, so they stay inside `rawDetails`; only `freeCancellation` and
+`breakfastIncluded` are copied out. Search results live in Redis only; there is no `searches` collection.
+
+### `priceSnapshots/{auto ID}`
+
+`searchKey`, `destinationId`, `checkIn`, `checkOut`, `adults`, `currency`, `fetchedAt`, `page`, and `prices`:
+a list of `hotelId`, `total`, `perNight`, `rank`, `freeCancellation`.
 
 The newest snapshot for a search is found with `where searchKey == X order by fetchedAt desc limit 1`,
 which needs one composite index (`searchKey` ascending, `fetchedAt` descending), listed in `firestore.indexes.json`.

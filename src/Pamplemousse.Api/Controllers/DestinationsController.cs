@@ -10,6 +10,7 @@ using Pamplemousse.Application.Destinations.Queries.ListEvents;
 using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
 using Pamplemousse.Application.Flights.Queries.SearchFlights;
+using Pamplemousse.Application.Hotels.Queries.SearchHotels;
 
 namespace Pamplemousse.Api.Controllers;
 
@@ -92,5 +93,22 @@ public sealed class DestinationsController : ControllerBase
         var flights = await handler.HandleAsync(
             new SearchFlightsQuery(id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit), ct);
         return Ok(flights.ToViewModel());
+    }
+
+    [HttpGet("{id}/hotels")]
+    [EndpointName("SearchHotels")]
+    [EndpointSummary("Hotels for the dates with the total price for the stay (Booking.com), sorted and filtered on stored data.")]
+    public async Task<ActionResult<HotelSearchViewModel>> GetHotelsAsync(
+        string id,
+        [FromQuery] SearchHotelsRequest request,
+        [FromServices] IQueryHandler<SearchHotelsQuery, SearchHotelsResponse> handler,
+        CancellationToken ct)
+    {
+        var hotels = await handler.HandleAsync(
+            new SearchHotelsQuery(
+                id, request.From, request.To, request.Adults, request.Currency, request.Sort, request.MinStars, request.MinReview,
+                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page),
+            ct);
+        return Ok(hotels.ToViewModel());
     }
 }

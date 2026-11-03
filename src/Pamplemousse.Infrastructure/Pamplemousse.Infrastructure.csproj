@@ -8,6 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
+    <PackageReference Include="Google.Cloud.Firestore" />
   </ItemGroup>
 
   <!-- Reference data (GeoNames cities, mledoze countries, Passport Index visas) ships inside the assembly. -->
