@@ -1,5 +1,5 @@
 # 0014 — No live flight source for the MVP
-Date: 2026-11-02 · Status: Accepted
+Date: 2026-11-02 · Status: Superseded by 0016
 
 ## Context
 The Travelpayouts Data API (ADR 0010) holds cached fares built from what people search. Thin routes are often empty: Beirut to 11 cities, for one January and one February trip, returned a fare on 3 of 22 searches, even with the any-return level.

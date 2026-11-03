@@ -22,9 +22,11 @@ Date: YYYY-MM-DD · Status: Proposed | Accepted | Superseded by NNNN
 | [0007](0007-telegram-bot.md) | Telegram bot with full feature parity, webhook into the .NET backend | Accepted |
 | [0008](0008-sprint-1-config-and-reference-data.md) | Env file per repo; bundled reference data; missing keys = warnings | Accepted |
 | [0009](0009-linting-and-testing.md) | Clippy-style linting and tests for every feature; every test must pass in CI | Accepted |
-| [0010](0010-flights-travelpayouts-data-api.md) | Flights from the Travelpayouts (Aviasales) Data API, cached prices + partner links | Accepted |
+| [0010](0010-flights-travelpayouts-data-api.md) | Flights from the Travelpayouts (Aviasales) Data API, cached prices + partner links | Accepted (main source superseded by 0016; Travelpayouts stays as fallback) |
 | [0011](0011-attractions-from-wikidata.md) | Attractions from Wikidata ranked by fame, OpenTripMap as fallback; one event per show | Accepted |
 | [0012](0012-clean-architecture-layers.md) | Four layers (Api, Application, Domain, Infrastructure), one service, plain handlers | Accepted |
 | [0013](0013-code-docs-in-the-repo.md) | Code documentation lives in the repo; OneDrive keeps non-code material | Accepted |
-| [0014](0014-no-live-flight-source-for-mvp.md) | No live flight source for the MVP; thin routes link to live prices | Accepted |
-| [0015](0015-factory-mousse-and-oracle-hosting.md) | Backend on an Oracle Always Free server, released from `factory_mousse` | Accepted |
+| [0014](0014-no-live-flight-source-for-mvp.md) | No live flight source for the MVP; thin routes link to live prices | Superseded by 0016 |
+| [0015](0015-factory-mousse-and-oracle-hosting.md) | Backend on an Oracle Always Free server, released from `factory_mousse` | Accepted (database settled by 0017) |
+| [0016](0016-booking-com-api-main-travel-source.md) | Booking COM API (RapidAPI) as the main source for hotels, flights, cars and attractions | Accepted |
+| [0017](0017-redis-and-firestore-data-flow.md) | Searches go Redis → Firestore → API; set cache times; price history in Firestore | Accepted |
