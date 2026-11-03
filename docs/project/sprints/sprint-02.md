@@ -1,6 +1,33 @@
 # Sprint 2 review — in progress
 
-Hotels and cars are still to do. This records the Flights feature (TG-06), built with Spec Kit: [spec and plan](../../../specs/001-flights/).
+Cars are still to do. This records the Flights feature (TG-06) and the hotels backend (TG-07), built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/).
+
+## Delivered: Hotels (backend)
+`GET /api/v1/destinations/{id}/hotels` and `GET /api/v1/hotels/{hotelId}`, from the Booking COM API (ADR 0016). Searches are kept in Redis for 12 hours and every hotel, city and price is stored in Firestore (ADR 0017). The hotels screen in `chocomousse` needs its own spec and an approved Figma design.
+
+| Story | Result |
+|---|---|
+| Hotels and prices for my dates | ✅ Total with taxes and fees, per night, for a room that fits the adults; saved prices with their time when the source fails |
+| Open a hotel to book it | ✅ Details fetched once a week; the Booking.com link has the dates, adults and one room |
+| Sort and filter | ✅ By price, review score, stars, distance; filters on stars, score, price, type of stay, free cancellation. No new call to the source |
+
+### Live checks, 3 Nov 2026
+Real key and real Firestore, local API without Aspire. 10 requests of the monthly 530.
+
+| Check | Result |
+|---|---|
+| Rome, 15–19 Jan 2027 | 20 hotels, all with name, photo, position and total. 15 s on the first search ever: the one-time city lookup took 5.7 s at the source, and Firestore connected for the first time (now done at startup) |
+| Same search, sorted by price, review ≥ 8 | 17 hotels, cheapest first, none under 8.4; 0.6 s, no new call |
+| Paris and Beirut, first search ever | 20 hotels each; 7–7.5 s, including the one-time city lookup |
+| Rome, other dates (city already known) | 3.3–4.4 s, after the Firestore writes were combined |
+| Open a hotel twice | Details and link right; second open 0.3–0.6 s with no new call. Found and fixed: an empty translated name from the source replaced the hotel's name |
+
+Still to check by hand (quickstart): prices against Booking.com for 10 hotels (SC-003), 10 links (SC-007), Zahlé marked "near the city", and whether a link built from the hotel ID alone opens the right hotel (R-5).
+
+### Known limits
+- **Free plan:** one page of 20 hotels per search, and details only when a hotel is opened. So the free-cancellation and type-of-stay filters only cover hotels already opened; the response says how many.
+- **First search for a city** is slower (about 7 s), once per city.
+- **The last price of a hotel** is kept for the last dates searched; opening it for other dates shows no price until it is searched for those dates.
 
 ## Delivered: Flights
 `GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
@@ -51,4 +78,4 @@ Tests: 221 passing, no analyzer findings.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Hotels (TG-07), cars as links (TG-08), Redis in Aspire.
+- Hotels screen (spec and Figma in `chocomousse`), cars (TG-08) from the same API.
