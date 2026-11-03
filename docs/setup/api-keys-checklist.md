@@ -17,7 +17,7 @@ You create these accounts yourself. Store keys in the git-ignored `.env` (local)
 | 10 | Gemini API key (Google AI Studio) | Chatbot, embeddings | 5 | aistudio.google.com | Free tier may train on prompts | ☐ |
 | 11 | Neon or Supabase | Cloud Postgres + pgvector | 0 | neon.tech / supabase.com | Free tier | ☐ |
 | 12 | ~~Upstash~~ | ~~Cloud Redis~~ | — | — | Not needed: Redis runs next to the backend (ADR 0017) | — |
-| 13 | Firebase project + Firestore + service account → `GOOGLE_APPLICATION_CREDENTIALS`, `FIREBASE_PROJECT_ID` | Hosting, database (ADR 0017), maybe Auth | 2 | console.firebase.google.com | Project `travelgenie-1fdd1`. Firestore free plan, no card | ☐ |
+| 13 | Firebase project + Firestore + service account → `GOOGLE_APPLICATION_CREDENTIALS`, `FIREBASE_PROJECT_ID` | Hosting, database (ADR 0017), maybe Auth | 2 | console.firebase.google.com | Project `travelgenie-1fdd1`. Firestore free plan, no card. Service account key kept outside the repo | ✅ 3 Nov (in pamplemousse `.env`) |
 | 14 | REST Countries v5 | *Not needed* | — | — | Replaced by static mledoze dataset | — |
 
 No key needed: Open-Meteo, Frankfurter, Nager.Date, Passport Index (CSV), US State Dept advisories, UK FCDO, GeoNames dumps, mledoze/countries.

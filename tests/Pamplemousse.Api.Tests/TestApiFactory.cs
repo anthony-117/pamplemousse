@@ -9,6 +9,7 @@ using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Infrastructure;
 using Pamplemousse.Infrastructure.Providers;
+using Pamplemousse.Infrastructure.Storage;
 
 namespace Pamplemousse.Api.Tests;
 
@@ -21,6 +22,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
     public FakeExchangeRates Exchange { get; } = new();
 
     public FakeFlights Flights { get; } = new();
+
+    public FakeHotels Hotels { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -36,6 +39,18 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IHolidayProvider, FakeHolidays>();
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
             services.AddSingleton<IFlightProvider>(Flights);
+            services.AddSingleton<IHotelProvider>(Hotels);
+
+            // The developer's .env may name a real Firebase project; tests keep hotel data in memory instead.
+            services.AddSingleton<InMemoryHotelData>();
+            foreach (var warmUp in services.Where(d => d.ImplementationType == typeof(FirestoreWarmUp)).ToList())
+            {
+                services.Remove(warmUp);
+            }
+
+            services.AddSingleton<ICityMappingStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
+            services.AddSingleton<IHotelStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
+            services.AddSingleton<IPriceHistory>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
     }

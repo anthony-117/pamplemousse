@@ -16,6 +16,11 @@
     <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.6.4" />
   </ItemGroup>
 
+  <!-- Firestore: hotels, cities and price history (ADR 0017). -->
+  <ItemGroup Label="Storage">
+    <PackageVersion Include="Google.Cloud.Firestore" Version="4.5.0" />
+  </ItemGroup>
+
   <!-- Matches runtime 10.0.13, which ships with the pinned SDK 10.0.113. -->
   <ItemGroup Label="ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
@@ -37,6 +42,8 @@
   <ItemGroup Label="Testing">
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Testcontainers.Firestore" Version="4.16.0" />
+    <PackageVersion Include="Testcontainers.Redis" Version="4.16.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>

@@ -17,6 +17,9 @@ public sealed class StubHttp : HttpMessageHandler
 
     public IList<Uri> Requests { get; } = new List<Uri>();
 
+    /// <summary>Every request header, as "name: value".</summary>
+    public IList<string> Headers { get; } = new List<string>();
+
     public StubHttp On(string urlContains, string body, HttpStatusCode status = HttpStatusCode.OK)
     {
         _rules.Add((urlContains, status, body));
@@ -29,6 +32,11 @@ public sealed class StubHttp : HttpMessageHandler
     {
         var url = request.RequestUri!;
         Requests.Add(url);
+        foreach (var header in request.Headers)
+        {
+            Headers.Add($"{header.Key}: {string.Join(',', header.Value)}");
+        }
+
         var rule = _rules.FirstOrDefault(r => url.ToString().Contains(r.UrlContains, StringComparison.Ordinal));
         var response = rule.UrlContains is null
             ? new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent($"No stub for {url}") }

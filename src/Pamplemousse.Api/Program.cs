@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Pamplemousse.Api;
 using Pamplemousse.Api.Middleware;
 using Pamplemousse.Application;
+using Pamplemousse.Application.Hotels;
 using Pamplemousse.Infrastructure;
 
 Env.LoadDotEnv();
@@ -15,6 +16,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
 
+// How much hotel data each search gathers (FR-008c); the defaults suit the free request plan.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Hotels").Get<HotelSettings>() ?? new HotelSettings());
 builder.Services.AddApplication();
 builder.AddInfrastructure(keys =>
 {
@@ -22,6 +25,9 @@ builder.AddInfrastructure(keys =>
     keys.TicketmasterApiKey = Env.TicketmasterApiKey;
     keys.TravelpayoutsApiToken = Env.TravelpayoutsApiToken;
     keys.TravelpayoutsMarker = Env.TravelpayoutsMarker;
+    keys.RapidApiKey = Env.RapidApiKey;
+    keys.FirebaseProjectId = Env.FirebaseProjectId;
+    keys.GoogleCredentialsPath = Env.GoogleApplicationCredentials;
 });
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)

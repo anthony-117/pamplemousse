@@ -1,6 +1,7 @@
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Domain.Flights;
+using Pamplemousse.Domain.Hotels;
 using Pamplemousse.Domain.Places;
 using Pamplemousse.Domain.TravelEvents;
 
@@ -72,6 +73,34 @@ public interface IFlightCities
 }
 
 public sealed record CityMatch(FlightCity City, double DistanceKm);
+
+/// <summary>Live hotel prices (ADR 0016). Everything source-specific stays behind this interface (FR-015).</summary>
+public interface IHotelProvider
+{
+    /// <summary>Shown as each hotel's source, e.g. "Booking.com".</summary>
+    string Source { get; }
+
+    /// <summary>The source's ids for the city nearest to <paramref name="destination"/>; null when the source knows none nearby.</summary>
+    Task<CityMapping?> FindCityAsync(Destination destination, CancellationToken ct);
+
+    /// <summary>One page of hotels with their prices, in the source's recommended order.</summary>
+    Task<HotelResults> SearchAsync(CityMapping city, HotelSearch search, int page, CancellationToken ct);
+
+    /// <summary>Everything the source says about one hotel for these dates; null when it doesn't know the hotel.</summary>
+    Task<Hotel?> GetDetailsAsync(string hotelId, HotelSearch search, CancellationToken ct);
+
+    /// <summary>The booking site's own search for the city and dates, for when no hotel can be shown.</summary>
+    string SearchUrl(Destination destination, HotelSearch search);
+
+    /// <summary>The hotel's page on the booking site with the dates and travellers filled in.</summary>
+    string BookingUrl(Hotel hotel, HotelSearch search);
+}
+
+/// <summary>A page of hotels. <see cref="TotalPages"/> is how many pages the source has for the search.</summary>
+public sealed record HotelResults(IReadOnlyList<FoundHotel> Hotels, int TotalPages);
+
+/// <summary>A hotel with its search fields and price for the stay; <see cref="Rank"/> counts from 1 across pages.</summary>
+public sealed record FoundHotel(Hotel Hotel, HotelPrice Price, int Rank);
 
 public interface IEventProvider
 {
