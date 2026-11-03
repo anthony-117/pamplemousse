@@ -33,7 +33,7 @@ public sealed class FakeFlights : IFlightProvider
     {
         LastSearch = search;
         return Error is null
-            ? Task.FromResult(new FlightResults(Offers, "https://www.aviasales.com/search/PAR1004ROM14041", []))
+            ? Task.FromResult(new FlightResults(Offers, "https://www.aviasales.com/search/PAR1004ROM14041"))
             : Task.FromException<FlightResults>(Error);
     }
 }

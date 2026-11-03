@@ -80,6 +80,5 @@ The example's values are illustrative. Field meanings come from the real API (re
 |---|---|
 | Token missing | `Travelpayouts is not configured. Set TRAVELPAYOUTS_API_TOKEN in the environment or .env file.` |
 | Source failed or timed out | `Flights is unavailable right now.` |
-| Marker missing | `Booking links have no partner marker. Set TRAVELPAYOUTS_MARKER in the environment or .env file.` |
 
 Existing endpoints do not change.

@@ -24,14 +24,13 @@ public class SearchFlightsHandlerTests
     {
         public IReadOnlyList<FlightOffer> Offers { get; init; } = [];
         public Exception? Error { get; init; }
-        public IReadOnlyList<string> Warnings { get; init; } = [];
         public FlightSearch? Search { get; private set; }
 
         public Task<FlightResults> SearchAsync(FlightSearch search, CancellationToken ct)
         {
             Search = search;
             return Error is null
-                ? Task.FromResult(new FlightResults(Offers, "https://book/search", Warnings))
+                ? Task.FromResult(new FlightResults(Offers, "https://book/search"))
                 : Task.FromException<FlightResults>(Error);
         }
     }
@@ -206,15 +205,5 @@ public class SearchFlightsHandlerTests
         var result = await Handler(new FakeProvider { Error = error }, TwoCities()).HandleAsync(Query(), CancellationToken.None);
 
         Assert.Contains("TRAVELPAYOUTS_API_TOKEN", result.Warnings[0], StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Provider_warnings_are_passed_on()
-    {
-        var provider = new FakeProvider { Offers = [Offer(90)], Warnings = ["no marker"] };
-
-        var result = await Handler(provider, TwoCities()).HandleAsync(Query(), CancellationToken.None);
-
-        Assert.Equal(["no marker"], result.Warnings, StringComparer.Ordinal);
     }
 }

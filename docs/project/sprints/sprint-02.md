@@ -3,7 +3,7 @@
 Hotels and cars are still to do. This records the Flights feature (TG-06), built with Spec Kit: [spec and plan](../../../specs/001-flights/).
 
 ## Delivered: Flights
-`GET /api/v1/destinations/{id}/flights`, backend only. The screen in `chocomousse` needs its own spec and an approved Figma design.
+`GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
 
 | Story | Result |
 |---|---|
@@ -46,10 +46,9 @@ Tests: 221 passing, no analyzer findings.
 ## Known limits
 - **Beirut:** coverage stays thin, even with the any-return level added on 2 Nov. Beirut to 11 cities (Rome, London, Madrid, Athens, Berlin, Geneva, Amsterdam, Cairo, Doha, Larnaca, Paris), for one January and one February trip: 3 of 22 searches returned a fare, and only for Paris and Madrid. The booking site showed live prices from $248 for Beirut–Paris when the source had none. Only a live source would fix this, and the owner decided against one for the MVP ([ADR 0014](../../architecture/adr/0014-no-live-flight-source-for-mvp.md)). Thin routes show a link to live prices.
 - **The source is built from searches:** after the booking links were opened for the checks above, Beirut–Paris returned a fare at the price seen on the site, and other prices moved to match. Opening a route probably adds it to the data, so a re-run of the checks reads 10 of 10 routes, and that figure is not independent. The 9 of 10 above was measured first.
-- **Airline names:** in 34 of 98 sampled fares, the source's `airline` field differs from the carrier in the fare's own booking link (Rome–Athens: `GQ` in the field, `FR` in the link), so the airline and flight number shown may be wrong. The link's format is undocumented, so we do not parse it.
+- **Airline names:** in 34 of 98 sampled fares, the source's `airline` field differs from the carrier in the fare's own booking link (Rome–Athens: `GQ` in the field, `FR` in the link), so the airline and flight number may be wrong. The link's format is undocumented, so we do not parse it. The API still returns these fields, and the app does not show them.
 - **Few options:** several routes return only 1–3 fares, because fares must be within 3 days on both legs.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Decide how to show airlines.
 - Hotels (TG-07), cars as links (TG-08), Redis in Aspire.

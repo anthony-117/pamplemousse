@@ -76,10 +76,6 @@ public sealed class SearchFlightsHandler(
         var search = FlightSearch.Create(originMatch.City.Code, destinationMatch.City.Code, dates, tripType, directOnly, query.Currency);
         var sections = new SectionLoader(logger);
         var results = await sections.LoadAsync("Flights", () => flights.SearchAsync(search, ct));
-        foreach (var warning in results?.Warnings ?? [])
-        {
-            sections.AddWarning(warning);
-        }
 
         IReadOnlyList<FlightOffer> items = [.. (results?.Offers ?? []).Take(Math.Clamp(query.Limit ?? 20, 1, 50))];
         return new SearchFlightsResponse(
