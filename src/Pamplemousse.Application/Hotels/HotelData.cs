@@ -32,13 +32,11 @@ internal sealed partial class HotelData(IHotelStore hotels, IPriceHistory histor
     public async Task<IReadOnlyList<PriceSnapshot>> LatestAsync(string searchKey, CancellationToken ct) =>
         await TryAsync(() => history.GetLatestAsync(searchKey, ct), []) ?? [];
 
-    /// <summary>Stored hotels merged with <paramref name="fresh"/> answers, saved, and returned by id.</summary>
-    public async Task<Dictionary<string, Hotel>> MergeAndSaveAsync(IReadOnlyList<Hotel> fresh, CancellationToken ct)
+    /// <summary>Stored hotels merged with <paramref name="fresh"/> answers (not saved yet), by id.</summary>
+    public async Task<Dictionary<string, Hotel>> MergeAsync(IReadOnlyList<Hotel> fresh, CancellationToken ct)
     {
         var stored = (await HotelsAsync([.. fresh.Select(h => h.Id)], ct)).ToDictionary(h => h.Id, StringComparer.Ordinal);
-        var merged = fresh.Select(h => stored.TryGetValue(h.Id, out var old) ? old.MergeWith(h) : h).ToList();
-        await SaveHotelsAsync(merged, ct);
-        return merged.ToDictionary(h => h.Id, StringComparer.Ordinal);
+        return fresh.Select(h => stored.TryGetValue(h.Id, out var old) ? old.MergeWith(h) : h).ToDictionary(h => h.Id, StringComparer.Ordinal);
     }
 
     private async Task<T?> TryAsync<T>(Func<Task<T>> read, T? fallback)
@@ -69,9 +67,14 @@ internal sealed partial class HotelData(IHotelStore hotels, IPriceHistory histor
     private void Fail(Exception ex)
     {
         LogStorageFailed(logger, ex);
-        if (!_warnings.Contains(Unavailable, StringComparer.Ordinal))
+
+        // Writes can run side by side, so two can fail at once.
+        lock (_warnings)
         {
-            _warnings.Add(Unavailable);
+            if (!_warnings.Contains(Unavailable, StringComparer.Ordinal))
+            {
+                _warnings.Add(Unavailable);
+            }
         }
     }
 

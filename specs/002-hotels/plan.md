@@ -151,6 +151,17 @@ Each step ends with all tests passing. The whole feature is one pull request unl
 | The source is an unofficial API and may change or vanish | Rework in one class, or no hotels | Everything source-specific stays in `BookingComHotelProvider`; raw data is stored, so old snapshots stay readable; `IHotelProvider` keeps the source replaceable (FR-015) |
 | Booking.com's link without the slug may not open the hotel (R-5) | One extra request per opened hotel | Use the details `url`, stored for a week, so each hotel costs the request once |
 
+## Implementation notes (2026-11-03)
+
+Where the code differs from the plan above, and why:
+
+- **No Firestore emulator in the AppHost.** The owner set up a real Firebase project and service account, so local runs use it. Tests use the emulator through Testcontainers instead, and without a project the API keeps hotel data in memory with a warning in the log.
+- **Sorting and filtering live in Domain** (`HotelFilters`), not `Application/Hotels/HotelSorting.cs`: they are pure rules with no dependencies.
+- **`ExtraPagesWhenFiltered` is not built.** Instead, our page N reads the source's page N (both hold 20 hotels), fetched once and kept with the search. On the free plan this covers "next page" without a separate setting.
+- **No composite Firestore index.** The newest snapshot is found by reading a search's few snapshots (one per 12 hours) and sorting them in code, so nothing has to be set up in the Firebase console.
+- **The monthly limit** is `RapidApiMonthlyLimit` with the API keys (default 530), not in the `Hotels` section, because cars and attractions will share it.
+- **Distance** is calculated by `GeoPoint.DistanceKmTo`, now shared with the flight-city lookup.
+
 ## Complexity Tracking
 
 None. No constitution violations.

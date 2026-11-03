@@ -48,7 +48,7 @@ are returned with their time, or `items` is empty, and `warnings` says why.
       "stars": 4,
       "reviewScore": 8.6,
       "reviewCount": 1520,
-      "location": { "latitude": 41.9, "longitude": 12.49 },
+      "location": { "lat": 41.9, "lng": 12.49 },
       "distanceKm": 1.2,
       "nearCity": false,
       "stayType": null,
@@ -100,21 +100,40 @@ GET /api/v1/hotels/{hotelId}?from=&to=&adults=&currency=
 
 ### 200 OK
 
-The search item's fields, plus:
-
 ```json
 {
+  "id": "bk:558347",
+  "name": "Hotel Example Roma",
+  "photoUrls": ["https://cf.bstatic.com/xdata/images/hotel/square500/....jpg"],
+  "stars": 4,
+  "starsEstimated": false,
+  "reviewScore": 8.6,
+  "reviewCount": 1520,
+  "reviewWord": "Excellent",
+  "location": { "lat": 41.9, "lng": 12.49 },
   "address": "Via Example 1, 00184 Rome",
+  "district": "Esquilino",
+  "distanceToCentreKm": 1.2,
   "stayType": "Hotels",
   "freeCancellation": true,
-  "checkInTime": "14:00",
-  "checkOutTime": "11:00",
-  "facilities": ["Free WiFi", "Air conditioning", "Breakfast"],
+  "breakfastIncluded": false,
+  "checkInFrom": "14:00",
+  "checkInUntil": "23:00",
+  "checkOutFrom": "07:00",
+  "checkOutUntil": "11:00",
+  "facilities": ["Free WiFi", "Air conditioning"],
+  "languages": ["en-gb", "it"],
+  "price": { "total": 812.40, "perNight": 203.10, "currency": "USD" },
+  "priceFetchedAt": "2027-03-01T09:12:00Z",
   "bookingUrl": "https://www.booking.com/hotel/it/example.html?checkin=2027-04-10&checkout=2027-04-14&group_adults=2&no_rooms=1&group_children=0&selected_currency=USD",
   "detailsFetchedAt": "2027-03-01T09:15:00Z",
+  "source": "Booking.com",
   "warnings": []
 }
 ```
+
+`price` is the last search price, and only when it was for the same dates, adults and currency; otherwise `null`.
+`freeCancellation` is for a room that fits the adults, on the dates the details were last fetched.
 
 When details can't be fetched (source down, no key, limit), the stored fields are returned, `bookingUrl` falls
 back to the Booking.com search for the city and dates, and `warnings` says why.

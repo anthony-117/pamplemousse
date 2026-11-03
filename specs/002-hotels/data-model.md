@@ -54,8 +54,8 @@ Rooms and their prices depend on the dates, so they stay inside `rawDetails`; on
 `searchKey`, `destinationId`, `checkIn`, `checkOut`, `adults`, `currency`, `fetchedAt`, `page`, and `prices`:
 a list of `hotelId`, `total`, `perNight`, `rank`, `freeCancellation`.
 
-The newest snapshot for a search is found with `where searchKey == X order by fetchedAt desc limit 1`,
-which needs one composite index (`searchKey` ascending, `fetchedAt` descending), listed in `firestore.indexes.json`.
+The newest snapshot of each page is found with `where searchKey == X`, then sorted by `fetchedAt` in code.
+An equality filter alone needs no composite index, and a search has only a few snapshots (one per 12 hours).
 
 ## Redis keys
 
@@ -63,7 +63,7 @@ which needs one composite index (`searchKey` ascending, `fetchedAt` descending),
 |---|---|---|
 | `hotels:{searchKey}` | Hotel IDs in source order with prices and `fetchedAt` | 12 hours |
 | `lock:{searchKey}` | `1` | 30 seconds |
-| `quota:{yyyy-MM}` | Requests made to the Booking COM API this month (shared by all its features) | 35 days |
+| `quota:bookingcom:{yyyy-MM}` | Requests made to the Booking COM API this month (shared by all its features) | 35 days |
 
 ## Settings (`Hotels` section, appsettings)
 
@@ -71,7 +71,7 @@ which needs one composite index (`searchKey` ascending, `fetchedAt` descending),
 |---|---|---|
 | `PagesPerSearch` | 1 | Result pages fetched per new search |
 | `DetailsForEveryHotel` | false | Fetch details for every listed hotel, not only on opening |
-| `ExtraPagesWhenFiltered` | 0 | Extra pages to fetch when filters leave fewer than 20 hotels |
-| `MonthlyRequestLimit` | 530 | Plan limit; new calls stop at 95% |
 | `NearCityRadiusKm` | 10 | Beyond this, a hotel is marked near the city |
 | `ResultsTtlHours` | 12 | Redis lifetime of a search's results (ADR 0017) |
+
+The monthly limit is `RapidApiMonthlyLimit` (default 530, new calls stop at 95%) with the API keys, because every feature using the Booking COM API shares it.

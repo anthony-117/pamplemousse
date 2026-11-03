@@ -219,7 +219,8 @@ public sealed partial class SearchHotelsHandler(
                 found = await WithDetailsAsync(found, run.Search, ct);
             }
 
-            foreach (var (id, hotel) in await run.Store.MergeAndSaveAsync([.. found.Select(f => f.Hotel)], ct))
+            var merged = await run.Store.MergeAsync([.. found.Select(f => f.Hotel)], ct);
+            foreach (var (id, hotel) in merged)
             {
                 run.Hotels[id] = hotel;
             }
@@ -227,7 +228,9 @@ public sealed partial class SearchHotelsHandler(
             var snapshot = new PriceSnapshot(
                 run.Search.Key, destination.Id, run.Search.Dates.From, run.Search.Dates.To, run.Search.Adults, run.Search.Currency, now, page,
                 [.. found.Select(f => new SnapshotPrice(f.Hotel.Id, f.Price.Total, f.Price.PerNight, f.Rank, run.Hotels[f.Hotel.Id].FreeCancellation))]);
-            await run.Store.AddSnapshotAsync(snapshot, ct);
+
+            // Two independent writes, sent together to save a round trip.
+            await Task.WhenAll(run.Store.SaveHotelsAsync([.. merged.Values], ct), run.Store.AddSnapshotAsync(snapshot, ct));
 
             // The same hotel can come back on two pages when the source's order shifts between calls.
             prices.AddRange(snapshot.Prices.Where(p => prices.TrueForAll(x => !string.Equals(x.HotelId, p.HotelId, StringComparison.Ordinal))));

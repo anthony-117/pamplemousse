@@ -12,7 +12,7 @@ namespace Pamplemousse.Infrastructure.Tests.Storage;
 /// </summary>
 public sealed class FirestoreEmulator : IAsyncLifetime
 {
-    private readonly FirestoreContainer _container = new FirestoreBuilder("gcr.io/google.com/cloudsdktool/google-cloud-cli:546.0.0-emulators").Build();
+    private readonly FirestoreContainer _container = new FirestoreBuilder("gcr.io/google.com/cloudsdktool/google-cloud-cli:590.0.0-emulators").Build();
 
     public FirestoreDb Db { get; private set; } = null!;
 

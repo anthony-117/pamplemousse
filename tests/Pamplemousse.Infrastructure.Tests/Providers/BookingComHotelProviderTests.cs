@@ -215,6 +215,16 @@ public class BookingComHotelProviderTests
     }
 
     [Fact]
+    public async Task An_empty_translated_name_falls_back_to_the_name()
+    {
+        var http = new StubHttp().On("/stays/detail", Details.Replace("\"hotel_name_trans\":\"Hôtel Mirific\"", "\"hotel_name_trans\":\"\"", StringComparison.Ordinal));
+
+        var hotel = await Provider(http).GetDetailsAsync("bk:59015", Search, CancellationToken.None);
+
+        Assert.Equal("Mirific", hotel?.Name);
+    }
+
+    [Fact]
     public async Task Free_cancellation_only_counts_rooms_that_fit_the_travellers()
     {
         // The refundable room holds one person; the room for two is not refundable.

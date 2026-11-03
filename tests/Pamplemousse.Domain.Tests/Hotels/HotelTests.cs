@@ -50,6 +50,14 @@ public class HotelTests
     }
 
     [Fact]
+    public void An_empty_name_never_replaces_a_stored_one()
+    {
+        var merged = Stored().MergeWith(new Hotel { Id = "bk:1", Name = " ", Location = new GeoPoint(41.9, 12.5) });
+
+        Assert.Equal("Old name", merged.Name);
+    }
+
+    [Fact]
     public void Details_are_stale_after_a_week_or_when_missing()
     {
         Assert.False(Stored().DetailsAreStale(Now));

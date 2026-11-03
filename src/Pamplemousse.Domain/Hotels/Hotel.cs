@@ -100,7 +100,7 @@ public sealed record Hotel
         return new Hotel
         {
             Id = Id,
-            Name = newer.Name,
+            Name = string.IsNullOrWhiteSpace(newer.Name) ? Name : newer.Name,
             Location = newer.Location,
             StayType = newer.StayType ?? StayType,
             Address = newer.Address ?? Address,

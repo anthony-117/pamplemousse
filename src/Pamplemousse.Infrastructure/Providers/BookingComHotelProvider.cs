@@ -193,7 +193,8 @@ public sealed class BookingComHotelProvider(
         JsonElement? d = data;
         var lat = d.Prop("latitude").Num();
         var lng = d.Prop("longitude").Num();
-        var name = d.Prop("hotel_name_trans").Str() ?? d.Prop("hotel_name").Str();
+        // The translated name is sometimes sent empty.
+        var name = Blank(d.Prop("hotel_name_trans").Str()) ?? Blank(d.Prop("hotel_name").Str());
         if (lat is null || lng is null || name is null)
         {
             return null;

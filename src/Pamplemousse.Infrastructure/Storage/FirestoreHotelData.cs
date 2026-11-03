@@ -65,19 +65,25 @@ public sealed class FirestoreHotelData(FirestoreDb db) : ICityMappingStore, IHot
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var historyId = FirestoreDocuments.HistoryId(snapshot.FetchedAt);
-        foreach (var chunk in snapshot.Prices.Chunk(BatchSize))
+        var chunks = snapshot.Prices.Chunk(BatchSize).ToList();
+
+        // A page has 20 hotels, so the snapshot and every hotel's history go in one commit.
+        for (var i = 0; i < Math.Max(chunks.Count, 1); i++)
         {
             var batch = db.StartBatch();
-            foreach (var price in chunk)
+            foreach (var price in i < chunks.Count ? chunks[i] : [])
             {
                 var history = Hotels.Document(FirestoreDocuments.DocumentId(price.HotelId)).Collection("prices").Document(historyId);
                 batch.Set(history, FirestoreDocuments.FromHistory(snapshot, price));
             }
 
+            if (i == 0)
+            {
+                batch.Create(Snapshots.Document(), FirestoreDocuments.FromSnapshot(snapshot));
+            }
+
             await batch.CommitAsync(ct);
         }
-
-        await Snapshots.AddAsync(FirestoreDocuments.FromSnapshot(snapshot), ct);
     }
 
     public async Task<IReadOnlyList<PriceSnapshot>> GetLatestAsync(string searchKey, CancellationToken ct)

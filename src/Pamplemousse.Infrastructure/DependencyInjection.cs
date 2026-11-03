@@ -86,6 +86,7 @@ public static class DependencyInjection
                 EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction,
             }.Build());
             services.AddSingleton<FirestoreHotelData>();
+            services.AddHostedService<FirestoreWarmUp>();
         }
         else
         {

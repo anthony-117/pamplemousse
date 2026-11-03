@@ -43,6 +43,11 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
             // The developer's .env may name a real Firebase project; tests keep hotel data in memory instead.
             services.AddSingleton<InMemoryHotelData>();
+            foreach (var warmUp in services.Where(d => d.ImplementationType == typeof(FirestoreWarmUp)).ToList())
+            {
+                services.Remove(warmUp);
+            }
+
             services.AddSingleton<ICityMappingStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IHotelStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IPriceHistory>(sp => sp.GetRequiredService<InMemoryHotelData>());
