@@ -3,7 +3,7 @@
 Cars are still to do. This records the Flights feature (TG-06) and the hotels backend (TG-07), built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/).
 
 ## Delivered: Hotels (backend)
-`GET /api/v1/destinations/{id}/hotels` and `GET /api/v1/hotels/{hotelId}`, from the Booking COM API (ADR 0016). Searches are kept in Redis for 12 hours and every hotel, city and price is stored in Firestore (ADR 0017). The hotels screen in `chocomousse` needs its own spec and an approved Figma design.
+`GET /api/v1/destinations/{id}/hotels` and `GET /api/v1/hotels/{hotelId}`, from the Booking COM API (ADR 0016). Searches are kept in Redis for 12 hours and every hotel, city and price is stored in Firestore (ADR 0017). The screens are in `chocomousse`, with their own spec (`specs/002-hotel-screen`) and an approved Figma design: a list with sort, filters and pages (a side panel on wide screens), hotel details, and an adults setting shared with flights. `totalPages` was added to the search response for the pager.
 
 | Story | Result |
 |---|---|
@@ -21,6 +21,11 @@ Real key and real Firestore, local API without Aspire. 10 requests of the monthl
 | Paris and Beirut, first search ever | 20 hotels each; 7–7.5 s, including the one-time city lookup |
 | Rome, other dates (city already known) | 3.3–4.4 s, after the Firestore writes were combined |
 | Open a hotel twice | Details and link right; second open 0.3–0.6 s with no new call. Found and fixed: an empty translated name from the source replaced the hotel's name |
+
+### Live check of the screens, 4 Nov 2026
+Rome, 4–8 Dec 2026, on phone and wide layouts against the local API: photos, stars, scores and totals show; hotels without reviews hide the score; details open with photos, facilities and the Booking.com link; sorted by lowest price with 4+ stars returns the cheapest first and "Page 1 of 503".
+
+Found: the list's distance is from TravelGenie's point for the city and the details' distance is from Booking.com's city centre, so one hotel can read 3.6 km in the list and 2.1 km in its details.
 
 Still to check by hand (quickstart): prices against Booking.com for 10 hotels (SC-003), 10 links (SC-007), Zahlé marked "near the city", and whether a link built from the hotel ID alone opens the right hotel (R-5).
 
@@ -78,4 +83,4 @@ Tests: 221 passing, no analyzer findings.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Hotels screen (spec and Figma in `chocomousse`), cars (TG-08) from the same API.
+- Cars (TG-08) from the same API.
