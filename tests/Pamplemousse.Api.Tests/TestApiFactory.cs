@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
@@ -25,6 +26,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
     public FakeHotels Hotels { get; } = new();
 
+    public FakeChat Chat { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
@@ -40,6 +43,9 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
             services.AddSingleton<IFlightProvider>(Flights);
             services.AddSingleton<IHotelProvider>(Hotels);
+
+            // Never Gemini: the developer's .env may hold a real key. The real tool loop still runs the tools.
+            services.AddSingleton<IChatClient>(_ => new FunctionInvokingChatClient(Chat));
 
             // The developer's .env may name a real Firebase project; tests keep hotel data in memory instead.
             services.AddSingleton<InMemoryHotelData>();

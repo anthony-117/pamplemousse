@@ -23,4 +23,16 @@ public sealed class ExternalApiOptions
 
     /// <summary>Path to the service account JSON file; empty uses Google's default credentials (or the emulator).</summary>
     public string GoogleCredentialsPath { get; set; } = "";
+
+    /// <summary>Google AI Studio key for the assistant (ADR 0005, ADR 0018); empty makes every answer a warning.</summary>
+    public string GeminiApiKey { get; set; } = "";
+
+    /// <summary>Gemini model the assistant uses.</summary>
+    public string GeminiModel { get; set; } = "gemini-3.8-flash";
+
+    /// <summary>Longest wait for one Gemini call; past it the answer is the "busy" warning (spec 003).</summary>
+    public TimeSpan GeminiTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>Most rounds of tool calls in one answer (spec 003, edge cases).</summary>
+    public int AssistantMaxToolRounds { get; set; } = 6;
 }

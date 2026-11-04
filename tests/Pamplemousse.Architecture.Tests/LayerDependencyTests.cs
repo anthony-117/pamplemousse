@@ -27,11 +27,11 @@ public class LayerDependencyTests
     [Fact]
     public void Application_depends_only_on_domain_and_abstractions()
     {
+        // Constitution I: Domain plus Microsoft.Extensions.*.Abstractions packages (DI, logging, AI).
         Assert.All(References(ApplicationLayer), name => Assert.True(
             name.StartsWith("System", StringComparison.Ordinal)
                 || string.Equals(name, "Pamplemousse.Domain", StringComparison.Ordinal)
-                || string.Equals(name, "Microsoft.Extensions.DependencyInjection.Abstractions", StringComparison.Ordinal)
-                || string.Equals(name, "Microsoft.Extensions.Logging.Abstractions", StringComparison.Ordinal),
+                || (name.StartsWith("Microsoft.Extensions.", StringComparison.Ordinal) && name.EndsWith(".Abstractions", StringComparison.Ordinal)),
             $"Application references {name}"));
     }
 

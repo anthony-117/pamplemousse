@@ -51,6 +51,8 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | `RAPIDAPI_KEY` | Hotels (Booking COM API) | Hotels return saved prices or a warning |
 | `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities and price history | Hotel data is kept in memory only; the log says so |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo | Google's default credentials are tried |
+| `GEMINI_API_KEY` | Assistant (Google AI Studio, free tier) | The assistant answers with a warning |
+| `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-3.8-flash` | The default is used |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
 
 Weather, exchange rates, holidays, visas, advisories, countries and cities need no key.
@@ -67,6 +69,7 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/api/v1/destinations/{id}/hotels?from=&to=&adults=&currency=&sort=&minStars=&minReview=&minPrice=&maxPrice=&stayType=&freeCancellation=&page=` | Hotels with the total for the stay, sorted and filtered on stored data ([contract](specs/002-hotels/contracts/hotels-api.md)) |
 | GET | `/api/v1/hotels/{hotelId}?from=&to=&adults=&currency=` | One hotel's details and its Booking.com link (`bk:…`) |
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
+| POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
 | GET | `/api/v1/system/ping` | Name, version, environment, server time |
 | GET | `/alive` | Liveness (all environments, used by Cloud Run) |
@@ -93,6 +96,7 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 | Attractions | Wikidata, ranked by number of Wikipedia editions; details from the Wikipedia summary; OpenTripMap fills in when Wikidata is down or has too few (ADR 0011) | free, no key |
 | Restaurants | OpenTripMap (`foods`: restaurants, cafés, bars; no ratings, prices or hours) | free key |
 | Events | Ticketmaster Discovery | free key |
+| Assistant | Google Gemini through `Microsoft.Extensions.AI` (ADR 0005, ADR 0018); answers only from the sources above, called as tools | Google AI Studio key |
 
 Bundled files live in `src/Pamplemousse.Infrastructure/ReferenceData/Data/` (gzip, embedded in the assembly).
 

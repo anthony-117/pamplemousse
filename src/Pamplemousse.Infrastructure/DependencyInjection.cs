@@ -1,9 +1,13 @@
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
+using Google.GenAI;
+using Google.GenAI.Types;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Infrastructure.Assistant;
 using Pamplemousse.Infrastructure.Caching;
 using Pamplemousse.Infrastructure.Providers;
 using Pamplemousse.Infrastructure.ReferenceData;
@@ -45,6 +49,7 @@ public static class DependencyInjection
         services.AddSingleton<JsonCache>();
         services.AddSingleton<ISearchCache, DistributedSearchCache>();
         AddHotelStorage(services, keys);
+        AddChatModel(services, keys);
         services.AddHttpClient<IWeatherProvider, OpenMeteoWeatherProvider>();
         services.AddHttpClient<IExchangeRateProvider, FrankfurterExchangeRateProvider>();
         services.AddHttpClient<IHolidayProvider, NagerHolidayProvider>();
@@ -68,6 +73,27 @@ public static class DependencyInjection
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapRestaurantProvider>());
 
         return builder;
+    }
+
+    /// <summary>
+    /// Gemini through Google's SDK, wrapped in the tool loop and the error translation (ADR 0018). The translation sits inside
+    /// the loop, around each call to Gemini. Without a key, a stand-in answers every message with a warning.
+    /// </summary>
+    private static void AddChatModel(IServiceCollection services, ExternalApiOptions keys)
+    {
+        if (keys.GeminiApiKey.Length == 0)
+        {
+            services.AddSingleton<IChatClient, NotConfiguredChatClient>();
+            return;
+        }
+
+        // One attempt per call (the SDK's default): a busy model becomes a warning at once, with no hidden retries.
+        services.AddSingleton(_ => new Client(
+            apiKey: keys.GeminiApiKey,
+            httpOptions: new HttpOptions { Timeout = (int)keys.GeminiTimeout.TotalMilliseconds }));
+        services.AddChatClient(sp => sp.GetRequiredService<Client>().AsIChatClient(keys.GeminiModel))
+            .UseFunctionInvocation(configure: loop => loop.MaximumIterationsPerRequest = keys.AssistantMaxToolRounds)
+            .Use(inner => new GeminiErrorTranslator(inner));
     }
 
     /// <summary>Firestore when a Firebase project is set (ADR 0017); otherwise memory, with a warning in the log.</summary>

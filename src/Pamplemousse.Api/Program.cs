@@ -28,6 +28,8 @@ builder.AddInfrastructure(keys =>
     keys.RapidApiKey = Env.RapidApiKey;
     keys.FirebaseProjectId = Env.FirebaseProjectId;
     keys.GoogleCredentialsPath = Env.GoogleApplicationCredentials;
+    keys.GeminiApiKey = Env.GeminiApiKey;
+    keys.GeminiModel = Env.GeminiModel;
 });
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)

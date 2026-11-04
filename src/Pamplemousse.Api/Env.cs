@@ -19,6 +19,10 @@ public static class Env
     public static string FirebaseProjectId => Get("FIREBASE_PROJECT_ID", "");
     public static string GoogleApplicationCredentials => Get("GOOGLE_APPLICATION_CREDENTIALS", "");
 
+    // Assistant (ADR 0005, ADR 0018): Google AI Studio key and model. Without a key, every answer is a warning naming the variable.
+    public static string GeminiApiKey => Get("GEMINI_API_KEY", "");
+    public static string GeminiModel => Get("GEMINI_MODEL", "gemini-3.8-flash");
+
     // Comma-separated browser origins allowed to call the API (e.g. the Firebase Hosting domain).
     public static IReadOnlyList<string> CorsAllowedOrigins =>
         Get("CORS_ALLOWED_ORIGINS", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
