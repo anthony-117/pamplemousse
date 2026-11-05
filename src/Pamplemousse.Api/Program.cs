@@ -6,6 +6,7 @@ using Pamplemousse.Application;
 using Pamplemousse.Application.Cars;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Infrastructure;
+using Scalar.AspNetCore;
 
 Env.LoadDotEnv();
 
@@ -66,6 +67,9 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Interactive API reference at /scalar, built from /openapi/v1.json.
+    app.MapScalarApiReference(o => o.WithTitle("pamplemousse API"));
 }
 
 app.MapDefaultEndpoints();

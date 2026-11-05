@@ -27,6 +27,17 @@ public class SystemEndpointsTests(WebApplicationFactory<Program> factory) : ICla
     }
 
     [Theory]
+    [InlineData("/openapi/v1.json", "application/json")]
+    [InlineData("/scalar", "text/html")]
+    public async Task Api_reference_is_served_in_development(string path, string mediaType)
+    {
+        var response = await _client.GetAsync(new Uri(path, UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(mediaType, response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Theory]
     [InlineData("http://localhost:61234", true)]
     [InlineData("https://evil.example.com", false)]
     public async Task Cors_allows_localhost_origins_in_development(string origin, bool allowed)

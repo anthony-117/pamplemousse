@@ -31,6 +31,8 @@
   <!-- Matches runtime 10.0.13, which ships with the pinned SDK 10.0.113. -->
   <ItemGroup Label="ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <!-- API reference page for the OpenAPI document (Development only). -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
   </ItemGroup>
 
