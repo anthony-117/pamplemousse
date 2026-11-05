@@ -52,7 +52,7 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities and price history | Hotel data is kept in memory only; the log says so |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo | Google's default credentials are tried |
 | `GEMINI_API_KEY` | Assistant (Google AI Studio, free tier) | The assistant answers with a warning |
-| `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-3.8-flash` | The default is used |
+| `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-2.5-flash` | The default is used |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
 
 Weather, exchange rates, holidays, visas, advisories, countries and cities need no key.

@@ -29,7 +29,7 @@ city-guide card; "3 cheapest hotels" → prices identical to `/hotels`, card ope
 Tests: app 138 (26 new: data, controller, screen, flow). Backend: Domain 92, Application 78, Infrastructure 127 (9 need Docker Hub access, see below), Api 73, Architecture 5.
 
 ## Known limits
-- **Gemini availability**: on 4 Nov `gemini-3.8-flash` (the default) returned 503 "high demand" all afternoon; `gemini-2.5-flash` answered in under 1 s. The model is the `GEMINI_MODEL` setting. See [quickstart](../../../specs/003-assistant/quickstart.md).
+- **Gemini availability**: on 4 Nov `gemini-3.8-flash` returned 503 "high demand" all afternoon; `gemini-2.5-flash` answered in under 1 s, so 2.5-flash is the default. The model is the `GEMINI_MODEL` setting. See [quickstart](../../../specs/003-assistant/quickstart.md).
 - **Shared free tier**: anyone using the web app shares the free daily limit until accounts exist.
 - **No saved conversations** until accounts; the app keeps the chat for the session.
 - **Local test run**: the 9 Testcontainers tests (Redis, Firestore emulator) fail on a machine whose Docker Hub login has expired (`docker logout` fixes it); CI is unaffected.
