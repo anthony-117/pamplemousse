@@ -30,7 +30,7 @@ Tests: app 138 (26 new: data, controller, screen, flow). Backend: Domain 92, App
 
 ## Known limits
 - **Gemini availability**: on 4 Nov `gemini-3.8-flash` returned 503 "high demand" all afternoon; `gemini-2.5-flash` answered in under 1 s, so 2.5-flash is the default. The model is the `GEMINI_MODEL` setting. See [quickstart](../../../specs/003-assistant/quickstart.md).
-- **Shared free tier**: anyone using the web app shares the free daily limit until accounts exist.
+- **Shared free tier**: anyone using the web app shares the free daily limit until accounts exist. Since 5 Nov the API limits the assistant to 5 messages per minute and 40 per day per IP, and 10 per minute overall (FR-015); the counts reset when the API restarts.
 - **No saved conversations** until accounts; the app keeps the chat for the session.
 - **Local test run**: the 9 Testcontainers tests (Redis, Firestore emulator) fail on a machine whose Docker Hub login has expired (`docker logout` fixes it); CI is unaffected.
 

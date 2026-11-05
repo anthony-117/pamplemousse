@@ -1,10 +1,13 @@
 using System.Net;
 using System.Text;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
@@ -28,6 +31,12 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
     public FakeChat Chat { get; } = new();
 
+    /// <summary>High by default so other tests never meet them; rate-limit tests lower them before the first request.</summary>
+    public AssistantRateLimitSettings Limits { get; } = new() { PerClientPerMinute = 1000, PerClientPerDay = 1000, AllClientsPerMinute = 1000 };
+
+    /// <summary>Every request arrives from this address, as from Caddy inside the Docker network.</summary>
+    public static readonly IPAddress ProxyAddress = IPAddress.Parse("172.18.0.2");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
@@ -37,6 +46,13 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
                 o.OpenTripMapApiKey = "";
                 o.TicketmasterApiKey = "";
             });
+            services.PostConfigure<AssistantRateLimitSettings>(o =>
+            {
+                o.PerClientPerMinute = Limits.PerClientPerMinute;
+                o.PerClientPerDay = Limits.PerClientPerDay;
+                o.AllClientsPerMinute = Limits.AllClientsPerMinute;
+            });
+            services.AddSingleton<IStartupFilter, FromProxy>();
             services.AddSingleton<IWeatherProvider, FakeWeather>();
             services.AddSingleton<IExchangeRateProvider>(Exchange);
             services.AddSingleton<IHolidayProvider, FakeHolidays>();
@@ -59,6 +75,20 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IPriceHistory>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
+    }
+
+    /// <summary>The test server sets no remote address; production requests come from Caddy.</summary>
+    private sealed class FromProxy : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((HttpContext context, RequestDelegate nextMiddleware) =>
+            {
+                context.Connection.RemoteIpAddress = ProxyAddress;
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 
     /// <summary>Knows one landmark in Paris; everywhere else Wikidata is "down", so attractions fall back to OpenTripMap.</summary>
