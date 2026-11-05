@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-05
 
-**Status**: Draft, waiting for the owner's approval
+**Status**: Approved by the owner on 2026-11-05. Design: Figma page "Sprint 2 — Cars", approved 2026-11-05
 
 **Input**: User description: "TG-08: As Fares, I want to see car rental options."
 
@@ -126,7 +126,7 @@ the source was made.
 
 - **FR-001**: Users MUST be able to request cars by giving a destination, the trip's first and last day, a pick-up place (default the city centre) and the driver's age (default 30, from 18 to 99). Pick-up and return are at the same place, at 10:00.
 - **FR-002**: Users MUST be able to list a destination's pick-up places: the city centre, then the airports the source knows for that city, with name and IATA code.
-- **FR-003**: Each car MUST include: model, "or similar" wording, size class, photo, gearbox, seats, doors, big and small bags, air-con, mileage, fuel policy, rental company name and logo, company rating out of 10 and review count when known, pick-up place name, type (terminal, shuttle, rental centre, train station, downtown), address and distance from the destination, total price, price per day, currency, pay now or at pick-up, free cancellation, deposit and damage excess with their currency, and whether the source marks it as sponsored.
+- **FR-003**: Each car MUST include: model, "or similar" wording, size class, photo, gearbox, seats, doors, checked bags (the source gives no small-bag count, research R-5), air-con, mileage, fuel policy, rental company name and logo, company rating out of 10 and review count when known, pick-up place name, type (terminal, shuttle, rental centre, train station, downtown), address and distance from the destination, total price, price per day, currency, pay now or at pick-up, free cancellation, deposit and damage excess with their currency, and whether the source marks it as sponsored.
 - **FR-004**: The price MUST be the normal price the source reports (`drive_away_price_before` when given, otherwise `drive_away_price`), not a member discount.
 - **FR-005**: The response MUST say when its prices were fetched from the source.
 - **FR-006**: System MUST return up to 20 cars per page, and users MUST be able to ask for the next page.
