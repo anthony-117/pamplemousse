@@ -1,3 +1,4 @@
+using System.Net;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Google.GenAI;
@@ -79,13 +80,19 @@ public static class DependencyInjection
     /// <summary>Hotels and cars share the Booking COM API key and its monthly request count (ADR 0016).</summary>
     private static void AddBookingComClients(IServiceCollection services)
     {
-        services.AddHttpClient<IHotelProvider, BookingComHotelProvider>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        // A car answer is several MB of JSON. Without Accept-Encoding the source sends it uncompressed, and on a slow day the
+        // body was still arriving at the 45 s limit after the headers came at 5-16 s. Compressed, it is a fraction of that.
+        static HttpMessageHandler Compressed() => new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All };
+
+        services.AddHttpClient<IHotelProvider, BookingComHotelProvider>(c => c.Timeout = TimeSpan.FromSeconds(10))
+            .ConfigurePrimaryHttpMessageHandler(Compressed);
 
         // A car search takes 20-30 s at the source (research R-7), past the standard handler's 30 s total and 10 s per try,
         // and a retry would cost a second request. So one try, with its own longer limit.
         // RemoveAllResilienceHandlers is marked experimental; it is the documented way to opt one client out of the defaults.
 #pragma warning disable EXTEXP0001
         services.AddHttpClient<ICarProvider, BookingComCarProvider>(c => c.Timeout = TimeSpan.FromSeconds(45))
+            .ConfigurePrimaryHttpMessageHandler(Compressed)
             .RemoveAllResilienceHandlers();
 #pragma warning restore EXTEXP0001
     }

@@ -73,6 +73,7 @@ public sealed partial class SearchCarsHandler(
 
     private const string NoCars = "No rental cars are available here for these dates. Search Booking.com for more, or try another pick-up place.";
     private const string NoMatch = "No cars match these filters. Try fewer filters, or search Booking.com.";
+    private const string NotSearched = "Cars could not be searched just now. Try again in a moment, or search Booking.com.";
 
     public async Task<SearchCarsResponse> HandleAsync(SearchCarsQuery query, CancellationToken ct)
     {
@@ -92,7 +93,8 @@ public sealed partial class SearchCarsHandler(
         var (cars, isSaved) = await LoadAsync(search, destination.Location, store, warnings, ct);
         var offers = cars?.Cars ?? [];
         var matched = filters.Apply(offers);
-        var message = matched.Count > 0 ? null : offers.Count > 0 ? NoMatch : NoCars;
+        // No cars at all means the source failed with nothing saved, so nothing is known about this place.
+        var message = cars is null ? NotSearched : matched.Count > 0 ? null : offers.Count > 0 ? NoMatch : NoCars;
         var bookingUrl = provider.SearchUrl(destination, search);
 
         return new SearchCarsResponse(
@@ -129,7 +131,7 @@ public sealed partial class SearchCarsHandler(
             return (cached, false);
         }
 
-        await using var held = await searchLock.TryAcquireAsync(key, LockTime, ct);
+        var held = await searchLock.TryAcquireAsync(key, LockTime, ct);
         if (held is null)
         {
             // Someone is already asking the source for this search: wait for their answer rather than pay for it twice.
@@ -140,12 +142,18 @@ public sealed partial class SearchCarsHandler(
             }
         }
 
+        // Each call to the source is paid and takes up to 45 s, so it runs to the end even when the caller gives up: the answer
+        // is then saved and cached, and the caller's retry gets it at once. The HttpClient's own timeout still ends it.
+        var fetch = FetchAndCacheAsync(search, centre, store, key, held);
         string reason;
         try
         {
-            var fresh = await FetchAsync(search, centre, store, ct);
-            await cache.SetAsync(key, fresh, TimeSpan.FromHours(settings.ResultsTtlHours), ct);
-            return (fresh, false);
+            return (await fetch.WaitAsync(ct), false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            ObserveInBackground(fetch);
+            throw;
         }
         catch (ProviderNotConfiguredException ex)
         {
@@ -168,6 +176,32 @@ public sealed partial class SearchCarsHandler(
             : string.Create(CultureInfo.InvariantCulture, $"{reason.TrimEnd('.')}. Showing cars from {saved.FetchedAt:yyyy-MM-dd HH:mm} UTC."));
         return saved is null ? (null, false) : (new CachedCarSearch(saved.FetchedAt, saved.MayHaveMore, saved.Cars), true);
     }
+
+    /// <summary>Asks the source, saves and caches the answer, then frees the lock. Never cancelled by the caller.</summary>
+    private async Task<CachedCarSearch> FetchAndCacheAsync(CarSearch search, GeoPoint centre, CarData store, string key, IAsyncDisposable? held)
+    {
+        try
+        {
+            var fresh = await FetchAsync(search, centre, store, CancellationToken.None);
+            await cache.SetAsync(key, fresh, TimeSpan.FromHours(settings.ResultsTtlHours), CancellationToken.None);
+            return fresh;
+        }
+        finally
+        {
+            if (held is not null)
+            {
+                await held.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>A search the caller left still logs its failure, so it isn't lost as an unobserved task exception.</summary>
+    private void ObserveInBackground(Task<CachedCarSearch> fetch) =>
+        _ = fetch.ContinueWith(
+            t => LogAbandonedSearchFailed(logger, t.Exception!.GetBaseException()),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
 
     private async Task<CachedCarSearch> FetchAsync(CarSearch search, GeoPoint centre, CarData store, CancellationToken ct)
     {
@@ -201,4 +235,7 @@ public sealed partial class SearchCarsHandler(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Car source failed")]
     private static partial void LogSourceFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Car source failed after the caller left")]
+    private static partial void LogAbandonedSearchFailed(ILogger logger, Exception exception);
 }

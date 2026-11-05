@@ -105,7 +105,8 @@ the source was made.
 
 ### Edge Cases
 
-- **Source down, rate-limited, slow past the time limit, or a broken answer**: the last saved results for that search are returned, labelled with the time they were fetched. If there are none, an empty list with a warning and a link to Booking.com.
+- **Source down, rate-limited, slow past the time limit, or a broken answer**: the last saved results for that search are returned, labelled with the time they were fetched. If there are none, an empty list with a warning, a message saying the cars could not be searched (not that there are none), and a link to Booking.com.
+- **The caller gives up during a search** (the app closes the request): the search at the source still runs to the end and is saved, so the caller's retry gets it without a new paid request.
 - **Monthly request limit almost used up (95%, shared with hotels)**: same as source down; no new call is made.
 - **API key not configured**: no cars, and a warning naming the missing variable. The app does not crash.
 - **Two travellers ask for the same new search at once**: only one call is made; the other waits for its result.

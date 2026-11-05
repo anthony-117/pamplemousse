@@ -142,9 +142,50 @@ public class SearchCarsHandlerTests
         var result = await Handler().HandleAsync(Query(), CancellationToken.None);
 
         Assert.Empty(result.Items);
-        Assert.NotNull(result.Message);
         Assert.Equal(result.BookingUrl, result.SearchUrl);
         Assert.Contains(result.Warnings, w => w.Contains("No saved cars", StringComparison.Ordinal));
+        Assert.StartsWith("Cars could not be searched just now", result.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_search_with_no_cars_says_there_are_none_not_that_it_failed()
+    {
+        var result = await Handler().HandleAsync(Query(), CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.StartsWith("No rental cars are available here", result.Message, StringComparison.Ordinal);
+        Assert.Empty(result.Warnings);
+    }
+
+    [Fact]
+    public async Task A_caller_that_leaves_mid_search_still_gets_the_search_saved_for_its_retry()
+    {
+        TwoCars();
+        _provider.Gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var leaves = new CancellationTokenSource();
+
+        var first = Handler().HandleAsync(Query(), leaves.Token);
+        await leaves.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+
+        _provider.Gate.SetResult();
+        await WaitUntilAsync(() => _lock.Released > 0);
+        var retry = await Handler().HandleAsync(Query(), CancellationToken.None);
+
+        Assert.Single(_provider.Searches);
+        Assert.Single(_store.Snapshots);
+        Assert.Equal(2, retry.Items.Count);
+        Assert.False(retry.IsSavedPrice);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> done)
+    {
+        for (var i = 0; i < 200 && !done(); i++)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(done());
     }
 
     [Fact]

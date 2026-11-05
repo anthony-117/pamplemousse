@@ -56,15 +56,27 @@ Real key, local API without Aspire, Rome 4–8 Dec 2026. 4 requests of the month
 | Prices against Booking.com | Fiat 600 at Budget, Rome: 76.76 vs US$77. Opel Corsa at Record Go, Fiumicino: 62.89 vs US$63 |
 | Links | Centre and Fiumicino (`ftsType=A`) open the right place, dates, 10:00 and age. Found and fixed: the centre link filled Booking.com's search box with "City centre"; it now says the city |
 
+### Screen check, 5 Nov 2026 (evening)
+The app (`chocomousse` web build) against the local API, Rome and Zahlé 5–9 Dec 2026, at 390 px and 1440 px. 8 requests of the monthly 530 that day, counting the failed tries below.
+
+| Check | Result |
+|---|---|
+| First tries | Three Rome centre searches failed: headers after 5–16 s, then the body still arriving at the 45 s limit. Cause: the client didn't ask for compression, so the source sent several MB of plain JSON. Fixed: both Booking COM clients ask for gzip, deflate or brotli |
+| Rome centre, age 30 | 465 cars, 18 s (headers at 14.6 s, the compressed body about 3 s). The card matches the design: Fiat 600 at Budget, US$77 total, US$19 a day, pay now |
+| Car details | Photo, company, address, pick-up and return at 10:00, the car's specs, deposit €200, damage excess €3,294, fuel, payment, price box and the Booking.com button |
+| Fiumicino, age 23, from the pick-up sheet | 445 cars in 8 s (26.3 s before compression) and the young-driver note; Opel Corsa at Record Go US$63 |
+| Lowest price + automatic, from the filter sheet | No new call; the sheet's sizes, pick-up types and companies come from the search, "Filters cover all 445 cars" |
+| Zahlé | Only the city centre (no airport the source knows within 50 km); 201 cars in 6 s, nearest desks around Beirut, 33–38 km |
+| Wide layout | Side panel with the trip chips and filters, cars beside it |
+| Failed search with nothing saved | "Cars could not be searched" with Try again and the Booking.com search |
+
 Still to check (quickstart): 9 more cities and 3 more airports (SC-001), 10 prices (SC-003), 10 links (SC-007), and a wrong key giving saved cars.
 
 ### Known limits
 - **At most 500 cars per search**, with no paging at the source. Rome has about 1,050, so the response says `mayHaveMore` and links to Booking.com for the rest.
 - **An airport search also returns desks in the city:** Fiumicino gave 100 downtown and 120 train-station cars. The pick-up type filter narrows them.
 - **First search is slow:** 15–30 s at the source, once a day per place, dates and driver age.
-- **The source can stall mid-answer:** in the screen check on 5 Nov, Booking.com sent headers after 5–16 s but the body was still arriving at our 45 s limit, twice in a row for Rome centre. The app then says the search failed and offers Try again; nothing is saved, so each retry costs a request.
-- **A cancelled request is not saved:** when the app gives up and closes the request, the search at the source is cancelled too, so the request is spent and nothing is stored.
-- **Wrong message after a failure:** when the source fails and nothing is saved, `message` still says no cars are available here. The app replaces it, but other clients would show it.
+- **A failed search costs a request:** a search the source fails is not saved, so Try again pays again. A search the app gives up on is no longer lost: it runs to the end and is saved for the retry.
 
 ## Delivered: Flights
 `GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
@@ -115,5 +127,4 @@ Tests: 221 passing, no analyzer findings.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Car screens: run the live check again when the source answers (Rome centre and Fiumicino at 390 px and desktop, a filtered search, a car's details, Zahlé).
-- Cars backend: finish a search the app has closed, so it is saved; change `message` when the source failed; decide whether the 45 s limit should be longer.
+- Cars: the remaining quickstart checks (more cities and airports, prices, links, a wrong key).
