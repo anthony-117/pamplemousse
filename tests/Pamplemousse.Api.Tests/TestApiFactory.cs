@@ -31,6 +31,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
     public FakeCars Cars { get; } = new();
 
+    public FakeNearby Nearby { get; } = new();
+
     public FakeChat Chat { get; } = new();
 
     /// <summary>High by default so other tests never meet them; rate-limit tests lower them before the first request.</summary>
@@ -62,6 +64,7 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IFlightProvider>(Flights);
             services.AddSingleton<IHotelProvider>(Hotels);
             services.AddSingleton<ICarProvider>(Cars);
+            services.AddSingleton<INearbyPlaces>(Nearby);
 
             // Never Gemini: the developer's .env may hold a real key. The real tool loop still runs the tools.
             services.AddSingleton<IChatClient>(_ => new FunctionInvokingChatClient(Chat));

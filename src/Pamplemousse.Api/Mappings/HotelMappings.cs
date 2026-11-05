@@ -1,6 +1,7 @@
 using Pamplemousse.Api.ViewModels;
 using Pamplemousse.Application.Hotels.Queries.GetHotel;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Domain.Hotels;
 
 namespace Pamplemousse.Api.Mappings;
@@ -18,11 +19,14 @@ internal static class HotelMappings
         r.TotalPages,
         r.PricesFetchedAt,
         r.IsSavedPrice,
-        [.. r.Items.Select(o => o.ToViewModel(r.Source))],
+        [.. r.Items.Select(o => o.ToViewModel(r.Source, r.Ranking))],
         r.FiltersCheckedOn,
         r.Message,
         r.SearchUrl,
-        r.Warnings);
+        r.Warnings,
+        MatchMappings.WeightsOf(r.Ranking),
+        r.Ranking?.TripBudget,
+        r.Ranking?.Note);
 
     public static HotelDetailsViewModel ToViewModel(this GetHotelResponse r)
     {
@@ -57,7 +61,7 @@ internal static class HotelMappings
             r.Warnings);
     }
 
-    private static HotelViewModel ToViewModel(this HotelOffer o, string source) => new(
+    private static HotelViewModel ToViewModel(this HotelOffer o, string source, RankingResult? ranking) => new(
         o.Hotel.Id,
         o.Hotel.Name,
         o.Hotel.PhotoUrls.Count > 0 ? o.Hotel.PhotoUrls[0] : null,
@@ -70,5 +74,6 @@ internal static class HotelMappings
         o.Hotel.StayType,
         o.Hotel.FreeCancellation,
         new StayPriceViewModel(o.Price.Total, o.Price.PerNight, o.Price.Currency),
-        source);
+        source,
+        MatchMappings.MatchOf(ranking, o.Hotel.Id));
 }

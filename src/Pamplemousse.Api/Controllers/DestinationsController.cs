@@ -13,6 +13,7 @@ using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
 using Pamplemousse.Application.Flights.Queries.SearchFlights;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 
 namespace Pamplemousse.Api.Controllers;
 
@@ -109,7 +110,8 @@ public sealed class DestinationsController : ControllerBase
         var hotels = await handler.HandleAsync(
             new SearchHotelsQuery(
                 id, request.From, request.To, request.Adults, request.Currency, request.Sort, request.MinStars, request.MinReview,
-                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page),
+                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
             ct);
         return Ok(hotels.ToViewModel());
     }

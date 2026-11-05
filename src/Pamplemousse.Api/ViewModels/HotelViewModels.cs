@@ -17,7 +17,10 @@ public sealed record HotelSearchViewModel(
     int? FiltersCheckedOn,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    WeightsViewModel? Weights,
+    decimal? TripBudget,
+    string? RankingNote);
 
 public sealed record HotelDestinationViewModel(string Id, string Name, string? SourceName);
 
@@ -36,7 +39,8 @@ public sealed record HotelViewModel(
     string? StayType,
     bool? FreeCancellation,
     StayPriceViewModel Price,
-    string Source);
+    string Source,
+    MatchViewModel? Match);
 
 public sealed record StayPriceViewModel(decimal Total, decimal PerNight, string Currency);
 
