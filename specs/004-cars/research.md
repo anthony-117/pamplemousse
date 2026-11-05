@@ -80,11 +80,11 @@ Earlier evaluation: OneDrive `01-research/07-booking-com18-api-evaluation.md` §
 - **Decision**: `https://cars.booking.com/search-results?location=&dropLocation=&locationName={place}&dropLocationName={place}`
   `&coordinates={lat},{lng}&dropCoordinates={lat},{lng}&ftsType=D&dropFtsType=D&driversAge={age}`
   `&puDay=&puMonth=&puYear=&puHour=10&puMinute=0&doDay=&doMonth=&doYear=&doHour=10&doMinute=0&prefcurrency={cur}&preflang=en`.
-  `ftsType` is `A` for airports.
+  `ftsType` is `A` for airports. `{place}` is the airport name, or the city name for the centre.
 - **Evidence**: this is the URL Booking.com's own form produced; opened in a browser it showed Rome cars for the
   same dates and age. The source's `forward_url` (`DriverExtras.do?…vehicleInfo.vehicle.id=…`) returns 404, and the
   older `SearchResults.do?location=` keeps the dates but loses the place.
-- **Open**: `ftsType=A` for airports is from the site's own form for an airport search; confirmed in the quickstart.
+- **Confirmed** 5 Nov 2026: `ftsType=A` opens Booking.com's Fiumicino search with the right dates, times and age.
 
 ## R-7: Slow, large responses
 
