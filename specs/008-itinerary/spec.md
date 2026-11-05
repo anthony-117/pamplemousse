@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-06
 
-**Status**: Draft, for the owner's review. Design: Figma v0.2 screen 08 "Itinerary" and web W4 (approved 2026-10-27); screen 11 "My plans" and web W7. A Sprint 4 Figma page comes after this spec is approved.
+**Status**: Approved by the owner on 2026-11-06. Design: Figma v0.2 screen 08 "Itinerary" and web W4 (approved 2026-10-27); screen 11 "My plans" and web W7. A Sprint 4 Figma page comes after this spec is approved.
 
 **Input**: User description: "TG-10: As Fares, I want a complete day-by-day itinerary with a match score."
 
@@ -17,7 +17,7 @@
 - Q: How is the plan's overall match worked out? → A: A weighted average of the hotel's match, the flight's match and how well the days fit the traveller's interests (culture, food, nature, nightlife), shown as a whole percentage. The details are in FR-009.
 - Q: Is Pace added? → A: Yes, as a seventh preference with three levels: Relaxed, Balanced, Packed. It sets how many places a day holds. It does not change how hotels, flights or cars are ranked.
 - Q: Is the plan saved? → A: Yes, to the signed-in traveller's account. The owner turned on Firebase Authentication (email and password, and Google) and decided on 2026-11-06 that **signing in is required before using the app**, with no anonymous use. Sign-in itself (screens, and the API refusing requests without a valid sign-in) is its own feature and spec, delivered before this one. This spec only relies on knowing who is signed in.
-- Q: When is a plan saved? → A: *Proposed, to confirm at approval:* building a plan saves it straight away as a **draft**, so nothing is lost if the app is closed. The traveller can rename it, delete it, or mark it **planned**. "Booked" comes with booking (TG-13).
+- Q: When is a plan saved? → A: Building a plan saves it straight away as a **draft**, so nothing is lost if the app is closed. The traveller can rename it, delete it, or mark it **planned**. "Booked" comes with booking (TG-13).
 
 ## User Scenarios & Testing *(mandatory)*
 
