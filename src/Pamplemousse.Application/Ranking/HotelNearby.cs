@@ -20,7 +20,8 @@ public sealed partial class HotelNearby(INearbyPlaces places, IEnumerable<IPlace
     public const string Warning = "Places near the hotels couldn't be checked just now, so culture, food, nature and nightlife count as average.";
 
     private const int TopAttractions = 20;
-    private const int AtOnce = 4;
+    // OpenTripMap answers 429 to four hotels at once (two requests each) on the free key; two at a time stays under it.
+    private const int AtOnce = 2;
 
     public async Task<(IReadOnlyDictionary<string, Surroundings> Around, string? Warning)> ForAsync(
         Destination destination, IReadOnlyList<HotelOffer> offers, Weights weights, CancellationToken ct)

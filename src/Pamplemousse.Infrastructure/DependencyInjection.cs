@@ -63,7 +63,7 @@ public static class DependencyInjection
         services.AddHttpClient<OpenTripMapAttractionProvider>();
         services.AddHttpClient<OpenTripMapRestaurantProvider>();
         // Places near each hotel for weighted search; a slow answer makes that hotel's interests count as average.
-        services.AddHttpClient<INearbyPlaces, OpenTripMapNearbyPlaces>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<INearbyPlaces, OpenTripMapNearbyPlaces>(c => c.Timeout = TimeSpan.FromSeconds(20));
         services.AddHttpClient<WikidataAttractionProvider>(c =>
         {
             // Wikimedia asks API clients to identify themselves. A slow query falls back to OpenTripMap instead of hanging the page.
