@@ -2,7 +2,7 @@
 
 **Branch**: `007-weighted-search` | **Date**: 2026-11-05 | **Spec**: [spec.md](spec.md)
 
-**Status**: Draft, waiting for the owner's approval
+**Status**: Approved by the owner on 2026-11-05, with the two spec changes below
 
 ## Summary
 

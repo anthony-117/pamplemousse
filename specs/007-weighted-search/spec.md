@@ -14,7 +14,7 @@
 
 - Q: What is ranked? → A: The flights, hotels and rental cars **inside one destination**, each kind in its own list (Figma 07: tabs Flights, Hotels, Cars). Destinations are not ranked against each other. Putting one flight, one hotel and one car together into a trip is the itinerary (TG-10, Sprint 4).
 - Q: Which preferences? → A: The six on Figma 06: Budget, Culture & history, Food, Nature, Nightlife, Comfort. The domain model's seventh, Pace, is about how full each day is, so it waits for the itinerary (TG-10).
-- Q: What scale? → A: Each preference is a number from 0 to 100, as in the domain model and the `weights` column planned for saved trips. The app's Low, Medium and High send 20, 50 and 90. 0 means "doesn't matter". Leaving a preference out means 50.
+- Q: What scale? → A: Each preference is a number from 0 to 100, as in the domain model and the `weights` column planned for saved trips. The app's Low, Medium and High send 10, 50 and 90 *(Low changed from 20 during the live checks, research R-6)*. 0 means "doesn't matter". Leaving a preference out means 50.
 - Q: Which preference applies to which kind? → A: Budget and Comfort apply to all three. Culture, Food, Nature and Nightlife are about where you stay, so they apply to hotels only, measured by what is within walking distance of each hotel. A flight's or car's match uses only Budget and Comfort.
 - Q: Food quality isn't known (ADR 0008: OpenTripMap has no ratings or prices for restaurants). → A: Food is measured by how many restaurants and cafés are near the hotel, from the free OpenTripMap data already used. No paid source (Google Places and others need the owner's approval and are not needed for this).
 - Q: Who ranks? → A: Deterministic C# code (ADR 0002). The same offers and preferences always give the same order, scores and reasons. The LLM never ranks or writes the reasons.
@@ -106,7 +106,7 @@ source was made.
 - **FR-001**: The hotel, flight and car lists MUST accept a new sort, "match", and six optional preferences: budget, culture, food, nature, nightlife, comfort, each a whole number from 0 to 100. A missing preference MUST count as 50.
 - **FR-002**: The lists MUST accept an optional total budget for the trip, in the request's currency.
 - **FR-003**: Each preference MUST be measured on a scale from 0 to 1 per offer as follows:
-  - **Budget** (all kinds): the total price for the stay, flight or rental. Cheapest in the list is 1, most expensive is 0, linear in between.
+  - **Budget** (all kinds): the total price for the stay, flight or rental. Cheapest in the list is 1, most expensive is 0, evenly spaced by position in between *(changed from linear during the live checks, research R-6)*.
   - **Comfort, hotels**: the review score out of 10, and the star rating.
   - **Comfort, flights**: fewer stops (both legs), a shorter journey, and dates closer to the ones asked (exact, then within 3 days, then same month).
   - **Comfort, cars**: a larger size class, the company's rating, an automatic gearbox and free cancellation.
@@ -115,12 +115,12 @@ source was made.
   - **Nature** (hotels): how many parks, gardens and natural sites are within 2 km.
   - **Nightlife** (hotels): how many bars, pubs and night clubs are within 1 km.
   
-  Price and the nearby counts MUST be compared within the list: the best in the list gets 1 and the worst 0 (a hotel with no places nearby always gets 0). Review score, stars, stops, journey time and company rating MUST be measured on a fixed scale (e.g. review score out of 10), so one offer's measure doesn't depend on the others.
+  Price and the nearby counts MUST be compared within the list: the best in the list gets 1 and the worst 0 (a hotel with no places nearby always gets 0). Journey time MUST be compared with the shortest in the list (shortest ÷ this one), since a good time depends on the route *(changed during planning, research R-3)*. Review score, stars, stops, dates and company rating MUST be measured on a fixed scale (e.g. review score out of 10), so one offer's measure doesn't depend on the others.
 - **FR-004**: An offer's match MUST be the weighted average of the preferences that apply to its kind: each measure is multiplied by its preference, the results are added, and the total is divided by the sum of those preferences. It MUST be shown as a whole percentage from 0 to 100.
 - **FR-005**: Each offer MUST carry its match, a breakdown (each preference that counted: its weight and the offer's measure, as a percentage) and one short reason in plain English, built from its two strongest contributions. The wording MUST come from a fixed list in code, not from an LLM.
 - **FR-006**: With sort "match", offers MUST be ordered by match (highest first), then by the source's recommended order. Offers over the total budget MUST come after all others.
 - **FR-007**: Ranking MUST run on the stored results of the search, like the existing sorts and filters. Changing preferences or the total budget MUST NOT call the paid hotel and car source.
-- **FR-008**: The places near each hotel MUST come from data that is free and stored per destination (OpenTripMap, ADR 0008), fetched at most once a day per destination and kind, and MUST NOT need a request per hotel.
+- **FR-008**: The places near each hotel MUST come from free data (OpenTripMap, ADR 0008): at most two requests per hotel, the first time it is ranked, stored for 30 days. The top attractions are stored per destination for a day. *(Changed during planning, research R-1: OpenTripMap returns only the 500 nearest places, so one request per destination can't cover every hotel.)*
 - **FR-009**: The same offers, preferences and budget MUST always give the same order, matches, breakdowns and reasons.
 - **FR-010**: When all preferences that apply to a kind are 0, the list MUST come in its usual order with no match, and a note saying so.
 - **FR-011**: If the places data cannot be fetched, hotels MUST still be ranked, with the four place-based preferences counted as average and a warning.
@@ -133,7 +133,7 @@ source was made.
 - **Preferences (Weights)**: six numbers from 0 to 100: budget, culture, food, nature, nightlife, comfort. Pace (domain model) comes with TG-10.
 - **Match (Score)**: for one offer: the total from 0 to 1 (shown as %), the breakdown per preference, the reason, and whether it is over the total budget.
 - **Nearby counts**: for one hotel: the number of top attractions, restaurants, nature sites and nightlife places within each distance.
-- **Places by kind** (per destination): the destination's restaurants, nature sites and nightlife places, with their positions, stored for a day.
+- **Places near a hotel**: the counts of restaurants and cafés, bars and pubs, and nature sites around one hotel, stored for 30 days.
 
 ## Success Criteria *(mandatory)*
 

@@ -79,7 +79,7 @@ pages." No new call to the paid source is made for ranking (FR-007).
 
 | Request | Result |
 |---|---|
-| `…/hotels?sort=match&budget=90&culture=20&food=20&nature=20&nightlife=20&comfort=20` | close to cheapest first |
-| `…/flights?…&sort=match&budget=20&comfort=90` | direct flights before flights with stops |
+| `…/hotels?sort=match&budget=90&culture=10&food=10&nature=10&nightlife=10&comfort=10` | close to cheapest first |
+| `…/flights?…&sort=match&budget=10&comfort=90` | direct flights before flights with stops |
 | `…/cars?…&sort=match&budget=0&comfort=0` | usual order, `rankingNote` set, no `match` |
 | `…/hotels?sort=match&culture=101` | `400`, field `culture` |

@@ -6,7 +6,10 @@ public enum Scale
     /// <summary>Already from 0 to 1 (e.g. a review score / 10). Doesn't depend on the other offers.</summary>
     Fixed,
 
-    /// <summary>Lowest in the list is 1, highest is 0, linear in between (price).</summary>
+    /// <summary>
+    /// By position (price): the lowest in the list is 1, the highest 0, evenly spaced by how many offers are lower, so one
+    /// very dear offer doesn't squeeze the others together (research R-3). Equal values share a position.
+    /// </summary>
     LowerIsBetter,
 
     /// <summary>The value divided by the list's highest (nearby counts): none is 0, the most is 1.</summary>
@@ -147,7 +150,7 @@ public static class ScoringEngine
 
         return part.Scale switch
         {
-            Scale.LowerIsBetter => (max - x) / (max - min),
+            Scale.LowerIsBetter => 1 - ((double)list.Count(v => v < x) / (list.Length - 1)),
             Scale.ShareOfMost => max <= 0 ? 0 : Math.Clamp(x / max, 0, 1),
             Scale.ShareOfLeast => x <= 0 ? 1 : Math.Clamp(min / x, 0, 1),
             _ => throw new ArgumentOutOfRangeException(nameof(part), part.Scale, "Unknown scale."),

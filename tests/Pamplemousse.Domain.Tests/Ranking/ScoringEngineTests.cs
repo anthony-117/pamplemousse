@@ -56,6 +56,23 @@ public class ScoringEngineTests
     }
 
     [Fact]
+    public void Price_is_scored_by_position_so_one_dear_offer_does_not_squeeze_the_rest()
+    {
+        // Linear, 300 would score (1400 - 300) / 1300 = 85%. By position it is the 3rd of 5: 50%.
+        var ranked = Rank(Prefs(budget: 100, comfort: 0), new Item("a", 1, 100, 1), new Item("b", 2, 200, 1), new Item("c", 3, 300, 1), new Item("d", 4, 400, 1), new Item("e", 5, 1400, 1));
+
+        Assert.Equal([100, 75, 50, 25, 0], ranked.Select(r => r.Match.Parts[0].Percent));
+    }
+
+    [Fact]
+    public void Offers_with_the_same_price_share_a_position()
+    {
+        var ranked = Rank(Prefs(budget: 100, comfort: 0), new Item("a", 1, 100, 1), new Item("b", 2, 100, 1), new Item("c", 3, 300, 1));
+
+        Assert.Equal([100, 100, 0], ranked.Select(r => r.Match.Parts[0].Percent));
+    }
+
+    [Fact]
     public void A_preference_with_weight_zero_is_left_out()
     {
         var match = Rank(Prefs(budget: 0, comfort: 50), new Item("a", 1, 100, 0.6), new Item("b", 2, 200, 0.4))[0].Match;

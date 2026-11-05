@@ -97,3 +97,28 @@ The phrases are code constants in Domain, checked by tests. They can be reworded
 A hotel search keeps 20 hotels (one source page) by default. Fetching page 2 costs a paid request, and would
 re-order page 1. So sort=match ranks only the hotels already fetched for the search: `totalPages` is the number
 of pages fetched, and asking for a later page returns it empty with a message. Other sorts keep today's paging.
+
+## R-6 · Changes after the live checks (5 Nov 2026)
+
+With Low at 20 and price scored linearly from cheapest to dearest, Rome failed SC-001: 6 of the top 10 were
+among the 10 cheapest, against a target of 8. There were two causes:
+
+- **Weight balance.** One High (90) was outweighed by five Lows (5 × 20 = 100).
+- **Price scale.** One dear hotel ($1,371) squeezed the rest together, so the 8th cheapest still scored 76%.
+
+Two changes, approved by the owner:
+
+- The app's Low sends **10** instead of 20.
+- Price is scored **by position**: 1 − (offers cheaper than this one) ÷ (offers − 1). The cheapest is 1 and the
+  dearest 0. Offers with the same price share a position. This matches the budget detail ("the 4th cheapest of 20").
+
+Measured on the same live lists:
+
+| Low | Price score | Rome SC-001 | Paris SC-001 |
+|---|---|---|---|
+| 20 | linear | 6/10 | 8/10 |
+| 20 | by position | 7/10 | 8/10 |
+| 10 | linear | 7/10 | 9/10 |
+| 10 | by position | 9/10 | 10/10 |
+
+SC-002 (culture) was unchanged in every case.
