@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-06
 
-**Status**: Approved by the owner on 2026-11-06. Design: Figma v0.2 screen 08 "Itinerary" and web W4 (approved 2026-10-27); screen 11 "My plans" and web W7. A Sprint 4 Figma page comes after this spec is approved.
+**Status**: Approved by the owner on 2026-11-06. Design: Figma v0.2 screen 08 "Itinerary" and web W4 (approved 2026-10-27); screen 11 "My plans" and web W7. Sprint 4 Figma page "Sprint 4 — Accounts & itinerary" (I0–I6, W4), approved 2026-11-06.
 
 **Input**: User description: "TG-10: As Fares, I want a complete day-by-day itinerary with a match score."
 
