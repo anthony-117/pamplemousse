@@ -6,6 +6,7 @@ using Pamplemousse.Api.ViewModels;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Flights;
+using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Api.Tests.Destinations;
 
@@ -166,5 +167,39 @@ public sealed class FlightEndpointsTests : IClassFixture<TestApiFactory>
         Assert.NotNull(result);
         Assert.Equal("BEY", result.Destination.Code);
         Assert.True(result.Destination.IsNearby);
+    }
+
+    [Fact]
+    public async Task Sort_by_match_with_comfort_first_puts_the_direct_flight_first()
+    {
+        _factory.Flights.Offers = [FakeFlights.Offer("tp:cheap", 90) with { Stops = 2 }, FakeFlights.Offer("tp:dear", 240)];
+
+        var result = await GetAsync("&sort=match&budget=20&comfort=90");
+
+        Assert.Equal(FlightSort.Match, result!.Sort);
+        Assert.Equal(["tp:dear", "tp:cheap"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.Equal(new WeightsViewModel(20, 50, 50, 50, 50, 90), result.Weights);
+        Assert.Equal([Criterion.Budget, Criterion.Comfort], result.Items[0].Match!.Parts.Select(p => p.Criterion));
+    }
+
+    [Fact]
+    public async Task The_default_order_is_cheapest_first_without_a_match()
+    {
+        var result = await GetAsync("");
+
+        Assert.Equal(FlightSort.Cheapest, result!.Sort);
+        Assert.All(result.Items, i => Assert.Null(i.Match));
+        Assert.Null(result.Weights);
+    }
+
+    [Theory]
+    [InlineData("&sort=fastest", "sort")]
+    [InlineData("&comfort=200", "comfort")]
+    public async Task Bad_ranking_values_are_a_400_naming_the_field(string query, string field)
+    {
+        var response = await _client.GetAsync(new Uri($"/api/v1/destinations/{Rome}/flights?origin={Paris}&{Dates()}{query}", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(field, await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 }

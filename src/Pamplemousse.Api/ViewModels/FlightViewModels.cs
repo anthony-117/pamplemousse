@@ -13,7 +13,11 @@ public sealed record FlightSearchViewModel(
     string PriceNote,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    FlightSort Sort,
+    WeightsViewModel? Weights,
+    decimal? TripBudget,
+    string? RankingNote);
 
 public sealed record FlightEndpointViewModel(string Id, string Name, string? FlightCity, string? Code, bool IsNearby, double? DistanceKm);
 
@@ -31,4 +35,5 @@ public sealed record FlightViewModel(
     MoneyViewModel Price,
     string BookingUrl,
     DateMatch DateMatch,
-    string Source);
+    string Source,
+    MatchViewModel? Match);

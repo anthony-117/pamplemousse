@@ -2,10 +2,12 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Hotels;
+using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Application.Hotels.Queries.SearchHotels;
 
@@ -22,7 +24,8 @@ public sealed record SearchHotelsQuery(
     decimal? MaxPrice = null,
     IReadOnlyList<string>? StayTypes = null,
     bool? FreeCancellation = null,
-    int? Page = null);
+    int? Page = null,
+    RankingInput? Ranking = null);
 
 /// <summary>The destination asked for, and the source's city used for it when the names differ.</summary>
 public sealed record HotelDestination(string Id, string Name, string? SourceName);
@@ -44,7 +47,8 @@ public sealed record SearchHotelsResponse(
     int? FiltersCheckedOn,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    RankingResult? Ranking = null);
 
 /// <summary>
 /// Hotels for a destination and dates (spec 002). Prices come from the cache when an identical search was answered in the
@@ -61,6 +65,7 @@ public sealed partial class SearchHotelsHandler(
     ISearchLock searchLock,
     HotelSettings settings,
     TimeProvider clock,
+    HotelNearby nearby,
     ILogger<SearchHotelsHandler> logger) : IQueryHandler<SearchHotelsQuery, SearchHotelsResponse>
 {
     private static readonly TimeSpan LockTime = TimeSpan.FromSeconds(30);
@@ -75,15 +80,19 @@ public sealed partial class SearchHotelsHandler(
         var search = HotelSearch.Create(destination.Id, dates, query.Adults, query.Currency);
         var filters = HotelFilters.Create(
             query.Sort, query.MinStars, query.MinReviewScore, query.MinPrice, query.MaxPrice, query.StayTypes, query.FreeCancellation, query.Page);
+        var byMatch = filters.Sort == HotelSort.Match;
+        var preferences = RankingResult.PreferencesFor(query.Ranking, byMatch);
 
         var store = new HotelData(hotels, history, cities, logger);
         var run = new Run(search, store);
 
-        // Our page N needs source page N, since both hold 20 hotels.
-        var prices = await LoadPricesAsync(destination, run, Math.Max(settings.PagesPerSearch, filters.Page), ct);
+        // Our page N needs source page N, since both hold 20 hotels. Ranking by match covers only the pages fetched anyway,
+        // so a later page costs nothing (research R-5).
+        var pages = byMatch ? settings.PagesPerSearch : Math.Max(settings.PagesPerSearch, filters.Page);
+        var prices = await LoadPricesAsync(destination, run, pages, ct);
         if (prices is null)
         {
-            return Respond(destination, run, filters, null, [], [], run.Message ?? NoHotels);
+            return Respond(destination, run, filters, null, [], [], run.Message ?? NoHotels, Unranked(preferences));
         }
 
         var ids = prices.Prices.Select(p => p.HotelId).ToList();
@@ -97,16 +106,52 @@ public sealed partial class SearchHotelsHandler(
             .Where(p => run.Hotels.ContainsKey(p.HotelId))
             .Select(p => ToOffer(run.Hotels[p.HotelId], p, prices.FetchedAt, search, destination.Location))
             .ToList();
-        var matched = filters.Apply(offers);
+        IReadOnlyList<HotelOffer> matched = filters.Apply(offers);
+        RankingResult? ranking = null;
+        if (preferences is not null)
+        {
+            (matched, ranking) = await RankAsync(destination, matched, preferences, byMatch, run, ct);
+        }
+
         var message = matched.Count > 0 ? null : offers.Count > 0 ? NoMatch : NoHotels;
-        return Respond(destination, run, filters, prices, offers, matched, message);
+        if (byMatch && matched.Count > 0 && filters.PageOf(matched).Count == 0)
+        {
+            message = RankedEarlier;
+        }
+
+        return Respond(destination, run, filters, prices, offers, matched, message, ranking);
+    }
+
+    private static RankingResult? Unranked(Preferences? preferences) =>
+        preferences is null ? null : new RankingResult(preferences.Weights, preferences.TripBudget, new Dictionary<string, Match>(StringComparer.Ordinal), null);
+
+    /// <summary>Scores the hotels (spec 007). With sort=match they are reordered; otherwise each only gains its match.</summary>
+    private async Task<(IReadOnlyList<HotelOffer> Offers, RankingResult Ranking)> RankAsync(
+        Destination destination, IReadOnlyList<HotelOffer> matched, Preferences preferences, bool byMatch, Run run, CancellationToken ct)
+    {
+        if (ScoringEngine.NothingApplies(HotelRanking.Used, preferences.Weights))
+        {
+            return (matched, RankingResult.Unranked(preferences, "hotels"));
+        }
+
+        var (around, warning) = await nearby.ForAsync(destination, matched, preferences.Weights, ct);
+        if (warning is not null)
+        {
+            run.Warnings.Add(warning);
+        }
+
+        var ranked = HotelRanking.Rank(matched, around, preferences, run.Search.Currency);
+        var result = RankingResult.Of(preferences, ranked, o => o.Hotel.Id);
+        return (byMatch ? [.. ranked.Select(r => r.Offer)] : matched, result);
     }
 
     private const string NoHotels = "No hotels are available for these dates. Search the booking site for more.";
     private const string NoMatch = "No hotels match these filters. Try fewer filters, or search the booking site.";
+    private const string RankedEarlier = "All the ranked hotels are on the earlier pages.";
 
     private SearchHotelsResponse Respond(
-        Destination destination, Run run, HotelFilters filters, CachedHotelSearch? prices, List<HotelOffer> offers, IReadOnlyList<HotelOffer> matched, string? message)
+        Destination destination, Run run, HotelFilters filters, CachedHotelSearch? prices, List<HotelOffer> offers, IReadOnlyList<HotelOffer> matched, string? message,
+        RankingResult? ranking)
     {
         var sourceName = prices?.SourceName ?? run.SourceName;
         var renamed = sourceName is not null && !SameName(sourceName, destination.Name) ? sourceName : null;
@@ -119,7 +164,7 @@ public sealed partial class SearchHotelsHandler(
             filters.Sort,
             filters.Page,
             matched.Count,
-            Math.Max(prices?.TotalPages ?? 0, filters.Page),
+            filters.Sort == HotelSort.Match ? Math.Max(1, (matched.Count + HotelFilters.PageSize - 1) / HotelFilters.PageSize) : Math.Max(prices?.TotalPages ?? 0, filters.Page),
             prices?.FetchedAt,
             run.IsSaved,
             filters.PageOf(matched),
@@ -127,7 +172,8 @@ public sealed partial class SearchHotelsHandler(
             filters.NeedsDetails ? offers.Count(o => o.Hotel.HasDetails) : null,
             message,
             matched.Count == 0 ? provider.SearchUrl(destination, run.Search) : null,
-            [.. run.Warnings, .. run.Store.Warnings]);
+            [.. run.Warnings, .. run.Store.Warnings],
+            ranking);
     }
 
     /// <summary>

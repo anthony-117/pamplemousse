@@ -2,9 +2,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Application.Tests.Destinations;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Hotels;
+using Pamplemousse.Domain.Places;
 
 namespace Pamplemousse.Application.Tests.Hotels;
 
@@ -17,7 +19,8 @@ public class SearchHotelsHandlerTests
     private readonly MovableClock _clock = new();
 
     private SearchHotelsHandler Handler(HotelSettings? settings = null) => new(
-        new Fakes(), _provider, _store, _store, _store, _cache, _lock, settings ?? new HotelSettings(), _clock, NullLogger<SearchHotelsHandler>.Instance);
+        new Fakes(), _provider, _store, _store, _store, _cache, _lock, settings ?? new HotelSettings(), _clock,
+        new HotelNearby(new FakeNearby(), [new FakePlaces(PlaceCategory.Attraction)], NullLogger<HotelNearby>.Instance), NullLogger<SearchHotelsHandler>.Instance);
 
     private static SearchHotelsQuery Query(string? sort = null, int? minReview = null, int? page = null, int? adults = null, string destination = "3169070") =>
         new(destination, new DateOnly(2027, 4, 10), new DateOnly(2027, 4, 14), adults, null, sort, MinReviewScore: minReview, Page: page);

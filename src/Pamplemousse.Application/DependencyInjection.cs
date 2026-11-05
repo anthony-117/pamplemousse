@@ -18,6 +18,7 @@ using Pamplemousse.Application.Flights.Queries.SearchFlights;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Application.Hotels.Queries.GetHotel;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 
 namespace Pamplemousse.Application;
 
@@ -38,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetHotelQuery, GetHotelResponse>, GetHotelHandler>();
         services.AddScoped<IQueryHandler<GetCarPlacesQuery, GetCarPlacesResponse>, GetCarPlacesHandler>();
         services.AddScoped<IQueryHandler<SearchCarsQuery, SearchCarsResponse>, SearchCarsHandler>();
+        services.AddScoped<HotelNearby>();
         services.AddScoped<AssistantTools>();
         services.AddScoped<IQueryHandler<AskAssistantQuery, AskAssistantResponse>, AskAssistantHandler>();
 

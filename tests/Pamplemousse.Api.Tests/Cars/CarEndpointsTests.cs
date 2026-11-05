@@ -186,4 +186,25 @@ public sealed class CarEndpointsTests : IClassFixture<TestApiFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Sort_by_match_on_budget_puts_the_cheapest_first_with_a_breakdown()
+    {
+        var result = await SearchAsync("&sort=match&budget=100&comfort=0&tripBudget=200");
+
+        Assert.Equal(CarSort.Match, result!.Sort);
+        Assert.Equal("bk:2", result.Items[0].Id);
+        Assert.Equal((100, false), (result.Items[0].Match!.Percent, result.Items[0].Match!.OverBudget));
+        Assert.True(result.Items[^1].Match!.OverBudget);
+        Assert.Equal(200m, result.TripBudget);
+    }
+
+    [Fact]
+    public async Task Budget_and_comfort_at_zero_give_a_note_and_no_match()
+    {
+        var result = await SearchAsync("&sort=match&budget=0&comfort=0");
+
+        Assert.Equal("None of your preferences apply to cars, so they are in the usual order.", result!.RankingNote);
+        Assert.All(result.Items, i => Assert.Null(i.Match));
+    }
 }

@@ -12,6 +12,9 @@ public enum CarSort
 
     /// <summary>Best-rated rental company first.</summary>
     Rating,
+
+    /// <summary>Best match for the traveller's preferences first (spec 007). The filters keep the source's order; the ranking orders them.</summary>
+    Match,
 }
 
 /// <summary>A filter value present in a search, and how many cars have it.</summary>
@@ -84,7 +87,7 @@ public sealed record CarFilters
         var order = CarSort.Recommended;
         if (sort is not null && (!Enum.TryParse(sort, ignoreCase: true, out order) || !Enum.IsDefined(order) || IsNumber(sort)))
         {
-            throw new DomainException("Use 'recommended', 'price' or 'rating'.", "sort");
+            throw new DomainException("Use 'recommended', 'price', 'rating' or 'match'.", "sort");
         }
 
         Gearbox? box = null;

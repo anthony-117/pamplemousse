@@ -3,6 +3,7 @@ using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Application.Cars;
 using Pamplemousse.Application.Cars.Queries.GetCarPlaces;
 using Pamplemousse.Application.Cars.Queries.SearchCars;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Application.Tests.Destinations;
 using Pamplemousse.Application.Tests.Hotels;
 using Pamplemousse.Domain.Cars;
@@ -295,5 +296,53 @@ public class SearchCarsHandlerTests
 
         Assert.Equal(["centre", "FCO"], old.Places.Select(p => p.Id), StringComparer.Ordinal);
         Assert.Empty(old.Warnings);
+    }
+
+    private static SearchCarsQuery Ranked(string? sort, int? budget, int? comfort, decimal? tripBudget = null) =>
+        Query(sort: sort) with { Ranking = new RankingInput(budget, null, null, null, null, comfort, tripBudget) };
+
+    [Fact]
+    public async Task Sort_by_match_puts_the_best_fit_first()
+    {
+        _provider.Cars.AddRange([CarFakes.Car(1, 300, size: "Mini", rating: 6.0), CarFakes.Car(2, 320, model: "VW Passat", size: "Standard", rating: 9.0)]);
+
+        var result = await Handler().HandleAsync(Ranked("match", budget: 10, comfort: 90), CancellationToken.None);
+
+        Assert.Equal(CarSort.Match, result.Sort);
+        Assert.Equal(["bk:2", "bk:1"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.Equal(2, result.Ranking!.Matches.Count);
+    }
+
+    [Fact]
+    public async Task Cars_over_the_trip_budget_come_last()
+    {
+        _provider.Cars.AddRange([CarFakes.Car(1, 300, model: "VW Passat", size: "Standard", rating: 9.0), CarFakes.Car(2, 150, size: "Mini", rating: 6.0)]);
+
+        var result = await Handler().HandleAsync(Ranked("match", budget: 0, comfort: 100, tripBudget: 200), CancellationToken.None);
+
+        Assert.Equal(["bk:2", "bk:1"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.True(result.Ranking!.Matches["bk:1"].OverBudget);
+    }
+
+    [Fact]
+    public async Task Preferences_with_another_sort_keep_that_order()
+    {
+        TwoCars();
+
+        var result = await Handler().HandleAsync(Ranked("price", budget: 0, comfort: 100), CancellationToken.None);
+
+        Assert.Equal(["bk:2", "bk:1"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.NotEmpty(result.Ranking!.Matches);
+    }
+
+    [Fact]
+    public async Task Budget_and_comfort_at_zero_leave_the_usual_order_with_a_note()
+    {
+        TwoCars();
+
+        var result = await Handler().HandleAsync(Ranked("match", budget: 0, comfort: 0), CancellationToken.None);
+
+        Assert.Equal(["bk:1", "bk:2"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.Equal("None of your preferences apply to cars, so they are in the usual order.", result.Ranking!.Note);
     }
 }

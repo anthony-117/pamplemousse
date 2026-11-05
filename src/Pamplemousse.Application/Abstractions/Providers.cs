@@ -57,6 +57,15 @@ public interface IPlaceProvider
     Task<Place?> GetAsync(string providerId, CancellationToken ct);
 }
 
+/// <summary>How many places of each kind are around a position (spec 007, research R-1). 500 means 500 or more.</summary>
+public sealed record NearbyCounts(int Food, int Nightlife, int Nature);
+
+/// <summary>Counts restaurants and cafés and bars and pubs within 1 km, and parks and natural sites within 2 km, of a position.</summary>
+public interface INearbyPlaces
+{
+    Task<NearbyCounts> CountAsync(GeoPoint position, CancellationToken ct);
+}
+
 /// <summary>Recent flight prices for a search, cheapest first.</summary>
 public interface IFlightProvider
 {

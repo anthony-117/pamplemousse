@@ -13,6 +13,7 @@ using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
 using Pamplemousse.Application.Flights.Queries.SearchFlights;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 
 namespace Pamplemousse.Api.Controllers;
 
@@ -85,7 +86,7 @@ public sealed class DestinationsController : ControllerBase
 
     [HttpGet("{id}/flights")]
     [EndpointName("SearchFlights")]
-    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first (Travelpayouts).")]
+    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first or by match (Travelpayouts).")]
     public async Task<ActionResult<FlightSearchViewModel>> GetFlightsAsync(
         string id,
         [FromQuery] SearchFlightsRequest request,
@@ -93,7 +94,10 @@ public sealed class DestinationsController : ControllerBase
         CancellationToken ct)
     {
         var flights = await handler.HandleAsync(
-            new SearchFlightsQuery(id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit), ct);
+            new SearchFlightsQuery(
+                id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit, request.Sort,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
+            ct);
         return Ok(flights.ToViewModel());
     }
 
@@ -109,7 +113,8 @@ public sealed class DestinationsController : ControllerBase
         var hotels = await handler.HandleAsync(
             new SearchHotelsQuery(
                 id, request.From, request.To, request.Adults, request.Currency, request.Sort, request.MinStars, request.MinReview,
-                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page),
+                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
             ct);
         return Ok(hotels.ToViewModel());
     }
@@ -139,7 +144,8 @@ public sealed class DestinationsController : ControllerBase
             new SearchCarsQuery(
                 id, request.From, request.To, request.Place, request.DriverAge, request.Currency, request.Sort, request.Size,
                 request.Gearbox, request.MinSeats, request.MinBags, request.Company, request.PickUpType, request.MaxPrice,
-                request.FreeCancellation, request.Page),
+                request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
             ct);
         return Ok(cars.ToViewModel());
     }
