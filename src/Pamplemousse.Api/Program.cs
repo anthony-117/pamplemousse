@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Pamplemousse.Api;
+using Pamplemousse.Api.Auth;
 using Pamplemousse.Api.Middleware;
 using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application;
@@ -48,6 +49,9 @@ builder.Services.AddCors(options => options.AddPolicy(AppCorsPolicy, policy => p
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
+// Every route needs a Firebase sign-in unless marked [AllowAnonymous] (spec 009, ADR 0019).
+builder.Services.AddFirebaseSignIn(Env.FirebaseProjectId);
+
 // The assistant spends the shared Gemini free tier: limited per client and overall (spec 003, FR-015).
 builder.Services.AddAssistantRateLimits(builder.Configuration);
 
@@ -60,16 +64,20 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(AppCorsPolicy);
 
+// After CORS, so a browser can read a 401.
+app.UseAuthentication();
+app.UseAuthorization();
+
 // After CORS, so the web app can read a 429.
 app.UseRateLimiter();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 
     // Interactive API reference at /scalar, built from /openapi/v1.json.
-    app.MapScalarApiReference(o => o.WithTitle("pamplemousse API"));
+    app.MapScalarApiReference(o => o.WithTitle("pamplemousse API")).AllowAnonymous();
 }
 
 app.MapDefaultEndpoints();

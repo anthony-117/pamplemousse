@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http.Resilience;
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Infrastructure.Accounts;
 using Pamplemousse.Infrastructure.Assistant;
 using Pamplemousse.Infrastructure.Caching;
 using Pamplemousse.Infrastructure.Providers;
@@ -137,13 +138,19 @@ public static class DependencyInjection
             }.Build());
             services.AddSingleton<FirestoreHotelData>();
             services.AddSingleton<FirestoreCarData>();
+            services.AddSingleton<ITravelProfileStore, FirestoreTravelProfiles>();
+            services.AddSingleton<IAccountDeleter>(_ => new FirebaseAccountDeleter(keys.FirebaseProjectId, keys.GoogleCredentialsPath));
             services.AddHostedService<FirestoreWarmUp>();
         }
         else
         {
             services.AddSingleton<InMemoryHotelData>();
             services.AddSingleton<InMemoryCarData>();
+            services.AddSingleton<ITravelProfileStore, InMemoryTravelProfiles>();
+            services.AddSingleton<IAccountDeleter, NotConfiguredAccountDeleter>();
         }
+
+        services.AddSingleton<IDeletedTravellers, DeletedTravellers>();
 
         services.AddSingleton(Store<ICityMappingStore>);
         services.AddSingleton(Store<IHotelStore>);

@@ -1,10 +1,12 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pamplemousse.Api.ViewModels;
 
 namespace Pamplemousse.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/v1/system")]
 [Tags("System")]
 public sealed class SystemController(IHostEnvironment env, TimeProvider clock) : ControllerBase

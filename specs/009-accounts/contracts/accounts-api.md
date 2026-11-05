@@ -25,7 +25,6 @@ no other client yet.
 
 ```json
 {
-  "type": "https://httpstatuses.io/401",
   "title": "Sign in again.",
   "status": 401,
   "code": "sign-in-required"

@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Google.Cloud.Firestore" />
+    <PackageReference Include="FirebaseAdmin" />
     <PackageReference Include="Google.GenAI" />
     <PackageReference Include="Microsoft.Extensions.AI" />
   </ItemGroup>

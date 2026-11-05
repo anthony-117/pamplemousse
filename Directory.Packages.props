@@ -21,6 +21,12 @@
     <PackageVersion Include="Google.Cloud.Firestore" Version="4.5.0" />
   </ItemGroup>
 
+  <!-- Sign-in (ADR 0019): Firebase ID tokens checked by the JWT bearer handler; the Admin SDK only deletes accounts. -->
+  <ItemGroup Label="Sign-in">
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <PackageVersion Include="FirebaseAdmin" Version="3.7.0" />
+  </ItemGroup>
+
   <!-- Assistant (ADR 0005, ADR 0018): IChatClient and tools in Application, the tool loop and Gemini in Infrastructure. -->
   <ItemGroup Label="AI">
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.11.0" />
