@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-05
 
-**Status**: Approved by the owner on 2026-11-05. Design: Figma v0.2 screens 06 "Plan setup & preferences" and 07 "Ranked results" (approved 2026-10-27); a "Sprint 3 — Weighted search" page fits them to real data before the plan.
+**Status**: Approved by the owner on 2026-11-05. Design: Figma v0.2 screens 06 "Plan setup & preferences" and 07 "Ranked results" (approved 2026-10-27); Figma page "Sprint 3 — Weighted search", approved 2026-11-05.
 
 **Input**: User description: "TG-09: As Fares, I want to weight budget, culture, food and style and get ranked options."
 
