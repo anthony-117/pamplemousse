@@ -2,7 +2,7 @@
 
 **Branch**: `008-itinerary` | **Date**: 2026-11-06 | **Spec**: [spec.md](spec.md)
 
-**Status**: Draft, waiting for the owner's approval
+**Status**: Approved by the owner on 2026-11-06, with the spec changes below
 
 ## Summary
 
