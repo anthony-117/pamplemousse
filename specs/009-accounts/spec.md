@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-06
 
-**Status**: Draft, for the owner's review. Design: Figma v0.2 screen 01 "Welcome & sign in" and web W5, screen 12 "Profile & preferences" and web W9 (approved 2026-10-27). A Sprint 4 Figma page with the missing states comes after this spec is approved.
+**Status**: Approved by the owner on 2026-11-06. Design: Figma v0.2 screen 01 "Welcome & sign in" and web W5, screen 12 "Profile & preferences" and web W9 (approved 2026-10-27). A Sprint 4 Figma page with the missing states comes after this spec is approved.
 
 **Input**: User description: "TG-17: As Fares, I want to sign in with email or Google so my plans and travel profile are mine on every device." The owner decided on 2026-11-06 that signing in is required before using the app, with no anonymous use.
 
