@@ -4,7 +4,7 @@
 
 - Hosting: Docker on Google Cloud Run
 - Data: Redis (12-hour hotel and 1-day car search results, locks, request counts) and Firestore (hotels, cities, price history, car searches), ADR 0017; Postgres + pgvector for the chatbot later
-- External sources: Booking COM API on RapidAPI (hotels and rental cars, ADR 0016), Travelpayouts (flights), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
+- External sources: Booking COM API on RapidAPI (hotels and rental cars, ADR 0016), Travelpayouts (flights), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback, places near hotels for weighted search), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
 - Clients: `chocomousse` (Flutter, sibling repo) via OpenAPI; Telegram bot via webhook
 
 Documentation about the code is in [`docs/`](docs/README.md), and the project's rules are in the [constitution](.specify/memory/constitution.md). Non-code material (Figma, presentations, studies) is in the OneDrive FYP folder.
@@ -46,7 +46,7 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 |---|---|---|
 | `TRAVELPAYOUTS_API_TOKEN` | Flights | Flights return a warning |
 | `TRAVELPAYOUTS_MARKER` | Partner ID on booking links | Links work, but earn no commission; the server log says so |
-| `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details | Restaurants return a warning; attractions still come from Wikidata |
+| `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details, places near hotels | Restaurants return a warning; attractions still come from Wikidata; weighted hotel search counts food, nature and nightlife as average |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
 | `RAPIDAPI_KEY` | Hotels and cars (Booking COM API) | Hotels and cars return saved prices or a warning; car pick-up is the city centre only |
 | `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities, price history and car searches | Hotel and car data is kept in memory only; the log says so |
@@ -65,11 +65,11 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/api/v1/destinations/{id}/overview?passport=LB&currency=USD&from=&to=` | Weather, exchange rate, holidays, visa, safety advisory for the dates |
 | GET | `/api/v1/destinations/{id}/places?category=attraction\|restaurant&limit=20` | Top attractions or restaurants |
 | GET | `/api/v1/destinations/{id}/events?from=&to=` | Events during the dates |
-| GET | `/api/v1/destinations/{id}/flights?origin=&from=&to=&tripType=&directOnly=&currency=&limit=` | Recent flight prices, cheapest first ([contract](specs/001-flights/contracts/flights-api.md)) |
-| GET | `/api/v1/destinations/{id}/hotels?from=&to=&adults=&currency=&sort=&minStars=&minReview=&minPrice=&maxPrice=&stayType=&freeCancellation=&page=` | Hotels with the total for the stay, sorted and filtered on stored data ([contract](specs/002-hotels/contracts/hotels-api.md)) |
+| GET | `/api/v1/destinations/{id}/flights?origin=&from=&to=&tripType=&directOnly=&currency=&limit=&sort=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Recent flight prices, cheapest first or by match ([contract](specs/001-flights/contracts/flights-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
+| GET | `/api/v1/destinations/{id}/hotels?from=&to=&adults=&currency=&sort=&minStars=&minReview=&minPrice=&maxPrice=&stayType=&freeCancellation=&page=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Hotels with the total for the stay, sorted and filtered on stored data, or ranked by match ([contract](specs/002-hotels/contracts/hotels-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
 | GET | `/api/v1/hotels/{hotelId}?from=&to=&adults=&currency=` | One hotel's details and its Booking.com link (`bk:…`) |
 | GET | `/api/v1/destinations/{id}/car-places` | Where a rental car can be picked up: the city centre, then airports within 50 km |
-| GET | `/api/v1/destinations/{id}/cars?from=&to=&place=&driverAge=&currency=&sort=&size=&gearbox=&minSeats=&minBags=&company=&pickUpType=&maxPrice=&freeCancellation=&page=` | Rental cars with the total for the rental, sorted and filtered on one saved search ([contract](specs/004-cars/contracts/cars-api.md)) |
+| GET | `/api/v1/destinations/{id}/cars?from=&to=&place=&driverAge=&currency=&sort=&size=&gearbox=&minSeats=&minBags=&company=&pickUpType=&maxPrice=&freeCancellation=&page=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Rental cars with the total for the rental, sorted and filtered on one saved search, or ranked by match ([contract](specs/004-cars/contracts/cars-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
 | POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |

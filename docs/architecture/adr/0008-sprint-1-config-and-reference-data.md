@@ -14,6 +14,7 @@ Sprint 1 needs city search, country facts and visa rules, plus API keys that do 
 5. **Map:** a lightweight pin preview until a Google Maps key is configured.
 6. **US State Department** level (1–4) is the single safety score; UK FCDO text is not used yet.
 7. **Google Places is on hold (amended 27 Oct 2026).** Restaurants come from OpenTripMap's `foods` category (restaurants, cafés, bars) with the same key as attractions. Trade-off: no ratings, price levels or opening hours, so Sprint 3 cannot score restaurants on food quality or budget until a richer source is chosen. Revisit before Sprint 3 (options: Google Places at the Pro tier, Geoapify, Foursquare). This changes the restaurants line of ADR 0003.
+8. **Food in weighted search is a count, not a quality (amended 5 Nov 2026, spec 007).** Weighted search still needs no richer source: food, nightlife and nature are how many OpenTripMap places are within 1–2 km of each hotel (two free requests per hotel, kept 30 days, two hotels at a time to stay under the free key's rate limit). Google Places stays on hold. See `specs/007-weighted-search/research.md` R-1.
 
 ## Consequences
 - The app works end-to-end with zero keys (weather, currency, holidays, visas, safety, countries, cities).
