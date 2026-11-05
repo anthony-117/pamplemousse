@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Application.Flights.Queries.SearchFlights;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Application.Tests.Destinations;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Flights;
+using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Application.Tests.Flights;
 
@@ -205,5 +207,56 @@ public class SearchFlightsHandlerTests
         var result = await Handler(new FakeProvider { Error = error }, TwoCities()).HandleAsync(Query(), CancellationToken.None);
 
         Assert.Contains("TRAVELPAYOUTS_API_TOKEN", result.Warnings[0], StringComparison.Ordinal);
+    }
+
+    private static FlightOffer WithStops(decimal price, int stops) => Offer(price) with { Id = $"tp:{price}:{stops}", Stops = stops, DurationMinutes = 120 + (stops * 150) };
+
+    private static SearchFlightsQuery Ranked(string? sort, int? budget, int? comfort, int? limit = null) =>
+        Query(limit: limit) with { Sort = sort, Ranking = new RankingInput(budget, null, null, null, null, comfort, null) };
+
+    [Fact]
+    public async Task Sort_by_match_ranks_every_offer_before_the_limit()
+    {
+        // The direct flight is the dearest, so cheapest-first with a limit of 1 would never show it.
+        var provider = new FakeProvider { Offers = [WithStops(90, 2), WithStops(120, 1), WithStops(200, 0)] };
+
+        var result = await Handler(provider, TwoCities()).HandleAsync(Ranked("match", budget: 20, comfort: 90, limit: 1), CancellationToken.None);
+
+        Assert.Equal(FlightSort.Match, result.Sort);
+        Assert.Equal("tp:200:0", Assert.Single(result.Items).Id);
+        Assert.Equal(3, result.Ranking!.Matches.Count);
+        Assert.Contains("Direct", result.Ranking.Matches["tp:200:0"].Parts.Single(p => p.Criterion == Criterion.Comfort).Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Preferences_with_the_cheapest_sort_keep_the_order_and_add_the_match()
+    {
+        var provider = new FakeProvider { Offers = [WithStops(90, 2), WithStops(200, 0)] };
+
+        var result = await Handler(provider, TwoCities()).HandleAsync(Ranked(null, budget: 20, comfort: 90), CancellationToken.None);
+
+        Assert.Equal(FlightSort.Cheapest, result.Sort);
+        Assert.Equal(["tp:90:2", "tp:200:0"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.Equal([Criterion.Budget, Criterion.Comfort], result.Ranking!.Matches["tp:90:2"].Parts.Select(p => p.Criterion));
+    }
+
+    [Fact]
+    public async Task Budget_and_comfort_at_zero_leave_the_usual_order_with_a_note()
+    {
+        var provider = new FakeProvider { Offers = [WithStops(90, 2), WithStops(200, 0)] };
+
+        var result = await Handler(provider, TwoCities()).HandleAsync(Ranked("match", budget: 0, comfort: 0), CancellationToken.None);
+
+        Assert.Equal(["tp:90:2", "tp:200:0"], result.Items.Select(i => i.Id), StringComparer.Ordinal);
+        Assert.Empty(result.Ranking!.Matches);
+        Assert.Equal("None of your preferences apply to flights, so they are in the usual order.", result.Ranking.Note);
+    }
+
+    [Fact]
+    public async Task An_unknown_sort_names_the_field()
+    {
+        var ex = await Assert.ThrowsAsync<DomainException>(() => Handler(new FakeProvider()).HandleAsync(Query() with { Sort = "fastest" }, CancellationToken.None));
+
+        Assert.Equal("sort", ex.Field);
     }
 }

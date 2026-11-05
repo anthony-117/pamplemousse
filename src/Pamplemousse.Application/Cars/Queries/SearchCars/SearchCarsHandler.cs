@@ -2,10 +2,12 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Domain.Cars;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Domain.Exceptions;
+using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Application.Cars.Queries.SearchCars;
 
@@ -25,7 +27,8 @@ public sealed record SearchCarsQuery(
     IReadOnlyList<string>? PickUpTypes = null,
     decimal? MaxPrice = null,
     bool? FreeCancellation = null,
-    int? Page = null);
+    int? Page = null,
+    RankingInput? Ranking = null);
 
 public sealed record SearchCarsResponse(
     Destination Destination,
@@ -48,7 +51,8 @@ public sealed record SearchCarsResponse(
     string? DriverNote,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    RankingResult? Ranking = null);
 
 /// <summary>
 /// Rental cars for a destination, place, dates and driver (spec 004). One call to the source returns every car, so results come
@@ -83,6 +87,7 @@ public sealed partial class SearchCarsHandler(
         var filters = CarFilters.Create(
             query.Sort, query.Sizes, query.Gearbox, query.MinSeats, query.MinBags, query.Companies, query.PickUpTypes, query.MaxPrice,
             query.FreeCancellation, query.Page);
+        var preferences = RankingResult.PreferencesFor(query.Ranking, filters.Sort == CarSort.Match);
 
         var store = new CarData(airports, history, logger);
         var places = new CarPlaces(provider, store, settings, clock, logger);
@@ -92,7 +97,9 @@ public sealed partial class SearchCarsHandler(
         var warnings = new List<string>(places.Warnings);
         var (cars, isSaved) = await LoadAsync(search, destination.Location, store, warnings, ct);
         var offers = cars?.Cars ?? [];
-        var matched = filters.Apply(offers);
+        IReadOnlyList<CarOffer> matched = filters.Apply(offers);
+        var ranking = preferences is null ? null : Rank(ref matched, preferences, filters.Sort == CarSort.Match, search.Currency);
+
         // No cars at all means the source failed with nothing saved, so nothing is known about this place.
         var message = cars is null ? NotSearched : matched.Count > 0 ? null : offers.Count > 0 ? NoMatch : NoCars;
         var bookingUrl = provider.SearchUrl(destination, search);
@@ -118,7 +125,25 @@ public sealed partial class SearchCarsHandler(
             search.DriverNote,
             message,
             matched.Count == 0 ? bookingUrl : null,
-            [.. warnings, .. store.Warnings]);
+            [.. warnings, .. store.Warnings],
+            ranking);
+    }
+
+    /// <summary>Scores the cars (spec 007). With sort=match they are reordered; otherwise each only gains its match.</summary>
+    private static RankingResult Rank(ref IReadOnlyList<CarOffer> matched, Preferences preferences, bool byMatch, string currency)
+    {
+        if (ScoringEngine.NothingApplies(CarRanking.Used, preferences.Weights))
+        {
+            return RankingResult.Unranked(preferences, "cars");
+        }
+
+        var ranked = CarRanking.Rank(matched, preferences, currency);
+        if (byMatch)
+        {
+            matched = [.. ranked.Select(r => r.Offer)];
+        }
+
+        return RankingResult.Of(preferences, ranked, c => c.Id);
     }
 
     /// <summary>The search's cars: from the cache, then the source, then the last saved snapshot. Null when there are none at all.</summary>

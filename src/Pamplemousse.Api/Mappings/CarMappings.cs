@@ -3,6 +3,7 @@ using System.Text.Json;
 using Pamplemousse.Api.ViewModels;
 using Pamplemousse.Application.Cars.Queries.GetCarPlaces;
 using Pamplemousse.Application.Cars.Queries.SearchCars;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Domain.Cars;
 using Pamplemousse.Domain.Common;
 
@@ -30,7 +31,7 @@ internal static class CarMappings
             r.PricesFetchedAt,
             r.IsSavedPrice,
             r.MayHaveMore,
-            [.. r.Items.Select(c => c.ToViewModel(r.BookingUrl, r.Source))],
+            [.. r.Items.Select(c => c.ToViewModel(r.BookingUrl, r.Source, r.Ranking))],
             new CarFilterOptionsViewModel(
                 Options(r.FilterOptions.Sizes, v => v),
                 Options(r.FilterOptions.Companies, v => v),
@@ -40,10 +41,13 @@ internal static class CarMappings
             r.DriverNote,
             r.Message,
             r.SearchUrl,
-            r.Warnings);
+            r.Warnings,
+            MatchMappings.WeightsOf(r.Ranking),
+            r.Ranking?.TripBudget,
+            r.Ranking?.Note);
     }
 
-    private static CarViewModel ToViewModel(this CarOffer c, string bookingUrl, string source) => new(
+    private static CarViewModel ToViewModel(this CarOffer c, string bookingUrl, string source, RankingResult? ranking) => new(
         c.Id,
         c.Model,
         c.OrSimilar,
@@ -65,7 +69,8 @@ internal static class CarMappings
         Money(c.DamageExcess),
         c.Sponsored,
         bookingUrl,
-        source);
+        source,
+        MatchMappings.MatchOf(ranking, c.Id));
 
     private static MoneyViewModel? Money(Money? m) => m is null ? null : new MoneyViewModel(m.Amount, m.Currency);
 

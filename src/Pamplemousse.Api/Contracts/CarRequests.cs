@@ -16,4 +16,11 @@ public sealed record SearchCarsRequest(
     IReadOnlyList<string>? PickUpType,
     decimal? MaxPrice,
     bool? FreeCancellation,
-    int? Page);
+    int? Page,
+    int? Budget,
+    int? Culture,
+    int? Food,
+    int? Nature,
+    int? Nightlife,
+    int? Comfort,
+    decimal? TripBudget);

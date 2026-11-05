@@ -2,10 +2,12 @@ using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Application.Common;
+using Pamplemousse.Application.Ranking;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Flights;
+using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Application.Flights.Queries.SearchFlights;
 
@@ -18,7 +20,9 @@ public sealed record SearchFlightsQuery(
     string? TripType,
     bool? DirectOnly,
     string? Currency,
-    int? Limit);
+    int? Limit,
+    string? Sort = null,
+    RankingInput? Ranking = null);
 
 /// <summary>A TravelGenie city and the flight city that serves it. <see cref="IsNearby"/> means a different place was used.</summary>
 public sealed record FlightEndpoint(string Id, string Name, string? FlightCity, string? Code, bool IsNearby, double? DistanceKm);
@@ -34,7 +38,9 @@ public sealed record SearchFlightsResponse(
     string PriceNote,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    FlightSort Sort = FlightSort.Cheapest,
+    RankingResult? Ranking = null);
 
 public sealed class SearchFlightsHandler(
     IReferenceData data,
@@ -59,6 +65,8 @@ public sealed class SearchFlightsHandler(
             throw new DomainException("Use 'roundTrip' or 'oneWay'.", "tripType");
         }
 
+        var sort = FlightSorts.Parse(query.Sort);
+        var preferences = RankingResult.PreferencesFor(query.Ranking, sort == FlightSort.Match);
         var directOnly = query.DirectOnly ?? false;
         var originMatch = flightCities.FindNearest(origin.Location);
         var destinationMatch = flightCities.FindNearest(destination.Location);
@@ -70,19 +78,43 @@ public sealed class SearchFlightsHandler(
             var city = originMatch is null ? origin.Name : destination.Name;
             return new SearchFlightsResponse(
                 from, to, dates, tripType, directOnly, query.Currency?.Trim().ToUpperInvariant() ?? FlightSearch.DefaultCurrency, [], PriceNote,
-                $"{city} has no airport nearby, so no flights can be shown.", null, []);
+                $"{city} has no airport nearby, so no flights can be shown.", null, [], sort,
+                preferences is null ? null : RankingResult.Of<FlightOffer>(preferences, [], f => f.Id));
         }
 
         var search = FlightSearch.Create(originMatch.City.Code, destinationMatch.City.Code, dates, tripType, directOnly, query.Currency);
         var sections = new SectionLoader(logger);
         var results = await sections.LoadAsync("Flights", () => flights.SearchAsync(search, ct));
 
-        IReadOnlyList<FlightOffer> items = [.. (results?.Offers ?? []).Take(Math.Clamp(query.Limit ?? 20, 1, 50))];
+        // Ranking runs on every offer the source gave, before the limit, so the best match is never cut off.
+        var (offers, ranking) = Rank(results?.Offers ?? [], preferences, sort, search.Currency);
+
+        IReadOnlyList<FlightOffer> items = [.. offers.Take(Math.Clamp(query.Limit ?? 20, 1, 50))];
         return new SearchFlightsResponse(
             from, to, dates, tripType, directOnly, search.Currency, items, PriceNote,
-            results is null ? null : MessageFor(items),
+            results is null ? null : MessageFor(results.Offers),
             results is not null && items.Count == 0 ? results.SearchUrl : null,
-            sections.Warnings);
+            sections.Warnings,
+            sort,
+            ranking);
+    }
+
+    /// <summary>Scores the flights (spec 007). With sort=match they are reordered; otherwise each only gains its match.</summary>
+    private static (IReadOnlyList<FlightOffer> Offers, RankingResult? Ranking) Rank(
+        IReadOnlyList<FlightOffer> offers, Preferences? preferences, FlightSort sort, string currency)
+    {
+        if (preferences is null)
+        {
+            return (offers, null);
+        }
+
+        if (ScoringEngine.NothingApplies(FlightRanking.Used, preferences.Weights))
+        {
+            return (offers, RankingResult.Unranked(preferences, "flights"));
+        }
+
+        var ranked = FlightRanking.Rank(offers, preferences, currency);
+        return (sort == FlightSort.Match ? [.. ranked.Select(r => r.Offer)] : offers, RankingResult.Of(preferences, ranked, f => f.Id));
     }
 
     private static FlightEndpoint ToEndpoint(Destination city, CityMatch? match) =>

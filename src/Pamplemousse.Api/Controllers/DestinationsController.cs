@@ -86,7 +86,7 @@ public sealed class DestinationsController : ControllerBase
 
     [HttpGet("{id}/flights")]
     [EndpointName("SearchFlights")]
-    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first (Travelpayouts).")]
+    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first or by match (Travelpayouts).")]
     public async Task<ActionResult<FlightSearchViewModel>> GetFlightsAsync(
         string id,
         [FromQuery] SearchFlightsRequest request,
@@ -94,7 +94,10 @@ public sealed class DestinationsController : ControllerBase
         CancellationToken ct)
     {
         var flights = await handler.HandleAsync(
-            new SearchFlightsQuery(id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit), ct);
+            new SearchFlightsQuery(
+                id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit, request.Sort,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
+            ct);
         return Ok(flights.ToViewModel());
     }
 
@@ -141,7 +144,8 @@ public sealed class DestinationsController : ControllerBase
             new SearchCarsQuery(
                 id, request.From, request.To, request.Place, request.DriverAge, request.Currency, request.Sort, request.Size,
                 request.Gearbox, request.MinSeats, request.MinBags, request.Company, request.PickUpType, request.MaxPrice,
-                request.FreeCancellation, request.Page),
+                request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
             ct);
         return Ok(cars.ToViewModel());
     }

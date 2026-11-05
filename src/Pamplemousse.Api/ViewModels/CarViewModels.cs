@@ -24,7 +24,10 @@ public sealed record CarSearchViewModel(
     string? DriverNote,
     string? Message,
     string? SearchUrl,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    WeightsViewModel? Weights,
+    decimal? TripBudget,
+    string? RankingNote);
 
 public sealed record CarDestinationViewModel(string Id, string Name);
 
@@ -54,7 +57,8 @@ public sealed record CarViewModel(
     MoneyViewModel? DamageExcess,
     bool Sponsored,
     string BookingUrl,
-    string Source);
+    string Source,
+    MatchViewModel? Match);
 
 public sealed record RentalCompanyViewModel(string Name, string? LogoUrl, double? Rating, int? ReviewCount);
 
