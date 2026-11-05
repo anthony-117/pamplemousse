@@ -1,6 +1,6 @@
 # Sprint 2 review — in progress
 
-This records the Flights feature (TG-06) and the hotels (TG-07) and cars (TG-08) backends, built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/), [cars](../../../specs/004-cars/). The car screens are still to do.
+This records the Flights feature (TG-06) and the hotels (TG-07) and cars (TG-08) backends, built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/), [cars](../../../specs/004-cars/). The car screens are in `chocomousse` (`specs/004-car-screen`).
 
 ## Delivered: Hotels (backend)
 `GET /api/v1/destinations/{id}/hotels` and `GET /api/v1/hotels/{hotelId}`, from the Booking COM API (ADR 0016). Searches are kept in Redis for 12 hours and every hotel, city and price is stored in Firestore (ADR 0017). The screens are in `chocomousse`, with their own spec (`specs/002-hotel-screen`) and an approved Figma design: a list with sort, filters and pages (a side panel on wide screens), hotel details, and an adults setting shared with flights. `totalPages` was added to the search response for the pager.
@@ -35,7 +35,7 @@ Still to check by hand (quickstart): prices against Booking.com for 10 hotels (S
 - **The last price of a hotel** is kept for the last dates searched; opening it for other dates shows no price until it is searched for those dates.
 
 ## Delivered: Cars (backend)
-`GET /api/v1/destinations/{id}/car-places` and `GET /api/v1/destinations/{id}/cars`, from the same Booking COM API as hotels. One call to the source returns every car (up to 500), so a search is kept in Redis for a day and saved as one Firestore snapshot with the source's whole answer, compressed. Sorting, filters and pages never call the source again. A city's airports are looked up once and stored on the city for 30 days. The Figma design is approved (page "Sprint 2 — Cars"); the screens come next, in `chocomousse`.
+`GET /api/v1/destinations/{id}/car-places` and `GET /api/v1/destinations/{id}/cars`, from the same Booking COM API as hotels. One call to the source returns every car (up to 500), so a search is kept in Redis for a day and saved as one Firestore snapshot with the source's whole answer, compressed. Sorting, filters and pages never call the source again. A city's airports are looked up once and stored on the city for 30 days. The Figma design is approved (page "Sprint 2 — Cars"). The screens are in `chocomousse`, with their own spec (`specs/004-car-screen`): a list with the pick-up place and driver's age, sort, filters and pages (a side panel on wide screens), car details, and a Car rental entry on the overview. The driver's age is a trip setting, 18–99, default 30.
 
 | Story | Result |
 |---|---|
@@ -62,6 +62,9 @@ Still to check (quickstart): 9 more cities and 3 more airports (SC-001), 10 pric
 - **At most 500 cars per search**, with no paging at the source. Rome has about 1,050, so the response says `mayHaveMore` and links to Booking.com for the rest.
 - **An airport search also returns desks in the city:** Fiumicino gave 100 downtown and 120 train-station cars. The pick-up type filter narrows them.
 - **First search is slow:** 15–30 s at the source, once a day per place, dates and driver age.
+- **The source can stall mid-answer:** in the screen check on 5 Nov, Booking.com sent headers after 5–16 s but the body was still arriving at our 45 s limit, twice in a row for Rome centre. The app then says the search failed and offers Try again; nothing is saved, so each retry costs a request.
+- **A cancelled request is not saved:** when the app gives up and closes the request, the search at the source is cancelled too, so the request is spent and nothing is stored.
+- **Wrong message after a failure:** when the source fails and nothing is saved, `message` still says no cars are available here. The app replaces it, but other clients would show it.
 
 ## Delivered: Flights
 `GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
@@ -112,4 +115,5 @@ Tests: 221 passing, no analyzer findings.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Car screens in `chocomousse`, with their own spec, from the approved Figma design.
+- Car screens: run the live check again when the source answers (Rome centre and Fiumicino at 390 px and desktop, a filtered search, a car's details, Zahlé).
+- Cars backend: finish a search the app has closed, so it is saved; change `message` when the source failed; decide whether the 45 s limit should be longer.
