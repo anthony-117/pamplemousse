@@ -30,10 +30,18 @@ internal sealed class FakeCarProvider : ICarProvider
         return AirportError is null ? Task.FromResult<IReadOnlyList<PickUpPlace>>([.. Airports]) : Task.FromException<IReadOnlyList<PickUpPlace>>(AirportError);
     }
 
-    public Task<CarResults> SearchAsync(CarSearch search, CancellationToken ct)
+    /// <summary>When set, a search waits for it, as a slow source does, so a test can leave mid-search.</summary>
+    public TaskCompletionSource? Gate { get; set; }
+
+    public async Task<CarResults> SearchAsync(CarSearch search, CancellationToken ct)
     {
         Searches.Add(search);
-        return Error is null ? Task.FromResult(new CarResults([.. Cars], MayHaveMore, [42])) : Task.FromException<CarResults>(Error);
+        if (Gate is { } gate)
+        {
+            await gate.Task.WaitAsync(ct);
+        }
+
+        return Error is null ? new CarResults([.. Cars], MayHaveMore, [42]) : throw Error;
     }
 
     public string SearchUrl(Destination destination, CarSearch search) => $"https://cars/search?place={search.Place.Id}&age={search.DriverAge}";

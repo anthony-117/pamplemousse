@@ -62,9 +62,7 @@ Still to check (quickstart): 9 more cities and 3 more airports (SC-001), 10 pric
 - **At most 500 cars per search**, with no paging at the source. Rome has about 1,050, so the response says `mayHaveMore` and links to Booking.com for the rest.
 - **An airport search also returns desks in the city:** Fiumicino gave 100 downtown and 120 train-station cars. The pick-up type filter narrows them.
 - **First search is slow:** 15–30 s at the source, once a day per place, dates and driver age.
-- **The source can stall mid-answer:** in the screen check on 5 Nov, Booking.com sent headers after 5–16 s but the body was still arriving at our 45 s limit, twice in a row for Rome centre. The app then says the search failed and offers Try again; nothing is saved, so each retry costs a request.
-- **A cancelled request is not saved:** when the app gives up and closes the request, the search at the source is cancelled too, so the request is spent and nothing is stored.
-- **Wrong message after a failure:** when the source fails and nothing is saved, `message` still says no cars are available here. The app replaces it, but other clients would show it.
+- **The source can stall mid-answer:** in the screen check on 5 Nov, Booking.com sent headers after 5–16 s but the body was still arriving at our 45 s limit, twice in a row for Rome centre. The app then says the search failed and offers Try again; nothing is saved, so each retry costs a request. Fixed after the check: a search the app gives up on now runs to the end and is saved, and after a failure with nothing saved `message` says the cars could not be searched, not that there are none.
 
 ## Delivered: Flights
 `GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
@@ -116,4 +114,4 @@ Tests: 221 passing, no analyzer findings.
 
 ## Next
 - Car screens: run the live check again when the source answers (Rome centre and Fiumicino at 390 px and desktop, a filtered search, a car's details, Zahlé).
-- Cars backend: finish a search the app has closed, so it is saved; change `message` when the source failed; decide whether the 45 s limit should be longer.
+- Cars backend: decide whether the 45 s limit should be longer if the source keeps stalling.

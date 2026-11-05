@@ -114,10 +114,11 @@ list, so it needs no call.
 4. Take the `lock:cars:{search}` lock for 60 s. If someone else holds it, wait up to 40 s for their result.
 5. Check the monthly counter (shared with hotels). At 95% or more: go to step 8.
 6. Call the source once. Map, drop bad prices, remove duplicates. Save one snapshot to Firestore and the cars to
-   Redis for 1 day.
+   Redis for 1 day. This step is not cancelled when the caller leaves: the call is paid, so it runs to the end (the
+   45 s HttpClient timeout still ends it), is saved, frees the lock, and the retry reads it from Redis.
 7. Filter, sort and page the cars; return them with the fetch time, the filter options, and the driver note.
 8. On failure, no key, timeout, or the limit: return the newest snapshot for the search with its time and a
-   warning, or an empty list, a warning and the Booking.com link.
+   warning, or an empty list, a warning, the message "Cars could not be searched just now…" and the Booking.com link.
 
 Car places (`GET …/car-places`) returns the centre plus the stored airports, looking them up once when missing.
 If the look-up fails, it returns only the centre with a warning.
