@@ -3,8 +3,8 @@
 .NET 10 API: location info, search and weighted scoring, itinerary builder, chat agent (Gemini Flash via `Microsoft.Extensions.AI`), TravelGenie's own MCP server, and the Telegram bot channel.
 
 - Hosting: Docker on Google Cloud Run
-- Data: Redis (12-hour search results, locks, request counts) and Firestore (hotels, cities, price history), ADR 0017; Postgres + pgvector for the chatbot later
-- External sources: Booking COM API on RapidAPI (hotels, ADR 0016), Travelpayouts (flights), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
+- Data: Redis (12-hour hotel and 1-day car search results, locks, request counts) and Firestore (hotels, cities, price history, car searches), ADR 0017; Postgres + pgvector for the chatbot later
+- External sources: Booking COM API on RapidAPI (hotels and rental cars, ADR 0016), Travelpayouts (flights), Wikidata + Wikipedia (attractions), OpenTripMap (restaurants, attractions fallback), Ticketmaster, Open-Meteo, Frankfurter, mledoze/countries, GeoNames, Nager.Date, Passport Index, US State Dept advisories
 - Clients: `chocomousse` (Flutter, sibling repo) via OpenAPI; Telegram bot via webhook
 
 Documentation about the code is in [`docs/`](docs/README.md), and the project's rules are in the [constitution](.specify/memory/constitution.md). Non-code material (Figma, presentations, studies) is in the OneDrive FYP folder.
@@ -48,8 +48,8 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | `TRAVELPAYOUTS_MARKER` | Partner ID on booking links | Links work, but earn no commission; the server log says so |
 | `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details | Restaurants return a warning; attractions still come from Wikidata |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
-| `RAPIDAPI_KEY` | Hotels (Booking COM API) | Hotels return saved prices or a warning |
-| `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities and price history | Hotel data is kept in memory only; the log says so |
+| `RAPIDAPI_KEY` | Hotels and cars (Booking COM API) | Hotels and cars return saved prices or a warning; car pick-up is the city centre only |
+| `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities, price history and car searches | Hotel and car data is kept in memory only; the log says so |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo | Google's default credentials are tried |
 | `GEMINI_API_KEY` | Assistant (Google AI Studio, free tier) | The assistant answers with a warning |
 | `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-2.5-flash` | The default is used |
@@ -68,6 +68,8 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/api/v1/destinations/{id}/flights?origin=&from=&to=&tripType=&directOnly=&currency=&limit=` | Recent flight prices, cheapest first ([contract](specs/001-flights/contracts/flights-api.md)) |
 | GET | `/api/v1/destinations/{id}/hotels?from=&to=&adults=&currency=&sort=&minStars=&minReview=&minPrice=&maxPrice=&stayType=&freeCancellation=&page=` | Hotels with the total for the stay, sorted and filtered on stored data ([contract](specs/002-hotels/contracts/hotels-api.md)) |
 | GET | `/api/v1/hotels/{hotelId}?from=&to=&adults=&currency=` | One hotel's details and its Booking.com link (`bk:…`) |
+| GET | `/api/v1/destinations/{id}/car-places` | Where a rental car can be picked up: the city centre, then airports within 50 km |
+| GET | `/api/v1/destinations/{id}/cars?from=&to=&place=&driverAge=&currency=&sort=&size=&gearbox=&minSeats=&minBags=&company=&pickUpType=&maxPrice=&freeCancellation=&page=` | Rental cars with the total for the rental, sorted and filtered on one saved search ([contract](specs/004-cars/contracts/cars-api.md)) |
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
 | POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
@@ -90,7 +92,7 @@ Errors are returned as RFC 9457 Problem Details (`application/problem+json`).
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB) | no key |
 | Holidays | [Nager.Date](https://date.nager.at) | no key |
 | Safety | US State Department travel advisories | public domain, no key |
-| Hotels | [Booking COM API](https://rapidapi.com/ntd119/api/booking-com18) on RapidAPI: live Booking.com prices (ADR 0016). Free Basic plan, 530 requests a month; new calls stop at 95% | RapidAPI key |
+| Hotels, rental cars | [Booking COM API](https://rapidapi.com/ntd119/api/booking-com18) on RapidAPI: live Booking.com prices (ADR 0016). Free Basic plan, 530 requests a month shared by hotels and cars; new calls stop at 95% | RapidAPI key |
 | Flights | [Travelpayouts](https://www.travelpayouts.com) (Aviasales) Data API: recent prices, not live | free partner token |
 | Flight cities, airlines | Travelpayouts public lists, bundled; rebuild with `python scripts/update-flight-data.py` | terms to confirm |
 | Attractions | Wikidata, ranked by number of Wikipedia editions; details from the Wikipedia summary; OpenTripMap fills in when Wikidata is down or has too few (ADR 0011) | free, no key |

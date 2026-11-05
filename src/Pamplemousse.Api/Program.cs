@@ -3,6 +3,7 @@ using Pamplemousse.Api;
 using Pamplemousse.Api.Middleware;
 using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application;
+using Pamplemousse.Application.Cars;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Infrastructure;
 
@@ -19,6 +20,7 @@ builder.Services.AddControllers()
 
 // How much hotel data each search gathers (FR-008c); the defaults suit the free request plan.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Hotels").Get<HotelSettings>() ?? new HotelSettings());
+builder.Services.AddSingleton(builder.Configuration.GetSection("Cars").Get<CarSettings>() ?? new CarSettings());
 builder.Services.AddApplication();
 builder.AddInfrastructure(keys =>
 {

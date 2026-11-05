@@ -3,6 +3,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Application.Assistant;
 using Pamplemousse.Application.Assistant.Queries.AskAssistant;
+using Pamplemousse.Application.Cars;
+using Pamplemousse.Application.Cars.Queries.GetCarPlaces;
+using Pamplemousse.Application.Cars.Queries.SearchCars;
 using Pamplemousse.Application.Destinations;
 using Pamplemousse.Application.Destinations.Queries.GetDestination;
 using Pamplemousse.Application.Destinations.Queries.GetOverview;
@@ -33,11 +36,14 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<SearchFlightsQuery, SearchFlightsResponse>, SearchFlightsHandler>();
         services.AddScoped<IQueryHandler<SearchHotelsQuery, SearchHotelsResponse>, SearchHotelsHandler>();
         services.AddScoped<IQueryHandler<GetHotelQuery, GetHotelResponse>, GetHotelHandler>();
+        services.AddScoped<IQueryHandler<GetCarPlacesQuery, GetCarPlacesResponse>, GetCarPlacesHandler>();
+        services.AddScoped<IQueryHandler<SearchCarsQuery, SearchCarsResponse>, SearchCarsHandler>();
         services.AddScoped<AssistantTools>();
         services.AddScoped<IQueryHandler<AskAssistantQuery, AskAssistantResponse>, AskAssistantHandler>();
 
         // The API registers the configured settings first; anything else (tests, the bots) gets the free-plan defaults.
         services.TryAddSingleton(new HotelSettings());
+        services.TryAddSingleton(new CarSettings());
         return services;
     }
 }

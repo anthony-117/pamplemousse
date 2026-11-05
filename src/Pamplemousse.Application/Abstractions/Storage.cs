@@ -1,3 +1,4 @@
+using Pamplemousse.Domain.Cars;
 using Pamplemousse.Domain.Hotels;
 
 namespace Pamplemousse.Application.Abstractions;
@@ -30,6 +31,24 @@ public interface IPriceHistory
 
     /// <summary>The newest snapshot of each page for a search, page 1 first; empty when the search was never answered.</summary>
     Task<IReadOnlyList<PriceSnapshot>> GetLatestAsync(string searchKey, CancellationToken ct);
+}
+
+/// <summary>A city's car pick-up airports (a field on Firestore <c>cities/{id}</c>, spec 004 FR-013).</summary>
+public interface ICarAirportStore
+{
+    Task<CarAirports?> GetAsync(string destinationId, CancellationToken ct);
+
+    /// <summary>Saves the airports without touching the city's other fields.</summary>
+    Task SaveAsync(CarAirports airports, CancellationToken ct);
+}
+
+/// <summary>Car search history (Firestore <c>carSnapshots</c>): one document per call to the source.</summary>
+public interface ICarHistory
+{
+    Task AddAsync(CarSnapshot snapshot, CancellationToken ct);
+
+    /// <summary>The newest snapshot for a search; null when the search was never answered.</summary>
+    Task<CarSnapshot?> GetLatestAsync(string searchKey, CancellationToken ct);
 }
 
 /// <summary>Short-lived results of identical searches (Redis, or memory when Redis is not configured).</summary>
