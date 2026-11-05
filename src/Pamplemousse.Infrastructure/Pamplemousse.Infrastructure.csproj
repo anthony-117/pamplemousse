@@ -9,6 +9,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Google.Cloud.Firestore" />
+    <PackageReference Include="Google.GenAI" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
   </ItemGroup>
 
   <!-- Reference data (GeoNames cities, mledoze countries, Passport Index visas) ships inside the assembly. -->

@@ -21,6 +21,13 @@
     <PackageVersion Include="Google.Cloud.Firestore" Version="4.5.0" />
   </ItemGroup>
 
+  <!-- Assistant (ADR 0005, ADR 0018): IChatClient and tools in Application, the tool loop and Gemini in Infrastructure. -->
+  <ItemGroup Label="AI">
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
+    <PackageVersion Include="Google.GenAI" Version="1.28.0" />
+  </ItemGroup>
+
   <!-- Matches runtime 10.0.13, which ships with the pinned SDK 10.0.113. -->
   <ItemGroup Label="ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />

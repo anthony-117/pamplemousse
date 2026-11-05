@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Pamplemousse.Api;
 using Pamplemousse.Api.Middleware;
+using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Infrastructure;
@@ -28,6 +29,8 @@ builder.AddInfrastructure(keys =>
     keys.RapidApiKey = Env.RapidApiKey;
     keys.FirebaseProjectId = Env.FirebaseProjectId;
     keys.GoogleCredentialsPath = Env.GoogleApplicationCredentials;
+    keys.GeminiApiKey = Env.GeminiApiKey;
+    keys.GeminiModel = Env.GeminiModel;
 });
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)
@@ -42,11 +45,20 @@ builder.Services.AddCors(options => options.AddPolicy(AppCorsPolicy, policy => p
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
+// The assistant spends the shared Gemini free tier: limited per client and overall (spec 003, FR-015).
+builder.Services.AddAssistantRateLimits(builder.Configuration);
+
 var app = builder.Build();
+
+// Caddy sits in front in production; the client's own IP is what the assistant's limits count.
+app.UseForwardedHeaders();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(AppCorsPolicy);
+
+// After CORS, so the web app can read a 429.
+app.UseRateLimiter();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
