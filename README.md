@@ -77,6 +77,7 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/alive` | Liveness (all environments, used by Cloud Run) |
 | GET | `/health` | Readiness incl. dependencies (Development only) |
 | GET | `/openapi/v1.json` | OpenAPI document (Development only) |
+| GET | `/scalar` | [Scalar](https://scalar.com) API reference: browse and try every endpoint (Development only) |
 
 City ids are GeoNames ids (Rome = `3169070`). Dates default to a 5-day trip starting in 30 days; trips are at most 30 days.
 Each overview section is independent: if a source fails or has no key, that section is `null` and `warnings` says why.
