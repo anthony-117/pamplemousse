@@ -29,6 +29,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
     public FakeHotels Hotels { get; } = new();
 
+    public FakeCars Cars { get; } = new();
+
     public FakeChat Chat { get; } = new();
 
     /// <summary>High by default so other tests never meet them; rate-limit tests lower them before the first request.</summary>
@@ -59,11 +61,12 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
             services.AddSingleton<IFlightProvider>(Flights);
             services.AddSingleton<IHotelProvider>(Hotels);
+            services.AddSingleton<ICarProvider>(Cars);
 
             // Never Gemini: the developer's .env may hold a real key. The real tool loop still runs the tools.
             services.AddSingleton<IChatClient>(_ => new FunctionInvokingChatClient(Chat));
 
-            // The developer's .env may name a real Firebase project; tests keep hotel data in memory instead.
+            // The developer's .env may name a real Firebase project; tests keep hotel and car data in memory instead.
             services.AddSingleton<InMemoryHotelData>();
             foreach (var warmUp in services.Where(d => d.ImplementationType == typeof(FirestoreWarmUp)).ToList())
             {
@@ -73,6 +76,9 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ICityMappingStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IHotelStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IPriceHistory>(sp => sp.GetRequiredService<InMemoryHotelData>());
+            services.AddSingleton<InMemoryCarData>();
+            services.AddSingleton<ICarAirportStore>(sp => sp.GetRequiredService<InMemoryCarData>());
+            services.AddSingleton<ICarHistory>(sp => sp.GetRequiredService<InMemoryCarData>());
             services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
     }

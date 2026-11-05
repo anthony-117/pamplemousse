@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Infrastructure.Assistant;
 using Pamplemousse.Infrastructure.Caching;
@@ -57,7 +58,7 @@ public static class DependencyInjection
         services.AddHttpClient<IEventProvider, TicketmasterEventProvider>();
         // A slow answer becomes a warning instead of holding up the page.
         services.AddHttpClient<IFlightProvider, TravelpayoutsFlightProvider>(c => c.Timeout = TimeSpan.FromSeconds(5));
-        services.AddHttpClient<IHotelProvider, BookingComHotelProvider>(c => c.Timeout = TimeSpan.FromSeconds(10));
+        AddBookingComClients(services);
         services.AddHttpClient<OpenTripMapAttractionProvider>();
         services.AddHttpClient<OpenTripMapRestaurantProvider>();
         services.AddHttpClient<WikidataAttractionProvider>(c =>
@@ -73,6 +74,20 @@ public static class DependencyInjection
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapRestaurantProvider>());
 
         return builder;
+    }
+
+    /// <summary>Hotels and cars share the Booking COM API key and its monthly request count (ADR 0016).</summary>
+    private static void AddBookingComClients(IServiceCollection services)
+    {
+        services.AddHttpClient<IHotelProvider, BookingComHotelProvider>(c => c.Timeout = TimeSpan.FromSeconds(10));
+
+        // A car search takes 20-30 s at the source (research R-7), past the standard handler's 30 s total and 10 s per try,
+        // and a retry would cost a second request. So one try, with its own longer limit.
+        // RemoveAllResilienceHandlers is marked experimental; it is the documented way to opt one client out of the defaults.
+#pragma warning disable EXTEXP0001
+        services.AddHttpClient<ICarProvider, BookingComCarProvider>(c => c.Timeout = TimeSpan.FromSeconds(45))
+            .RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
     }
 
     /// <summary>
@@ -112,20 +127,29 @@ public static class DependencyInjection
                 EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction,
             }.Build());
             services.AddSingleton<FirestoreHotelData>();
+            services.AddSingleton<FirestoreCarData>();
             services.AddHostedService<FirestoreWarmUp>();
         }
         else
         {
             services.AddSingleton<InMemoryHotelData>();
+            services.AddSingleton<InMemoryCarData>();
         }
 
         services.AddSingleton(Store<ICityMappingStore>);
         services.AddSingleton(Store<IHotelStore>);
         services.AddSingleton(Store<IPriceHistory>);
+        services.AddSingleton(CarStore<ICarAirportStore>);
+        services.AddSingleton(CarStore<ICarHistory>);
 
         T Store<T>(IServiceProvider sp)
             where T : class => keys.FirebaseProjectId.Length > 0
                 ? (T)(object)sp.GetRequiredService<FirestoreHotelData>()
                 : (T)(object)sp.GetRequiredService<InMemoryHotelData>();
+
+        T CarStore<T>(IServiceProvider sp)
+            where T : class => keys.FirebaseProjectId.Length > 0
+                ? (T)(object)sp.GetRequiredService<FirestoreCarData>()
+                : (T)(object)sp.GetRequiredService<InMemoryCarData>();
     }
 }
