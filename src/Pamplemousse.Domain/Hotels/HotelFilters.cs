@@ -18,6 +18,9 @@ public enum HotelSort
 
     /// <summary>Closest to the centre first.</summary>
     Distance,
+
+    /// <summary>Best match for the traveller's preferences first (spec 007). The filters keep the source's order; the ranking orders them.</summary>
+    Match,
 }
 
 /// <summary>
@@ -64,7 +67,7 @@ public sealed record HotelFilters
         var order = HotelSort.Recommended;
         if (sort is not null && (!Enum.TryParse(sort, ignoreCase: true, out order) || !Enum.IsDefined(order)))
         {
-            throw new DomainException("Use 'recommended', 'price', 'review', 'stars' or 'distance'.", "sort");
+            throw new DomainException("Use 'recommended', 'price', 'review', 'stars', 'distance' or 'match'.", "sort");
         }
 
         if (minStars is < 1 or > 5)
