@@ -86,7 +86,7 @@ internal static class PlanMappings
     }
 
     private static PlanSummaryViewModel ToViewModel(this PlanSummary s) =>
-        new(s.Id, s.Name, s.Status, s.DestinationName, s.From, s.To, s.Total, s.Currency, s.MatchPercent, s.ImageUrl);
+        new(s.Id, s.Name, s.Status, s.DestinationName, s.From, s.To, s.Total, s.Currency, s.MatchPercent, s.ImageUrl, s.UpdatedAt);
 
     private static PlanDayViewModel ToViewModel(PlanDay d) => new(
         d.Number,

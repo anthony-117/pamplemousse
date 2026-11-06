@@ -127,6 +127,7 @@ public class PlanEndpointsTests(TestApiFactory factory) : IClassFixture<TestApiF
         Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
         Assert.Equal((1, 50), (list?.Count, list?.Max));
         Assert.Equal(("Paris with Maya", PlanStatus.Planned, "Paris"), (list!.Items[0].Name, list.Items[0].Status, list.Items[0].DestinationName));
+        Assert.True(list.Items[0].UpdatedAt > plan.UpdatedAt);
 
         var badName = await client.PatchAsJsonAsync($"/api/v1/plans/{plan.Id}", new { name = new string('a', 61) });
         Assert.Equal(HttpStatusCode.BadRequest, badName.StatusCode);

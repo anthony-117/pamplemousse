@@ -74,7 +74,8 @@ public sealed record PlanSummaryViewModel(
     decimal Total,
     string Currency,
     int? MatchPercent,
-    string? ImageUrl);
+    string? ImageUrl,
+    DateTimeOffset UpdatedAt);
 
 /// <summary>A kept ranked list of a plan (research R-7), each item as its list shows it, with its match.</summary>
 public sealed record PlanAlternativesViewModel<T>(OfferKind Kind, string? ChosenId, DateTimeOffset? CheckedAt, IReadOnlyList<T> Items);

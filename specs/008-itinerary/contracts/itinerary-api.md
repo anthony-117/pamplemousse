@@ -94,7 +94,7 @@ The traveller's plans, newest first.
     {
       "id": "6f1c…", "name": "Rome, 5 days", "status": "draft", "destinationName": "Rome",
       "from": "2027-04-10", "to": "2027-04-14", "total": 939, "currency": "USD", "matchPercent": 91,
-      "imageUrl": "…"
+      "imageUrl": "…", "updatedAt": "2027-04-01T10:02:00Z"
     }
   ],
   "count": 1,
