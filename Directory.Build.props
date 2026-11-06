@@ -12,5 +12,10 @@
     <!-- Needed for IDE0005 (unused usings) in the build; CS1591 (XML doc on every public member) stays off. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Fix Arch Linux arch-x64 NuGet package resolution -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
+    <!-- Keep projects framework-dependent during normal builds to prevent solution-level single-RID conflicts -->
+    <SelfContained Condition="'$(SelfContained)' == ''">false</SelfContained>
   </PropertyGroup>
 </Project>
