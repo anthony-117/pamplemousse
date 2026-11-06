@@ -14,15 +14,24 @@ nothing is let through.
 home currency, home city and the six default preferences. Deleting needs a sign-in from the last 5 minutes. It removes
 the profile, then the Firebase account (Admin SDK), and refuses the old token for the hour it could still live.
 
+## Delivered: accounts (app)
+`chocomousse` spec 006 builds the approved screens: Welcome (A1), Sign in (A2, and W5 on wide screens), Create your
+account (A3), Check your email (A4), Reset your password (A5), Profile (P1), Edit profile (P2) and Delete your account
+(P3). A router guard shows Welcome while signed out and returns to the address afterwards, never to another site.
+Every API request carries the Firebase ID token; a refused token is renewed once, then the traveller is signed out.
+New trips start from the travel profile (passport, currency, home city, preferences). Without the Firebase settings the
+app still runs and Welcome says which one is missing. 250 app tests pass, 42 of them new.
+
 | Story | Result |
 |---|---|
-| TG-17 Sign in to use the app | ✅ API side: every route checked; ⏳ app screens |
-| TG-17 Create an account with email | ✅ API refuses unconfirmed emails; ⏳ app screens |
-| TG-17 Keep my travel profile | ✅ API; ⏳ app |
-| TG-17 Delete my account | ✅ API; ⏳ app, and a live check with a real account |
+| TG-17 Sign in to use the app | ✅ API and app (Google and email) |
+| TG-17 Create an account with email | ✅ API and app; confirmation email from Firebase |
+| TG-17 Keep my travel profile | ✅ API and app; seeds new trips |
+| TG-17 Delete my account | ✅ API and app (signs in again when needed); ⏳ live check with a real account |
 
 ## Not done yet
-- The app's sign-in, Profile and delete screens (`chocomousse`, from the approved Figma page). The API and the app are
-  released together, since the API now refuses requests without a sign-in.
+- Firebase console setup by the owner: Anonymous off, authorised domains, the Android app and its SHA-1, email
+  templates; then the app's `app.env`. The API and the app are released together, since the API now refuses requests
+  without a sign-in.
 - Live checks that need a real account (quickstart 3–11): run by the owner.
 - The itinerary (TG-10), next.
