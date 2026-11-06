@@ -51,11 +51,12 @@ public class SystemEndpointsTests(WebApplicationFactory<Program> factory) : ICla
     }
 
     [Fact]
-    public async Task Unknown_route_returns_problem_details()
+    public async Task Unknown_route_says_nothing_until_signed_in()
     {
+        // This client sends no sign-in, so the route's existence isn't revealed; signed in, it's a 404 (SignInTests).
         var response = await _client.GetAsync(new Uri("/api/v1/does-not-exist", UriKind.Relative));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.True(response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.ServiceUnavailable);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 }

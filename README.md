@@ -49,8 +49,8 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | `OPENTRIPMAP_API_KEY` | Restaurants, attractions fallback, their details, places near hotels | Restaurants return a warning; attractions still come from Wikidata; weighted hotel search counts food, nature and nightlife as average |
 | `TICKETMASTER_API_KEY` | Events | Events section returns a warning |
 | `RAPIDAPI_KEY` | Hotels and cars (Booking COM API) | Hotels and cars return saved prices or a warning; car pick-up is the city centre only |
-| `FIREBASE_PROJECT_ID` | Firestore project for hotels, cities, price history and car searches | Hotel and car data is kept in memory only; the log says so |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo | Google's default credentials are tried |
+| `FIREBASE_PROJECT_ID` | Firebase project: sign-in (ADR 0019) and Firestore for hotels, cities, price history, car searches and travel profiles | Every route that needs a sign-in answers 503; data is kept in memory only; the log says so |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo; also deletes Firebase accounts | Google's default credentials are tried |
 | `GEMINI_API_KEY` | Assistant (Google AI Studio, free tier) | The assistant answers with a warning |
 | `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-2.5-flash` | The default is used |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
@@ -58,6 +58,10 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 Weather, exchange rates, holidays, visas, advisories, countries and cities need no key.
 
 ## Endpoints
+Every route needs `Authorization: Bearer <Firebase ID token>` from a confirmed account, apart from ping, `/alive`, `/health` and
+the API reference. A refusal is Problem Details with a `code`: `sign-in-required` (401), `email-not-confirmed` (403),
+`recent-sign-in-required` (401) or `sign-in-not-configured` (503) ([contract](specs/009-accounts/contracts/accounts-api.md)).
+
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/api/v1/destinations?q=rom&limit=10` | City search (≥ 2 characters, accent-insensitive, biggest cities first) |
@@ -73,6 +77,9 @@ Weather, exchange rates, holidays, visas, advisories, countries and cities need 
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
 | POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
+| GET | `/api/v1/me` | The signed-in traveller's travel profile, made on the first call ([contract](specs/009-accounts/contracts/accounts-api.md)) |
+| PUT | `/api/v1/me` | Replace the name, passport, home currency, home city and default preferences |
+| DELETE | `/api/v1/me` | Delete the profile, the plans and the sign-in (needs a sign-in from the last 5 minutes) |
 | GET | `/api/v1/system/ping` | Name, version, environment, server time |
 | GET | `/alive` | Liveness (all environments, used by Cloud Run) |
 | GET | `/health` | Readiness incl. dependencies (Development only) |

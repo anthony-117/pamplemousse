@@ -1,7 +1,8 @@
 # Sprint 3 review — in progress
 
 This records weighted search (TG-09), built with Spec Kit: [spec, plan and contract](../../../specs/007-weighted-search/).
-The Figma design is approved (page "Sprint 3 — Weighted search", 5 Nov 2026). The app screens come next, in `chocomousse`.
+The Figma design is approved (page "Sprint 3 — Weighted search", 5 Nov 2026). The app screens are built in
+`chocomousse` ([spec and plan](https://github.com/anthony-117/chocomousse/tree/005-weighted-search-screen/specs/005-weighted-search-screen)).
 
 ## Delivered: weighted search (backend)
 No new route. The hotel, flight and car lists accept six preferences from 0 to 100 (`budget`, `culture`, `food`,
@@ -46,7 +47,22 @@ Found and fixed:
   the linear price score. With the owner's approval, Low is now 10 and price is scored by position in the list
   (research R-6).
 
+## Delivered: weighted search (app)
+- **Plan your trip** (S1), from a new row on each destination's overview: dates, travellers, departure city, an
+  optional total budget, and six sliders (Low, Medium, High send 10, 50, 90). Nothing is searched until "Find my best
+  plans".
+- **Best for you** (S2–S6): Hotels, Flights and Cars tabs, each ranked by the API with a match percentage and a reason.
+  Only the open tab loads, and a tab seen in the last 10 minutes shows again with no request. Tapping a match explains
+  it, one row per preference; offers over the whole budget are greyed and listed last.
+- **Wide screens** (W1): the form, the list and the selected offer's reasons side by side. A slider change re-ranks
+  500 ms after it settles, from the API's cache.
+- Tests: 208 in the app, 28 of them new.
+
+Live check, 5 Nov 2026, Rome at 390 px and 1400 px: the first ranked hotel search took about 40 s, then 20 ranked
+hotels. Moving one slider sent one request and the backend made no new Booking.com request.
+
 ### Known limits
 - Ranking covers the hotels already fetched for a search, 20 on the free plan.
-- The first ranked search for a city is about 5–10 s slower while the places near each hotel are counted, once a month.
+- The first ranked search for a city is slower while the places near each hotel are counted, once a month (about 40 s
+  for Rome on 5 Nov). The app waits up to 60 s.
 - Food is how many restaurants and cafés are near, not how good they are (ADR 0008).
