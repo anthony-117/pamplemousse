@@ -92,11 +92,11 @@ Abstractions/Plans.cs
   IPlanStore      CountAsync(owner) · AddAsync(plan) · GetAsync(owner, id) · ListAsync(owner) · SaveAsync(plan) · DeleteAsync(owner, id) · DeleteAllAsync(owner)
 
 Itinerary/PlanInputs.cs                 // runs the ranked hotel and flight searches (existing handlers, sort=match), places, events, weather in parallel; each failure → warning
-Itinerary/Commands/BuildPlan/           // checks the 50 limit, builds, saves as draft
-Itinerary/Commands/ChangePlan/          // rename, status
-Itinerary/Commands/SwapOffer/           // hotel, flight, car (add / swap / remove)
-Itinerary/Commands/DeletePlan/
-Itinerary/Queries/ListPlans/ · GetPlan/
+Itinerary/PlanHandlers.cs               // as built, one file:
+  BuildPlan      checks the 50 limit before any source, builds, saves as draft; no places → 422
+  GetPlan · ListPlans · ChangePlan (rename, status) · DeletePlan
+  GetAlternatives  the kept list; the first car list runs the ranked car search once
+  SwapOffer      hotel, flight, car (swap / remove); refetches only the free place lists
 ```
 
 `DeleteAccountHandler` (spec 009) calls `IPlanStore.DeleteAllAsync` first.
@@ -116,3 +116,8 @@ travellers/{uid}/plans/{planId}
 
 The list reads `name, status, destinationName, from, to, total.amount, match.percent, chosen.hotel.photo` with a
 field mask, newest `updatedAt` first.
+
+*As built:* the list fields are written out (`name`, `status`, `destinationName`, `from`, `to`, `total`, `currency`,
+`matchPercent`, `imageUrl`, `createdAt`, `updatedAt`), and the whole plan with its copies is one gzip-compressed JSON
+`body`, as cars are stored (spec 004): nested lists of 60 offers and 270 items as fields would pass Firestore's index
+limits. A 5-day plan packs to a few KB. Without Firebase settings the API keeps plans in memory.

@@ -87,12 +87,14 @@ Weights `w` are the six preferences, 0 to 100.
 | Days | see below | `wCulture + wNature + wNightlife + wFood` |
 
 **Days fit** is the weighted average, by those four weights, of:
-- Culture: `1 − |sights share − asked share|`, where the asked share is `wCulture ÷ (wCulture + wNature)`. This
-  only drops when there weren't enough sights.
+- Culture: sights planned ÷ sights asked (R-2), capped at 1. This only drops when there weren't enough sights.
+  *Changed while building:* the first rule, `1 − |sights share − asked share|`, gave 96 % on a full plan whenever
+  rounding split an odd number of slots, which read as a fault.
 - Nature: the same for parks.
 - Nightlife: evenings planned ÷ evenings asked, capped at 1; 1 when none were asked.
 - Food: meals with a restaurant ÷ meals in the plan; at High, only the meals that got a well-known restaurant
-  (rate 2 or more) count.
+  count. *Changed while building:* "well-known" is the first quarter of the restaurant list in the source's order,
+  since OpenTripMap's rate is missing for most restaurants.
 
 **Total** = `Σ value × weight ÷ Σ weight`, shown as a whole percentage. When every weight is 0 the plan shows no
 match, as spec 007 does.
