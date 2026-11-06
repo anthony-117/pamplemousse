@@ -63,6 +63,8 @@ public static class DependencyInjection
         AddBookingComClients(services);
         services.AddHttpClient<OpenTripMapAttractionProvider>();
         services.AddHttpClient<OpenTripMapRestaurantProvider>();
+        services.AddHttpClient<OpenTripMapNatureProvider>();
+        services.AddHttpClient<OpenTripMapNightlifeProvider>();
         // Places near each hotel for weighted search; a slow answer makes that hotel's interests count as average.
         services.AddHttpClient<INearbyPlaces, OpenTripMapNearbyPlaces>(c => c.Timeout = TimeSpan.FromSeconds(20));
         services.AddHttpClient<WikidataAttractionProvider>(c =>
@@ -76,6 +78,8 @@ public static class DependencyInjection
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<WikidataAttractionProvider>());
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapAttractionProvider>());
         services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapRestaurantProvider>());
+        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapNatureProvider>());
+        services.AddTransient<IPlaceProvider>(sp => sp.GetRequiredService<OpenTripMapNightlifeProvider>());
 
         return builder;
     }
