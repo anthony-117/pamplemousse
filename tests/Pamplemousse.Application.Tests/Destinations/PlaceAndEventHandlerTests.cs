@@ -29,6 +29,19 @@ public class PlaceAndEventHandlerTests
         Assert.Equal((0, 1), (attractions.Calls, restaurants.Calls));
     }
 
+    [Theory]
+    [InlineData("nature", PlaceCategory.Nature)]
+    [InlineData("NIGHTLIFE", PlaceCategory.Nightlife)]
+    public async Task Places_include_nature_and_nightlife(string category, PlaceCategory expected)
+    {
+        var handler = ListPlaces(new FakePlaces(PlaceCategory.Attraction), new FakePlaces(PlaceCategory.Nature), new FakePlaces(PlaceCategory.Nightlife));
+
+        var result = await handler.HandleAsync(new ListPlacesQuery(Fakes.Rome.Id, category, null), CancellationToken.None);
+
+        Assert.Equal(expected, result.Category);
+        Assert.Equal(expected, result.Items[0].Category);
+    }
+
     [Fact]
     public async Task Places_default_to_attractions()
     {

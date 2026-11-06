@@ -18,8 +18,10 @@ using Pamplemousse.Application.Flights.Queries.SearchFlights;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Application.Hotels.Queries.GetHotel;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Itinerary;
 using Pamplemousse.Application.Ranking;
 using Pamplemousse.Application.Travellers;
+using Pamplemousse.Domain.Itinerary;
 
 namespace Pamplemousse.Application;
 
@@ -47,6 +49,14 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetProfileQuery, ProfileResponse>, GetProfileHandler>();
         services.AddScoped<ICommandHandler<UpdateProfileCommand, ProfileResponse>, UpdateProfileHandler>();
         services.AddScoped<ICommandHandler<DeleteAccountCommand, bool>, DeleteAccountHandler>();
+        services.AddScoped<PlanInputs>();
+        services.AddScoped<ICommandHandler<BuildPlanCommand, Plan>, BuildPlanHandler>();
+        services.AddScoped<IQueryHandler<GetPlanQuery, Plan>, GetPlanHandler>();
+        services.AddScoped<IQueryHandler<ListPlansQuery, PlanList>, ListPlansHandler>();
+        services.AddScoped<ICommandHandler<ChangePlanCommand, Plan>, ChangePlanHandler>();
+        services.AddScoped<ICommandHandler<DeletePlanCommand, bool>, DeletePlanHandler>();
+        services.AddScoped<IQueryHandler<GetAlternativesQuery, Plan>, GetAlternativesHandler>();
+        services.AddScoped<ICommandHandler<SwapOfferCommand, Plan>, SwapOfferHandler>();
 
         // The API registers the configured settings first; anything else (tests, the bots) gets the free-plan defaults.
         services.TryAddSingleton(new HotelSettings());

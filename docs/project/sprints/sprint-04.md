@@ -29,9 +29,27 @@ app still runs and Welcome says which one is missing. 250 app tests pass, 42 of 
 | TG-17 Keep my travel profile | ✅ API and app; seeds new trips |
 | TG-17 Delete my account | ✅ API and app (signs in again when needed); ⏳ live check with a real account |
 
+## Delivered: itinerary (backend)
+`pamplemousse` spec 008 builds a day-by-day plan with `POST /api/v1/plans`: the best match of the ranked hotel and
+flight lists (spec 007), then days of sights, parks, meals, nightlife, events and free time, timed around the flight,
+grouped by area and with walking distances. Pace (Relaxed, Balanced, Packed) sets the places a day holds and is saved
+in the travel profile. The plan shows its total in the trip's currency and its match, with the parts behind it. The
+rules live in Domain (`PlanBuilder`), deterministic, with no outside dependency (ADR 0002 note).
+
+Plans are saved to `travellers/{uid}/plans` with a copy of every offer they use, so opening one calls no source. The
+traveller can list, rename, mark planned and delete them (50 at most), and swap the hotel or flight for another of the
+top 20 kept with the plan, or add and remove a car; a swap calls no paid source. A failing source becomes a warning;
+no places at all is a 422. Two new free OpenTripMap lists feed the parks and nightlife. 747 backend tests pass.
+
+| Story | Result |
+|---|---|
+| TG-10 Build a day-by-day plan | ✅ API; ⏳ live checks with a real account |
+| TG-10 Swap the hotel, flight or car | ✅ API |
+| TG-10 My plans | ✅ API |
+
 ## Not done yet
 - Firebase console setup by the owner: Anonymous off, authorised domains, the Android app and its SHA-1, email
   templates; then the app's `app.env`. The API and the app are released together, since the API now refuses requests
   without a sign-in.
-- Live checks that need a real account (quickstart 3–11): run by the owner.
-- The itinerary (TG-10), next.
+- Live checks that need a real account (spec 009 quickstart 3–11, spec 008 quickstart 1–14): run by the owner.
+- The itinerary screens in `chocomousse`: a separate spec, after a Sprint 4 Figma page is approved.

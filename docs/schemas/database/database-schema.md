@@ -150,3 +150,4 @@ erDiagram
 - `places` stores provider data with `refreshed_at`; Google Places terms limit how long some fields may be stored — keep only IDs + refresh, check terms before storing photos/ratings long term.
 - `itinerary_items.snapshot` keeps a copy of the chosen offer at save time (prices change).
 - `trip_embeddings.embedding`: `vector(768)` — Gemini embeddings truncated to 768 dimensions (configurable).
+- **As built (Sprint 4):** saved plans live in Firestore `travellers/{uid}/plans/{planId}`, one document each, not in these tables; see [spec 008's data model](../../../specs/008-itinerary/data-model.md).

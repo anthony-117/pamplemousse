@@ -1,6 +1,7 @@
 using Pamplemousse.Api.Contracts;
 using Pamplemousse.Api.ViewModels;
 using Pamplemousse.Application.Travellers;
+using Pamplemousse.Domain.Itinerary;
 using Pamplemousse.Domain.Travellers;
 
 namespace Pamplemousse.Api.Mappings;
@@ -19,6 +20,7 @@ public static class ProfileMappings
             p.HomeCurrency,
             response.HomeCity is { } city ? new HomeCityViewModel(city.Id, city.Name, city.CountryCode) : null,
             new WeightsViewModel(w.Budget, w.Culture, w.Food, w.Nature, w.Nightlife, w.Comfort),
+            p.Pace.ToText(),
             p.CreatedAt,
             p.UpdatedAt);
     }
@@ -37,6 +39,7 @@ public static class ProfileMappings
             w?.Food,
             w?.Nature,
             w?.Nightlife,
-            w?.Comfort);
+            w?.Comfort,
+            request.Pace);
     }
 }

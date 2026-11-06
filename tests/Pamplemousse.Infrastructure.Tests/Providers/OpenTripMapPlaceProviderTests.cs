@@ -86,6 +86,48 @@ public class OpenTripMapPlaceProviderTests
     }
 
     [Fact]
+    public async Task Nature_lists_named_parks_within_6_km_once_each_best_rated_first()
+    {
+        var http = new StubHttp().On("/radius", """
+            [{"xid":"P1","name":"Villa Borghese","kinds":"gardens_and_parks,urban_environment","rate":3,"wikidata":"Q1","point":{"lon":12.49,"lat":41.91}},
+             {"xid":"P2","name":"Villa Borghese","kinds":"gardens_and_parks","rate":2,"wikidata":"Q1","point":{"lon":12.49,"lat":41.91}},
+             {"xid":"P3","name":"","kinds":"natural","rate":3,"point":{"lon":12.5,"lat":41.9}},
+             {"xid":"P4","name":"Orange Garden","kinds":"gardens_and_parks","rate":2,"point":{"lon":12.48,"lat":41.884}}]
+            """);
+        var provider = new OpenTripMapNatureProvider(http.Client(), TestDoubles.Cache(), TestDoubles.Keys());
+
+        var places = await provider.SearchAsync(Rome, 50, CancellationToken.None);
+
+        Assert.Equal(["Villa Borghese", "Orange Garden"], places.Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal("otm:P1", places[0].Id);
+        Assert.All(places, p => Assert.Equal(PlaceCategory.Nature, p.Category));
+        Assert.Equal("Gardens and parks", places[0].Kind);
+        var query = http.Requests[0].Query;
+        Assert.Contains("radius=6000", query, StringComparison.Ordinal);
+        Assert.Contains("kinds=natural,gardens_and_parks", query, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Nightlife_lists_bars_pubs_and_clubs_rated_2_or_more_within_3_km()
+    {
+        var http = new StubHttp().On("/radius", """
+            [{"xid":"B1","name":"Bar Del Fico","kinds":"foods,bars","rate":2,"point":{"lon":12.47,"lat":41.899}},
+             {"xid":"B2","name":"Club X","kinds":"nightclubs","rate":3,"point":{"lon":12.5,"lat":41.89}},
+             {"xid":"B3","name":"Bar Del Fico","kinds":"bars","rate":2,"point":{"lon":12.47,"lat":41.899}}]
+            """);
+        var provider = new OpenTripMapNightlifeProvider(http.Client(), TestDoubles.Cache(), TestDoubles.Keys());
+
+        var places = await provider.SearchAsync(Rome, 50, CancellationToken.None);
+
+        Assert.Equal(["Club X", "Bar Del Fico"], places.Select(p => p.Name), StringComparer.Ordinal);
+        Assert.All(places, p => Assert.Equal(PlaceCategory.Nightlife, p.Category));
+        Assert.Equal("Bars", places[1].Kind);
+        var query = http.Requests[0].Query;
+        Assert.Contains("radius=3000", query, StringComparison.Ordinal);
+        Assert.Contains("kinds=bars,pubs,nightclubs&rate=2", query, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Details_include_description_address_image_and_detect_restaurants()
     {
         var http = new StubHttp().On("/xid/N9", """

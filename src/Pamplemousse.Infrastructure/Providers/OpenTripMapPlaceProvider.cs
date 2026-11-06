@@ -67,6 +67,44 @@ public sealed class OpenTripMapRestaurantProvider(HttpClient http, JsonCache cac
             .ThenBy(c => c.DistanceKm));
 }
 
+/// <summary>Parks, gardens and natural sites within 6 km of the city point, for the itinerary (spec 008, research R-1).</summary>
+public sealed class OpenTripMapNatureProvider(HttpClient http, JsonCache cache, IOptions<ExternalApiOptions> options)
+    : OpenTripMapPlaceProvider(http, cache, options)
+{
+    public const int RadiusMeters = 6_000;
+
+    public override PlaceCategory Category => PlaceCategory.Nature;
+
+    protected override Uri SearchUrl(Destination destination, string apiKey) => new(string.Create(
+        CultureInfo.InvariantCulture,
+        $"{BaseUrl}/radius?radius={RadiusMeters}&lon={destination.Location.Lng:F4}&lat={destination.Location.Lat:F4}&kinds=natural,gardens_and_parks&format=json&limit={CandidatePool}&apikey={apiKey}"));
+
+    protected override Task<IEnumerable<Candidate>> RankAsync(IReadOnlyList<Candidate> candidates, CancellationToken ct) =>
+        Task.FromResult<IEnumerable<Candidate>>(candidates
+            .DistinctBy(c => c.Wikidata ?? c.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(c => c.Rate)
+            .ThenBy(c => c.DistanceKm));
+}
+
+/// <summary>Bars, pubs and nightclubs rated 2 or more within 3 km of the city point, for the itinerary (research R-1).</summary>
+public sealed class OpenTripMapNightlifeProvider(HttpClient http, JsonCache cache, IOptions<ExternalApiOptions> options)
+    : OpenTripMapPlaceProvider(http, cache, options)
+{
+    public const int RadiusMeters = 3_000;
+
+    public override PlaceCategory Category => PlaceCategory.Nightlife;
+
+    protected override Uri SearchUrl(Destination destination, string apiKey) => new(string.Create(
+        CultureInfo.InvariantCulture,
+        $"{BaseUrl}/radius?radius={RadiusMeters}&lon={destination.Location.Lng:F4}&lat={destination.Location.Lat:F4}&kinds=bars,pubs,nightclubs&rate=2&format=json&limit={CandidatePool}&apikey={apiKey}"));
+
+    protected override Task<IEnumerable<Candidate>> RankAsync(IReadOnlyList<Candidate> candidates, CancellationToken ct) =>
+        Task.FromResult<IEnumerable<Candidate>>(candidates
+            .DistinctBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(c => c.Rate)
+            .ThenBy(c => c.DistanceKm));
+}
+
 /// <summary>OpenTripMap (free key, OPENTRIPMAP_API_KEY): places around a city, one subclass per category.</summary>
 public abstract class OpenTripMapPlaceProvider(HttpClient http, JsonCache cache, IOptions<ExternalApiOptions> options) : IPlaceProvider
 {

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Pamplemousse.Domain.Itinerary;
 using Pamplemousse.Domain.Ranking;
 using Pamplemousse.Domain.Travellers;
 using Pamplemousse.Infrastructure.Accounts;
@@ -24,6 +25,7 @@ public class FirestoreTravelProfilesTests(FirestoreEmulator emulator) : IClassFi
         HomeCurrency = "EUR",
         HomeCityId = "3169070",
         Preferences = new Weights(90, 80, 50, 20, 10, 0),
+        Pace = Pace.Packed,
         UpdatedAt = Created.AddMinutes(5),
     };
 
