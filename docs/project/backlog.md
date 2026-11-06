@@ -13,6 +13,7 @@ Move to GitHub Projects or Notion once set up. Priority: Must / Should / Could.
 | TG-07 | As Fares, I want to see hotel options and prices | 2 | Must |
 | TG-08 | As Fares, I want to see car rental options | 2 | Could |
 | TG-09 | As Fares, I want to weight budget, culture, food and style and get ranked options | 3 | Must |
+| TG-17 | As Fares, I want to sign in with email or Google so my plans and travel profile are mine on every device | 4 | Must |
 | TG-10 | As Fares, I want a complete day-by-day itinerary with a match score | 4 | Must |
 | TG-11 | As Fares, I want to change my plan by chatting | 5 | Must |
 | TG-12 | As Fares, I want suggestions based on my past trips | 7 | Should |
