@@ -143,6 +143,7 @@ public static class DependencyInjection
             services.AddSingleton<FirestoreHotelData>();
             services.AddSingleton<FirestoreCarData>();
             services.AddSingleton<ITravelProfileStore, FirestoreTravelProfiles>();
+            services.AddSingleton<IPlanStore, FirestorePlanStore>();
             services.AddSingleton<IAccountDeleter>(_ => new FirebaseAccountDeleter(keys.FirebaseProjectId, keys.GoogleCredentialsPath));
             services.AddHostedService<FirestoreWarmUp>();
         }
@@ -151,6 +152,7 @@ public static class DependencyInjection
             services.AddSingleton<InMemoryHotelData>();
             services.AddSingleton<InMemoryCarData>();
             services.AddSingleton<ITravelProfileStore, InMemoryTravelProfiles>();
+            services.AddSingleton<IPlanStore, InMemoryPlanStore>();
             services.AddSingleton<IAccountDeleter, NotConfiguredAccountDeleter>();
         }
 

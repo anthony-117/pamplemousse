@@ -8,6 +8,7 @@ public sealed record ProfileViewModel(
     string HomeCurrency,
     HomeCityViewModel? HomeCity,
     WeightsViewModel Preferences,
+    string Pace,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 

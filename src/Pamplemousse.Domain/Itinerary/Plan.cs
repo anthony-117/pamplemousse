@@ -22,7 +22,8 @@ public enum OfferKind
 
 /// <summary>
 /// The top of each ranked list the plan used, copied with their matches, so a swap never calls a source (research R-7).
-/// <see cref="Cars"/> is null until a car is first added. The times say when the prices were checked (FR-013).
+/// <see cref="Cars"/> is null until a car is first added. The times say when the prices were checked (FR-013). The sources
+/// and the car booking page are kept to show the offers as their lists do.
 /// </summary>
 public sealed record PlanAlternatives(
     IReadOnlyList<Ranked<HotelOffer>> Hotels,
@@ -30,7 +31,10 @@ public sealed record PlanAlternatives(
     IReadOnlyList<Ranked<CarOffer>>? Cars,
     DateTimeOffset? HotelsCheckedAt,
     DateTimeOffset? FlightsCheckedAt,
-    DateTimeOffset? CarsCheckedAt)
+    DateTimeOffset? CarsCheckedAt,
+    string? HotelSource = null,
+    string? CarSource = null,
+    string? CarBookingUrl = null)
 {
     public const int Max = 20;
 }
@@ -128,10 +132,19 @@ public sealed record Plan(
     };
 
     /// <summary>The kept cars, the first time a car is added (research R-7).</summary>
-    public Plan WithCars(IReadOnlyList<Ranked<CarOffer>> cars, DateTimeOffset checkedAt)
+    public Plan WithCars(IReadOnlyList<Ranked<CarOffer>> cars, DateTimeOffset checkedAt, string? source = null, string? bookingUrl = null)
     {
         ArgumentNullException.ThrowIfNull(cars);
-        return this with { Alternatives = Alternatives with { Cars = [.. cars.Take(PlanAlternatives.Max)], CarsCheckedAt = checkedAt } };
+        return this with
+        {
+            Alternatives = Alternatives with
+            {
+                Cars = [.. cars.Take(PlanAlternatives.Max)],
+                CarsCheckedAt = checkedAt,
+                CarSource = source,
+                CarBookingUrl = bookingUrl,
+            },
+        };
     }
 
     /// <summary>
@@ -139,6 +152,20 @@ public sealed record Plan(
     /// <paramref name="pools"/> (the places couldn't be fetched), the days are kept and only the total and match change.
     /// </summary>
     public Plan Swap(OfferKind kind, string? offerId, PlacePools? pools, DateTimeOffset now)
+    {
+        EnsureOffer(kind, offerId);
+        var id = offerId!.Trim();
+        var changed = kind switch
+        {
+            OfferKind.Hotel => this with { HotelId = id },
+            OfferKind.Flight => this with { FlightId = id },
+            _ => this with { CarId = id },
+        };
+        return changed.Rebuild(pools, now);
+    }
+
+    /// <summary>Throws, naming <c>offerId</c>, unless the offer is among the kept alternatives of its kind.</summary>
+    public void EnsureOffer(OfferKind kind, string? offerId)
     {
         var id = offerId?.Trim();
         var known = kind switch
@@ -151,14 +178,6 @@ public sealed record Plan(
         {
             throw new DomainException("Choose an offer from the list.", "offerId");
         }
-
-        var changed = kind switch
-        {
-            OfferKind.Hotel => this with { HotelId = id },
-            OfferKind.Flight => this with { FlightId = id },
-            _ => this with { CarId = id },
-        };
-        return changed.Rebuild(pools, now);
     }
 
     public Plan RemoveCar(PlacePools? pools, DateTimeOffset now) => (this with { CarId = null }).Rebuild(pools, now);

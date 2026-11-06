@@ -47,7 +47,7 @@ internal static class CarMappings
             r.Ranking?.Note);
     }
 
-    private static CarViewModel ToViewModel(this CarOffer c, string bookingUrl, string source, RankingResult? ranking) => new(
+    internal static CarViewModel ToViewModel(this CarOffer c, string bookingUrl, string source, RankingResult? ranking) => new(
         c.Id,
         c.Model,
         c.OrSimilar,

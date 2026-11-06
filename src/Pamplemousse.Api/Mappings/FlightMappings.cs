@@ -26,7 +26,7 @@ internal static class FlightMappings
 
     private static FlightEndpointViewModel ToViewModel(this FlightEndpoint e) => new(e.Id, e.Name, e.FlightCity, e.Code, e.IsNearby, e.DistanceKm);
 
-    private static FlightViewModel ToViewModel(this FlightOffer f, RankingResult? ranking) => new(
+    internal static FlightViewModel ToViewModel(this FlightOffer f, RankingResult? ranking) => new(
         f.Id,
         f.Airline,
         f.FlightNumber,
