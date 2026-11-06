@@ -6,6 +6,8 @@ public enum PlaceCategory
 {
     Attraction,
     Restaurant,
+    Nature,
+    Nightlife,
 }
 
 /// <summary>An attraction or restaurant. <see cref="Id"/> is "{source}:{providerId}", e.g. "otm:W12345".</summary>
