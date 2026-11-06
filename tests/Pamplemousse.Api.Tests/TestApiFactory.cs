@@ -1,13 +1,20 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Pamplemousse.Api.Auth;
+using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application.Abstractions;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
+using Pamplemousse.Domain.Travellers;
 using Pamplemousse.Infrastructure;
 using Pamplemousse.Infrastructure.Providers;
 using Pamplemousse.Infrastructure.Storage;
@@ -17,6 +24,7 @@ namespace Pamplemousse.Api.Tests;
 /// <summary>
 /// Hosts the API with fake free-data providers (no internet) and no API keys, so keyed providers
 /// (OpenTripMap, Ticketmaster) take their "not configured" path. Wikidata only answers for Paris.
+/// Sign-in trusts <see cref="TestTokens"/>, and every client it makes sends a valid token for <see cref="TestTokens.Uid"/>.
 /// </summary>
 public sealed class TestApiFactory : WebApplicationFactory<Program>
 {
@@ -26,7 +34,22 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
 
     public FakeHotels Hotels { get; } = new();
 
+    public FakeCars Cars { get; } = new();
+
+    public FakeNearby Nearby { get; } = new();
+
     public FakeChat Chat { get; } = new();
+
+    public FakeAccounts Accounts { get; } = new();
+
+    /// <summary>The Firebase project sign-in accepts; empty tests the "not configured" path. Set before the first request.</summary>
+    public string SignInProject { get; set; } = TestTokens.Project;
+
+    /// <summary>High by default so other tests never meet them; rate-limit tests lower them before the first request.</summary>
+    public AssistantRateLimitSettings Limits { get; } = new() { PerClientPerMinute = 1000, PerClientPerDay = 1000, AllClientsPerMinute = 1000 };
+
+    /// <summary>Every request arrives from this address, as from Caddy inside the Docker network.</summary>
+    public static readonly IPAddress ProxyAddress = IPAddress.Parse("172.18.0.2");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -37,17 +60,37 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
                 o.OpenTripMapApiKey = "";
                 o.TicketmasterApiKey = "";
             });
+            services.PostConfigure<AssistantRateLimitSettings>(o =>
+            {
+                o.PerClientPerMinute = Limits.PerClientPerMinute;
+                o.PerClientPerDay = Limits.PerClientPerDay;
+                o.AllClientsPerMinute = Limits.AllClientsPerMinute;
+            });
+            services.PostConfigure<SignInSettings>(o => o.ProjectId = SignInProject);
+            services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, o =>
+            {
+                // Never Google's keys: the developer's .env may name the real project.
+                o.Authority = null;
+                o.TokenValidationParameters.ValidIssuer = TestTokens.Issuer;
+                o.TokenValidationParameters.ValidAudience = TestTokens.Project;
+                o.TokenValidationParameters.IssuerSigningKey = TestTokens.Key;
+            });
+            services.AddSingleton<IAccountDeleter>(Accounts);
+            services.AddSingleton<ITravelProfileStore, InMemoryTravelProfiles>();
+            services.AddSingleton<IStartupFilter, FromProxy>();
             services.AddSingleton<IWeatherProvider, FakeWeather>();
             services.AddSingleton<IExchangeRateProvider>(Exchange);
             services.AddSingleton<IHolidayProvider, FakeHolidays>();
             services.AddSingleton<IAdvisoryProvider, FakeAdvisories>();
             services.AddSingleton<IFlightProvider>(Flights);
             services.AddSingleton<IHotelProvider>(Hotels);
+            services.AddSingleton<ICarProvider>(Cars);
+            services.AddSingleton<INearbyPlaces>(Nearby);
 
             // Never Gemini: the developer's .env may hold a real key. The real tool loop still runs the tools.
             services.AddSingleton<IChatClient>(_ => new FunctionInvokingChatClient(Chat));
 
-            // The developer's .env may name a real Firebase project; tests keep hotel data in memory instead.
+            // The developer's .env may name a real Firebase project; tests keep hotel and car data in memory instead.
             services.AddSingleton<InMemoryHotelData>();
             foreach (var warmUp in services.Where(d => d.ImplementationType == typeof(FirestoreWarmUp)).ToList())
             {
@@ -57,8 +100,32 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ICityMappingStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IHotelStore>(sp => sp.GetRequiredService<InMemoryHotelData>());
             services.AddSingleton<IPriceHistory>(sp => sp.GetRequiredService<InMemoryHotelData>());
+            services.AddSingleton<InMemoryCarData>();
+            services.AddSingleton<ICarAirportStore>(sp => sp.GetRequiredService<InMemoryCarData>());
+            services.AddSingleton<ICarHistory>(sp => sp.GetRequiredService<InMemoryCarData>());
             services.AddHttpClient<WikidataAttractionProvider>().ConfigurePrimaryHttpMessageHandler(() => new FakeWikidata());
         });
+    }
+
+    protected override void ConfigureClient(HttpClient client)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        base.ConfigureClient(client);
+        client.DefaultRequestHeaders.Authorization = TestTokens.Bearer(TestTokens.For());
+    }
+
+    /// <summary>The test server sets no remote address; production requests come from Caddy.</summary>
+    private sealed class FromProxy : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((HttpContext context, RequestDelegate nextMiddleware) =>
+            {
+                context.Connection.RemoteIpAddress = ProxyAddress;
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 
     /// <summary>Knows one landmark in Paris; everywhere else Wikidata is "down", so attractions fall back to OpenTripMap.</summary>
@@ -105,4 +172,25 @@ public sealed class FakeExchangeRates : IExchangeRateProvider
     public Task<ExchangeRate?> GetAsync(string baseCurrency, string quoteCurrency, CancellationToken ct) => Fail
         ? throw new HttpRequestException("ECB down")
         : Task.FromResult<ExchangeRate?>(new ExchangeRate(baseCurrency, quoteCurrency, 0.89m, new DateOnly(2026, 10, 27), "test"));
+}
+
+/// <summary>Records the Firebase accounts deleted, or fails when <see cref="Fail"/> is set.</summary>
+public sealed class FakeAccounts : IAccountDeleter
+{
+    private readonly ConcurrentQueue<string> _deleted = new();
+
+    public bool Fail { get; set; }
+
+    public IEnumerable<string> Deleted => _deleted;
+
+    public Task DeleteAsync(TravellerId traveller, CancellationToken ct)
+    {
+        if (Fail)
+        {
+            throw new ServiceUnavailableException("The sign-in service can't be reached.");
+        }
+
+        _deleted.Enqueue(traveller.Value);
+        return Task.CompletedTask;
+    }
 }

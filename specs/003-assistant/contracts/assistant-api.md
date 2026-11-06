@@ -84,3 +84,7 @@ Busy (Gemini 429, 503 or time-out):
 
 `400` Problem Details naming the field (too many messages, empty or too long text, last message not from the
 traveller, bad dates, adults out of range). `404` unknown `context.destinationId`.
+
+`429` Problem Details ("Too many messages to the assistant. Wait a minute and try again.") with a `Retry-After`
+header in seconds, past 5 messages per minute or 40 per day from one client, or 10 per minute from all clients
+(FR-015). Only this endpoint is limited.

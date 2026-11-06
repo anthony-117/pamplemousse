@@ -21,7 +21,7 @@ public static class Env
 
     // Assistant (ADR 0005, ADR 0018): Google AI Studio key and model. Without a key, every answer is a warning naming the variable.
     public static string GeminiApiKey => Get("GEMINI_API_KEY", "");
-    public static string GeminiModel => Get("GEMINI_MODEL", "gemini-3.8-flash");
+    public static string GeminiModel => Get("GEMINI_MODEL", "gemini-2.5-flash");
 
     // Comma-separated browser origins allowed to call the API (e.g. the Firebase Hosting domain).
     public static IReadOnlyList<string> CorsAllowedOrigins =>

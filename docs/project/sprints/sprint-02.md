@@ -1,6 +1,6 @@
 # Sprint 2 review — in progress
 
-Cars are still to do. This records the Flights feature (TG-06) and the hotels backend (TG-07), built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/).
+This records the Flights feature (TG-06) and the hotels (TG-07) and cars (TG-08) backends, built with Spec Kit: [flights](../../../specs/001-flights/), [hotels](../../../specs/002-hotels/), [cars](../../../specs/004-cars/). The car screens are in `chocomousse` (`specs/004-car-screen`).
 
 ## Delivered: Hotels (backend)
 `GET /api/v1/destinations/{id}/hotels` and `GET /api/v1/hotels/{hotelId}`, from the Booking COM API (ADR 0016). Searches are kept in Redis for 12 hours and every hotel, city and price is stored in Firestore (ADR 0017). The screens are in `chocomousse`, with their own spec (`specs/002-hotel-screen`) and an approved Figma design: a list with sort, filters and pages (a side panel on wide screens), hotel details, and an adults setting shared with flights. `totalPages` was added to the search response for the pager.
@@ -33,6 +33,50 @@ Still to check by hand (quickstart): prices against Booking.com for 10 hotels (S
 - **Free plan:** one page of 20 hotels per search, and details only when a hotel is opened. So the free-cancellation and type-of-stay filters only cover hotels already opened; the response says how many.
 - **First search for a city** is slower (about 7 s), once per city.
 - **The last price of a hotel** is kept for the last dates searched; opening it for other dates shows no price until it is searched for those dates.
+
+## Delivered: Cars (backend)
+`GET /api/v1/destinations/{id}/car-places` and `GET /api/v1/destinations/{id}/cars`, from the same Booking COM API as hotels. One call to the source returns every car (up to 500), so a search is kept in Redis for a day and saved as one Firestore snapshot with the source's whole answer, compressed. Sorting, filters and pages never call the source again. A city's airports are looked up once and stored on the city for 30 days. The Figma design is approved (page "Sprint 2 — Cars"). The screens are in `chocomousse`, with their own spec (`specs/004-car-screen`): a list with the pick-up place and driver's age, sort, filters and pages (a side panel on wide screens), car details, and a Car rental entry on the overview. The driver's age is a trip setting, 18–99, default 30.
+
+| Story | Result |
+|---|---|
+| Cars and prices for my trip | ✅ Normal Booking.com price for the whole rental and per day, pick-up and return at 10:00; the same car at the same desk is shown once, at its lowest price |
+| Pick-up at the centre or an airport, and the driver's age | ✅ Centre or airports within 50 km; age 18–99 with a note under 25 and over 70 |
+| Sort and filter | ✅ Recommended, price, company rating; size, gearbox, seats, bags, company, pick-up type, price, free cancellation |
+| Open Booking.com | ✅ The link opens Booking.com's car search for the same place, dates, times and age. The source's own per-car link opens "page not found", so no link opens one car |
+
+### Live checks, 5 Nov 2026
+Real key, local API without Aspire, Rome 4–8 Dec 2026. 4 requests of the monthly 530.
+
+| Check | Result |
+|---|---|
+| Rome pick-up places | Centre, Ciampino (CIA), Fiumicino (FCO); 2.4 s, once per city |
+| Rome centre, age 30 | 415 cars after removing repeats (500 from the source, which counted 1,054); 15.6 s |
+| Same search, cheapest automatic first | 182 cars, 0.03 s, no new call |
+| Fiumicino, age 23 | 420 cars and the young-driver note; 26.3 s |
+| Prices against Booking.com | Fiat 600 at Budget, Rome: 76.76 vs US$77. Opel Corsa at Record Go, Fiumicino: 62.89 vs US$63 |
+| Links | Centre and Fiumicino (`ftsType=A`) open the right place, dates, 10:00 and age. Found and fixed: the centre link filled Booking.com's search box with "City centre"; it now says the city |
+
+### Screen check, 5 Nov 2026 (evening)
+The app (`chocomousse` web build) against the local API, Rome and Zahlé 5–9 Dec 2026, at 390 px and 1440 px. 8 requests of the monthly 530 that day, counting the failed tries below.
+
+| Check | Result |
+|---|---|
+| First tries | Three Rome centre searches failed: headers after 5–16 s, then the body still arriving at the 45 s limit. Cause: the client didn't ask for compression, so the source sent several MB of plain JSON. Fixed: both Booking COM clients ask for gzip, deflate or brotli |
+| Rome centre, age 30 | 465 cars, 18 s (headers at 14.6 s, the compressed body about 3 s). The card matches the design: Fiat 600 at Budget, US$77 total, US$19 a day, pay now |
+| Car details | Photo, company, address, pick-up and return at 10:00, the car's specs, deposit €200, damage excess €3,294, fuel, payment, price box and the Booking.com button |
+| Fiumicino, age 23, from the pick-up sheet | 445 cars in 8 s (26.3 s before compression) and the young-driver note; Opel Corsa at Record Go US$63 |
+| Lowest price + automatic, from the filter sheet | No new call; the sheet's sizes, pick-up types and companies come from the search, "Filters cover all 445 cars" |
+| Zahlé | Only the city centre (no airport the source knows within 50 km); 201 cars in 6 s, nearest desks around Beirut, 33–38 km |
+| Wide layout | Side panel with the trip chips and filters, cars beside it |
+| Failed search with nothing saved | "Cars could not be searched" with Try again and the Booking.com search |
+
+Still to check (quickstart): 9 more cities and 3 more airports (SC-001), 10 prices (SC-003), 10 links (SC-007), and a wrong key giving saved cars.
+
+### Known limits
+- **At most 500 cars per search**, with no paging at the source. Rome has about 1,050, so the response says `mayHaveMore` and links to Booking.com for the rest.
+- **An airport search also returns desks in the city:** Fiumicino gave 100 downtown and 120 train-station cars. The pick-up type filter narrows them.
+- **First search is slow:** 15–30 s at the source, once a day per place, dates and driver age.
+- **A failed search costs a request:** a search the source fails is not saved, so Try again pays again. A search the app gives up on is no longer lost: it runs to the end and is saved for the retry.
 
 ## Delivered: Flights
 `GET /api/v1/destinations/{id}/flights`. The screen is in `chocomousse`, with its own spec (`specs/001-flight-screen`) and an approved Figma design. A missing partner marker is now logged for us, not sent to the traveller.
@@ -83,4 +127,4 @@ Tests: 221 passing, no analyzer findings.
 - **Embedded lists:** no published terms were found for Travelpayouts' city and airline lists, either allowing or restricting them. To be asked of their support.
 
 ## Next
-- Cars (TG-08) from the same API.
+- Cars: the remaining quickstart checks (more cities and airports, prices, links, a wrong key).

@@ -124,6 +124,7 @@ and don't ask for personal details. You can't book or change plans yet.
 | Risk | Handling |
 |---|---|
 | Free-tier limits change or are low | 429 → warning; model is a setting; the quickstart records the limits seen |
+| One visitor uses up the shared free tier | ASP.NET rate limiter on this endpoint only (FR-015): fixed windows of 5/min and 40/day per client IP and 10/min overall, chained; 429 with Retry-After. The client IP comes from Caddy's `X-Forwarded-For` (forwarded headers trust private networks only, since the API port is reachable only inside the Docker network). In memory, so one API instance; Redis if we ever run more |
 | Model ignores "use the tools" | SC-001/SC-002 live checks; instructions name each fact type; temperature 0.3 |
 | Hotel tool spends RapidAPI quota | Same handler, cache and quota as the screen; the model is told to search hotels only when asked |
 | Google.GenAI SDK is new (1.x) | Only used through `IChatClient`; replacing it is one Infrastructure file |

@@ -2,7 +2,7 @@
 
 ## Run it
 
-1. In `.env`, set `GEMINI_API_KEY` (Google AI Studio) and, optionally, `GEMINI_MODEL` (default `gemini-3.8-flash`).
+1. In `.env`, set `GEMINI_API_KEY` (Google AI Studio) and, optionally, `GEMINI_MODEL` (default `gemini-2.5-flash`).
 2. `dotnet run --project src/Pamplemousse.Api`
 3. Ask:
 

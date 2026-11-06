@@ -28,7 +28,7 @@ public sealed class ExternalApiOptions
     public string GeminiApiKey { get; set; } = "";
 
     /// <summary>Gemini model the assistant uses.</summary>
-    public string GeminiModel { get; set; } = "gemini-3.8-flash";
+    public string GeminiModel { get; set; } = "gemini-2.5-flash";
 
     /// <summary>Longest wait for one Gemini call; past it the answer is the "busy" warning (spec 003).</summary>
     public TimeSpan GeminiTimeout { get; set; } = TimeSpan.FromSeconds(30);

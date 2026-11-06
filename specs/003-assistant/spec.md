@@ -20,7 +20,7 @@ Plan-editing tools (`swap_day` …, ADR 0002) are added when the itinerary exist
 
 ### Session 2026-11-04
 
-- Q: Which model? → A: Gemini Flash through `Microsoft.Extensions.AI` (ADR 0005), Google AI Studio free tier, with the key the owner already has. The model name is a setting, default `gemini-3.8-flash` (checked on 4 Nov 2026: answers on the free tier; the `gemini-flash-latest` alias returned "high demand").
+- Q: Which model? → A: Gemini Flash through `Microsoft.Extensions.AI` (ADR 0005), Google AI Studio free tier, with the key the owner already has. The model name is a setting, default `gemini-2.5-flash` (checked on 4 Nov 2026: `gemini-3.8-flash` returned "high demand" all afternoon while 2.5-flash answered in under 1 s; the `gemini-flash-latest` alias also returned "high demand").
 - Q: Where does the assistant get its facts? → A: Only from TravelGenie's own use cases, called as tools: city search, overview (weather, currency, visa, safety, holidays), places, events, flights and hotels. Prices, visa rules and advisories are never made up by the model.
 - Q: Where is the conversation kept? → A: In the app, for the current session only. There are no accounts yet, so the server stores nothing; each message sends the recent conversation. Saved conversations (the list in W6) come with accounts.
 - Q: Can it change a plan? → A: Not in this feature: there is no plan yet (Sprint 4).
@@ -121,6 +121,7 @@ suggestions, sending a message, the typing state, the reply with a card, and an 
 - **FR-012**: The app MUST keep the conversation for the session, offer "New chat", and offer the assistant from a city's overview with that trip as context.
 - **FR-013**: The app MUST show a typing state while waiting and, on failure, keep the conversation and offer Try again (chocomousse principle V).
 - **FR-014**: The app MUST show a short notice that messages are processed by Google Gemini and should not contain personal details (ADR 0005: the free tier may use prompts for training).
+- **FR-015**: The API MUST limit assistant messages, since each one can make several Gemini calls on the shared free tier: 5 per minute and 40 per day per client (the IP address Caddy forwards), and 10 per minute for all clients together. Past a limit it answers `429` with `Retry-After`, and the app shows "Too many messages. Wait a minute and try again." with Try again. The limits are settings (`Assistant:RateLimit`); counts are kept in memory, so a restart resets them. Added 2026-11-05, approved by the owner.
 
 ### Key Entities
 

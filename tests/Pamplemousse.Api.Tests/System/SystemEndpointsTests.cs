@@ -27,6 +27,17 @@ public class SystemEndpointsTests(WebApplicationFactory<Program> factory) : ICla
     }
 
     [Theory]
+    [InlineData("/openapi/v1.json", "application/json")]
+    [InlineData("/scalar", "text/html")]
+    public async Task Api_reference_is_served_in_development(string path, string mediaType)
+    {
+        var response = await _client.GetAsync(new Uri(path, UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(mediaType, response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Theory]
     [InlineData("http://localhost:61234", true)]
     [InlineData("https://evil.example.com", false)]
     public async Task Cors_allows_localhost_origins_in_development(string origin, bool allowed)
@@ -40,11 +51,12 @@ public class SystemEndpointsTests(WebApplicationFactory<Program> factory) : ICla
     }
 
     [Fact]
-    public async Task Unknown_route_returns_problem_details()
+    public async Task Unknown_route_says_nothing_until_signed_in()
     {
+        // This client sends no sign-in, so the route's existence isn't revealed; signed in, it's a 404 (SignInTests).
         var response = await _client.GetAsync(new Uri("/api/v1/does-not-exist", UriKind.Relative));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.True(response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.ServiceUnavailable);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 }

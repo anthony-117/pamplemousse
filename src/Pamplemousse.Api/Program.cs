@@ -1,9 +1,13 @@
 using System.Text.Json.Serialization;
 using Pamplemousse.Api;
+using Pamplemousse.Api.Auth;
 using Pamplemousse.Api.Middleware;
+using Pamplemousse.Api.RateLimiting;
 using Pamplemousse.Application;
+using Pamplemousse.Application.Cars;
 using Pamplemousse.Application.Hotels;
 using Pamplemousse.Infrastructure;
+using Scalar.AspNetCore;
 
 Env.LoadDotEnv();
 
@@ -18,6 +22,7 @@ builder.Services.AddControllers()
 
 // How much hotel data each search gathers (FR-008c); the defaults suit the free request plan.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Hotels").Get<HotelSettings>() ?? new HotelSettings());
+builder.Services.AddSingleton(builder.Configuration.GetSection("Cars").Get<CarSettings>() ?? new CarSettings());
 builder.Services.AddApplication();
 builder.AddInfrastructure(keys =>
 {
@@ -44,16 +49,35 @@ builder.Services.AddCors(options => options.AddPolicy(AppCorsPolicy, policy => p
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
+// Every route needs a Firebase sign-in unless marked [AllowAnonymous] (spec 009, ADR 0019).
+builder.Services.AddFirebaseSignIn(Env.FirebaseProjectId);
+
+// The assistant spends the shared Gemini free tier: limited per client and overall (spec 003, FR-015).
+builder.Services.AddAssistantRateLimits(builder.Configuration);
+
 var app = builder.Build();
+
+// Caddy sits in front in production; the client's own IP is what the assistant's limits count.
+app.UseForwardedHeaders();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(AppCorsPolicy);
+
+// After CORS, so a browser can read a 401.
+app.UseAuthentication();
+app.UseAuthorization();
+
+// After CORS, so the web app can read a 429.
+app.UseRateLimiter();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
+
+    // Interactive API reference at /scalar, built from /openapi/v1.json.
+    app.MapScalarApiReference(o => o.WithTitle("pamplemousse API")).AllowAnonymous();
 }
 
 app.MapDefaultEndpoints();

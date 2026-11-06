@@ -116,14 +116,27 @@ internal sealed class FakeSearchCache : ISearchCache
 
 internal sealed class FakeSearchLock : ISearchLock
 {
+    private readonly Lock _sync = new();
+
     public bool Taken { get; set; }
 
-    public Task<IAsyncDisposable?> TryAcquireAsync(string key, TimeSpan ttl, CancellationToken ct) =>
-        Task.FromResult<IAsyncDisposable?>(Taken ? null : new Handle());
+    /// <summary>How many locks were freed; the last step of a search, so a test can wait for one that runs on its own.</summary>
+    public int Released { get; private set; }
 
-    private sealed class Handle : IAsyncDisposable
+    public Task<IAsyncDisposable?> TryAcquireAsync(string key, TimeSpan ttl, CancellationToken ct) =>
+        Task.FromResult<IAsyncDisposable?>(Taken ? null : new Handle(this));
+
+    private sealed class Handle(FakeSearchLock owner) : IAsyncDisposable
     {
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public ValueTask DisposeAsync()
+        {
+            lock (owner._sync)
+            {
+                owner.Released++;
+            }
+
+            return ValueTask.CompletedTask;
+        }
     }
 }
 

@@ -21,7 +21,6 @@ public sealed class BookingComHotelProvider(
 {
     public const string QuotaSource = "bookingcom";
 
-    private const string Host = "booking-com18.p.rapidapi.com";
     private const string BookingSite = "https://www.booking.com";
     private const double MaxCityDistanceKm = 100;
     private const int PageSize = 20;
@@ -116,31 +115,7 @@ public sealed class BookingComHotelProvider(
 
     private async Task<JsonDocument> GetAsync(string pathAndQuery, CancellationToken ct)
     {
-        var key = options.Value.RapidApiKey is { Length: > 0 } k ? k : throw new ProviderNotConfiguredException("Hotels", "RAPIDAPI_KEY");
-
-        // Stop at 95% of the plan, keeping a margin for live checks and other features sharing the key.
-        var limit = (long)Math.Floor(options.Value.RapidApiMonthlyLimit * 0.95);
-        if (!await quota.TryTakeAsync(QuotaSource, limit, ct))
-        {
-            throw new QuotaExceededException("Booking COM API");
-        }
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"https://{Host}{pathAndQuery}"));
-        request.Headers.Add("x-rapidapi-key", key); // a header, so the key never appears in a logged URL
-        request.Headers.Add("x-rapidapi-host", Host);
-
-        using var response = await http.SendAsync(request, ct);
-        response.EnsureSuccessStatusCode();
-        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-
-        // The source reports some failures inside a 200 answer.
-        if (doc.RootElement.TryGetProperty("status", out var status) && status.ValueKind == JsonValueKind.False)
-        {
-            var message = ((JsonElement?)doc.RootElement).Prop("message").Str();
-            doc.Dispose();
-            throw new HttpRequestException($"The hotel source refused the request: {message}");
-        }
-
+        var (doc, _) = await BookingComRequest.SendAsync(http, options.Value, quota, "Hotels", pathAndQuery, ct);
         return doc;
     }
 

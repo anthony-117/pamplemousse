@@ -3,6 +3,8 @@ using Pamplemousse.Api.Contracts;
 using Pamplemousse.Api.Mappings;
 using Pamplemousse.Api.ViewModels;
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Application.Cars.Queries.GetCarPlaces;
+using Pamplemousse.Application.Cars.Queries.SearchCars;
 using Pamplemousse.Application.Destinations;
 using Pamplemousse.Application.Destinations.Queries.GetDestination;
 using Pamplemousse.Application.Destinations.Queries.GetOverview;
@@ -11,6 +13,7 @@ using Pamplemousse.Application.Destinations.Queries.ListPlaces;
 using Pamplemousse.Application.Destinations.Queries.SearchDestinations;
 using Pamplemousse.Application.Flights.Queries.SearchFlights;
 using Pamplemousse.Application.Hotels.Queries.SearchHotels;
+using Pamplemousse.Application.Ranking;
 
 namespace Pamplemousse.Api.Controllers;
 
@@ -83,7 +86,7 @@ public sealed class DestinationsController : ControllerBase
 
     [HttpGet("{id}/flights")]
     [EndpointName("SearchFlights")]
-    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first (Travelpayouts).")]
+    [EndpointSummary("Recent flight prices to this city from a departure city, cheapest first or by match (Travelpayouts).")]
     public async Task<ActionResult<FlightSearchViewModel>> GetFlightsAsync(
         string id,
         [FromQuery] SearchFlightsRequest request,
@@ -91,7 +94,10 @@ public sealed class DestinationsController : ControllerBase
         CancellationToken ct)
     {
         var flights = await handler.HandleAsync(
-            new SearchFlightsQuery(id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit), ct);
+            new SearchFlightsQuery(
+                id, request.Origin, request.From, request.To, request.TripType, request.DirectOnly, request.Currency, request.Limit, request.Sort,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
+            ct);
         return Ok(flights.ToViewModel());
     }
 
@@ -107,8 +113,40 @@ public sealed class DestinationsController : ControllerBase
         var hotels = await handler.HandleAsync(
             new SearchHotelsQuery(
                 id, request.From, request.To, request.Adults, request.Currency, request.Sort, request.MinStars, request.MinReview,
-                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page),
+                request.MinPrice, request.MaxPrice, request.StayType, request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
             ct);
         return Ok(hotels.ToViewModel());
+    }
+
+    [HttpGet("{id}/car-places")]
+    [EndpointName("GetCarPlaces")]
+    [EndpointSummary("Where a rental car can be picked up: the city centre, then nearby airports.")]
+    public async Task<ActionResult<CarPlacesViewModel>> GetCarPlacesAsync(
+        string id,
+        [FromServices] IQueryHandler<GetCarPlacesQuery, GetCarPlacesResponse> handler,
+        CancellationToken ct)
+    {
+        var places = await handler.HandleAsync(new GetCarPlacesQuery(id), ct);
+        return Ok(places.ToViewModel());
+    }
+
+    [HttpGet("{id}/cars")]
+    [EndpointName("SearchCars")]
+    [EndpointSummary("Rental cars for the trip with the total price (Booking.com), sorted and filtered on one saved search.")]
+    public async Task<ActionResult<CarSearchViewModel>> GetCarsAsync(
+        string id,
+        [FromQuery] SearchCarsRequest request,
+        [FromServices] IQueryHandler<SearchCarsQuery, SearchCarsResponse> handler,
+        CancellationToken ct)
+    {
+        var cars = await handler.HandleAsync(
+            new SearchCarsQuery(
+                id, request.From, request.To, request.Place, request.DriverAge, request.Currency, request.Sort, request.Size,
+                request.Gearbox, request.MinSeats, request.MinBags, request.Company, request.PickUpType, request.MaxPrice,
+                request.FreeCancellation, request.Page,
+                new RankingInput(request.Budget, request.Culture, request.Food, request.Nature, request.Nightlife, request.Comfort, request.TripBudget)),
+            ct);
+        return Ok(cars.ToViewModel());
     }
 }

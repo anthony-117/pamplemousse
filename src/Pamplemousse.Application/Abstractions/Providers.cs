@@ -1,3 +1,4 @@
+using Pamplemousse.Domain.Cars;
 using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Destinations;
 using Pamplemousse.Domain.Flights;
@@ -56,6 +57,15 @@ public interface IPlaceProvider
     Task<Place?> GetAsync(string providerId, CancellationToken ct);
 }
 
+/// <summary>How many places of each kind are around a position (spec 007, research R-1). 500 means 500 or more.</summary>
+public sealed record NearbyCounts(int Food, int Nightlife, int Nature);
+
+/// <summary>Counts restaurants and cafés and bars and pubs within 1 km, and parks and natural sites within 2 km, of a position.</summary>
+public interface INearbyPlaces
+{
+    Task<NearbyCounts> CountAsync(GeoPoint position, CancellationToken ct);
+}
+
 /// <summary>Recent flight prices for a search, cheapest first.</summary>
 public interface IFlightProvider
 {
@@ -101,6 +111,25 @@ public sealed record HotelResults(IReadOnlyList<FoundHotel> Hotels, int TotalPag
 
 /// <summary>A hotel with its search fields and price for the stay; <see cref="Rank"/> counts from 1 across pages.</summary>
 public sealed record FoundHotel(Hotel Hotel, HotelPrice Price, int Rank);
+
+/// <summary>Live rental cars (ADR 0016, spec 004). Everything source-specific stays behind this interface (FR-016).</summary>
+public interface ICarProvider
+{
+    /// <summary>Shown as each car's source, e.g. "Booking.com".</summary>
+    string Source { get; }
+
+    /// <summary>Every airport the source finds for the destination's name, wherever it is; the caller keeps the nearby ones.</summary>
+    Task<IReadOnlyList<PickUpPlace>> FindAirportsAsync(Destination destination, CancellationToken ct);
+
+    /// <summary>All cars for the search, at most the source's cap, in its recommended order. Distances are left at 0.</summary>
+    Task<CarResults> SearchAsync(CarSearch search, CancellationToken ct);
+
+    /// <summary>The booking site's own car search for the same place, dates, times and driver age (FR-010).</summary>
+    string SearchUrl(Destination destination, CarSearch search);
+}
+
+/// <summary>What one car search returned. <see cref="Raw"/> is the source's whole answer, kept for history (FR-008b).</summary>
+public sealed record CarResults(IReadOnlyList<CarOffer> Cars, bool MayHaveMore, byte[] Raw);
 
 public interface IEventProvider
 {
