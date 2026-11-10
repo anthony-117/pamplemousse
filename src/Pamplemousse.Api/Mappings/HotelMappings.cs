@@ -61,7 +61,7 @@ internal static class HotelMappings
             r.Warnings);
     }
 
-    private static HotelViewModel ToViewModel(this HotelOffer o, string source, RankingResult? ranking) => new(
+    internal static HotelViewModel ToViewModel(this HotelOffer o, string source, RankingResult? ranking) => new(
         o.Hotel.Id,
         o.Hotel.Name,
         o.Hotel.PhotoUrls.Count > 0 ? o.Hotel.PhotoUrls[0] : null,

@@ -1,4 +1,5 @@
 using Pamplemousse.Domain.Exceptions;
+using Pamplemousse.Domain.Itinerary;
 using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Domain.Travellers;
@@ -22,6 +23,9 @@ public sealed record TravelProfile(
     public const string DefaultPassport = "LB";
     public const string DefaultCurrency = "USD";
     private const string FallbackName = "Traveller";
+
+    /// <summary>How full a new plan's days are (spec 008, FR-006).</summary>
+    public Pace Pace { get; init; } = Pace.Balanced;
 
     /// <summary>The profile made on a first sign-in (FR-010): the sign-in's name, else the start of the email, and the app's defaults.</summary>
     public static TravelProfile New(TravellerId traveller, string? name, string? email, DateTimeOffset now)
@@ -76,6 +80,7 @@ public sealed record TravelProfile(
             HomeCurrency = currency,
             HomeCityId = city,
             Preferences = weights,
+            Pace = PaceRules.Parse(changes.Pace),
             UpdatedAt = now,
         };
     }
@@ -101,7 +106,8 @@ public sealed record ProfileChanges(
     int? Food,
     int? Nature,
     int? Nightlife,
-    int? Comfort);
+    int? Comfort,
+    string? Pace = null);
 
 /// <summary>Answers from the reference data, passed in so Domain keeps no dependency.</summary>
 public sealed record ProfileLookups(Func<string, bool> IsCountry, Func<string, bool> IsCurrency, Func<string, bool> IsCity);

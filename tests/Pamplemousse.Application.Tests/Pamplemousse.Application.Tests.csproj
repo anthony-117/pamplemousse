@@ -23,4 +23,9 @@
     <ProjectReference Include="..\..\src\Pamplemousse.Application\Pamplemousse.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The Rome fixtures of the plan builder tests, so every layer tests plans on the same inputs. -->
+    <Compile Include="..\Pamplemousse.Domain.Tests\Itinerary\PlanFixtures.cs" Link="Itinerary\PlanFixtures.cs" />
+  </ItemGroup>
+
 </Project>

@@ -67,7 +67,7 @@ the API reference. A refusal is Problem Details with a `code`: `sign-in-required
 | GET | `/api/v1/destinations?q=rom&limit=10` | City search (≥ 2 characters, accent-insensitive, biggest cities first) |
 | GET | `/api/v1/destinations/{id}` | City + country |
 | GET | `/api/v1/destinations/{id}/overview?passport=LB&currency=USD&from=&to=` | Weather, exchange rate, holidays, visa, safety advisory for the dates |
-| GET | `/api/v1/destinations/{id}/places?category=attraction\|restaurant&limit=20` | Top attractions or restaurants |
+| GET | `/api/v1/destinations/{id}/places?category=attraction\|restaurant\|nature\|nightlife&limit=20` | Top attractions, restaurants, parks or nightlife |
 | GET | `/api/v1/destinations/{id}/events?from=&to=` | Events during the dates |
 | GET | `/api/v1/destinations/{id}/flights?origin=&from=&to=&tripType=&directOnly=&currency=&limit=&sort=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Recent flight prices, cheapest first or by match ([contract](specs/001-flights/contracts/flights-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
 | GET | `/api/v1/destinations/{id}/hotels?from=&to=&adults=&currency=&sort=&minStars=&minReview=&minPrice=&maxPrice=&stayType=&freeCancellation=&page=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Hotels with the total for the stay, sorted and filtered on stored data, or ranked by match ([contract](specs/002-hotels/contracts/hotels-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
@@ -78,8 +78,16 @@ the API reference. A refusal is Problem Details with a `code`: `sign-in-required
 | POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
 | GET | `/api/v1/me` | The signed-in traveller's travel profile, made on the first call ([contract](specs/009-accounts/contracts/accounts-api.md)) |
-| PUT | `/api/v1/me` | Replace the name, passport, home currency, home city and default preferences |
+| PUT | `/api/v1/me` | Replace the name, passport, home currency, home city, default preferences and pace |
 | DELETE | `/api/v1/me` | Delete the profile, the plans and the sign-in (needs a sign-in from the last 5 minutes) |
+| POST | `/api/v1/plans` | Build a day-by-day plan from the best hotel and flight for the preferences, saved as a draft ([contract](specs/008-itinerary/contracts/itinerary-api.md)) |
+| GET | `/api/v1/plans` | The traveller's plans, newest first (50 at most) |
+| GET | `/api/v1/plans/{id}` | A plan as saved; no source is called |
+| PATCH | `/api/v1/plans/{id}` | Rename, or mark draft or planned |
+| DELETE | `/api/v1/plans/{id}` | Delete a plan |
+| GET | `/api/v1/plans/{id}/alternatives/{hotels\|flights\|cars}` | The kept ranked list to swap from (the first car list runs the car search once) |
+| PUT | `/api/v1/plans/{id}/{hotel\|flight\|car}` | Swap in another offer and rebuild the days, total and match |
+| DELETE | `/api/v1/plans/{id}/car` | Remove the car |
 | GET | `/api/v1/system/ping` | Name, version, environment, server time |
 | GET | `/alive` | Liveness (all environments, used by Cloud Run) |
 | GET | `/health` | Readiness incl. dependencies (Development only) |
