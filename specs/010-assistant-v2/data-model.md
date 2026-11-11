@@ -26,10 +26,11 @@ travellers/{uid}
 │                                warnings[], planChanged
 ├── saved/{kind}:{id}            destinationId, destinationName, name, imageUrl, lat, lng, savedAt, item (JSON)
 └── plans/{planId}               (spec 008) + edits[]
+chatOwners/{uid}                 since: the travellers with chats, for the daily sweep (research R-8)
 ```
 
-Indexes: a collection-group index on `chats.lastMessageAt` for the sweeper; `chats.terms` (array-contains) with
-`lastMessageAt` descending for search.
+No index beyond Firestore's automatic single-field ones: search uses `terms` array-contains and sorts in memory; the
+sweep queries one traveller's chats at a time.
 
 ## Application
 

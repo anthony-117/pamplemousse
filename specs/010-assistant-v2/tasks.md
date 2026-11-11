@@ -5,11 +5,11 @@
 
 Each phase ends with every test passing (`dotnet test`) and no analyzer finding.
 
-**Done on 2026-11-11: T001–T026 except part of T021.** The Firestore store tests (chats, saved items) run on the emulator in CI; they need
+**Done on 2026-11-11: T001–T027.** The Firestore store tests (chats, saved items) run on the emulator in CI; they need
 Docker. Where the code differs from the names below: the Domain message is `ChatEntry` (with the existing `Speaker` as
 its role, since `ChatMessage` and `ChatRole` are Microsoft.Extensions.AI's), and flight cards sit at the arrival city's
-centre with `approximate: true`, since the bundled flight cities have no airport positions (FR-005's fallback). Left: the
-rest of T021, the sprint log (T027), T028 (the owner's live run) and T029 (chocomousse T096).
+centre with `approximate: true`, since the bundled flight cities have no airport positions (FR-005's fallback). Left: T028 (the owner's live run) and
+T029 (chocomousse T096).
 
 ## Phase 1 · Plan edits (FR-012a, FR-012b, FR-013, FR-016 to FR-018)
 
@@ -50,11 +50,12 @@ rest of T021, the sprint log (T027), T028 (the owner's live run) and T029 (choco
 - [x] T019 Tools: the six of spec 003 ranked and as cards, `search_cars`, plan tools, day-edit tools, preferences,
   saved items; each step's server summary.
 - [x] T020 Api: `CardJson` with the list mappings; the two send routes as Server-Sent Events with pings.
-- [ ] T021 Tests with a scripted chat model: SC-001 (9 card kinds), SC-002 (10 changes), SC-006, SC-007, a closed
+- [x] T021 Tests with a scripted chat model: SC-001 (9 card kinds), SC-002 (10 changes), SC-006, SC-007, a closed
   stream still saves, `chat-busy`, `chat-full`, no chat text in logs (SC-005).
   *Done so far*: plan and hotel cards (hotel cards equal the list's items), save from a card, history, `chat-busy`, a
   closed stream still saves, busy and unset model end with a warning, refusals, Recents, rename, search, delete.
-  *Still to write*: the other card kinds, the 10 scripted changes of SC-002, `chat-full`, SC-005.
+  Then `AssistantCoverageTests`: every card kind plus saved items (SC-001), ten changes by chat equal to the same
+  changes by route (SC-002), `chat-full`, and no chat text, arguments or answers in the logs (SC-005).
 
 ## Phase 5 · Limits, provider, expiry, deletion (FR-026, FR-029, FR-031, FR-034, FR-035)
 
@@ -67,6 +68,6 @@ rest of T021, the sprint log (T027), T028 (the owner's live run) and T029 (choco
 
 ## Phase 6 · Check
 
-- [ ] T027 Docs: README endpoints (done), sprint log (to write).
+- [x] T027 Docs: README endpoints, sprint log ([sprint 5](../../docs/project/sprints/sprint-05.md)).
 - [ ] T028 The owner's live run of SC-001 on Gemini and Groq; the numbers and the default in ADR 0021 (FR-035).
 - [ ] T029 chocomousse T096 against this branch.

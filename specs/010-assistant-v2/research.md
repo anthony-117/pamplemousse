@@ -70,8 +70,10 @@
 
 ## R-8 Expiry after 90 days
 
-- **Decision**: a hosted `ChatSweeper` runs once a day: a collection-group query for chats with `lastMessageAt`
-  older than 90 days, deleting each chat with its messages in batches. Reads treat an expired chat as missing.
+- **Decision**: a hosted `ChatSweeper` runs once a day. Each new chat also writes `chatOwners/{uid}`; the sweep reads
+  that list and, per traveller, queries the chats with `lastMessageAt` older than 90 days and deletes each with its
+  messages. (A collection-group query needs a manual index; listing `travellers` needs admin metadata calls, which the
+  emulator refuses.) Reads treat an expired chat as missing.
   Starting chat 501 deletes the chat with the oldest last message (FR-022a).
 - **Rationale**: Firestore TTL policies delete a document but not its subcollection, and need console setup; the
   sweeper is code, tested on the emulator.

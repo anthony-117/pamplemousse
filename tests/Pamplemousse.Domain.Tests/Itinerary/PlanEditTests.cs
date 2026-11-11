@@ -118,6 +118,19 @@ public class PlanEditTests
     }
 
     [Fact]
+    public void After_removing_the_day_s_event_another_one_can_be_added()
+    {
+        var pools = TheseEvents();
+        var plan = NewPlan(pools).ChangeDay(PlanEdit.Remove(2, "ev:1"), pools, Now);
+        Assert.DoesNotContain(plan.Built.Days[1].Items, i => i.Kind == ItemKind.Event);
+
+        var added = plan.ChangeDay(PlanEdit.Add(2, DayAlternatives.Find(plan, pools, 2, null, "ev:2", isEvent: true)), pools, Now);
+
+        Assert.Equal("ev:2", added.Built.Days[1].Items.Single(i => i.Kind == ItemKind.Event).Ref!.Id);
+        Assert.Equal(2, added.Edits.Count);
+    }
+
+    [Fact]
     public void Edits_last_through_a_swap_and_the_same_input_gives_the_same_plan()
     {
         var pools = Pools();

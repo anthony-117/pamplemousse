@@ -555,19 +555,19 @@ public static class PlanBuilder
             var book = context.Book;
             if (context.EventFor(frame.Date, frame.Start, frame.End) is { } chosen)
             {
-                if (book.Find(day, EditAction.Remove, chosen.Event.Id) is { } removal)
-                {
-                    book.Done(removal);
-                    return null;
-                }
-
                 if (book.Find(day, EditAction.Replace, chosen.Event.Id) is { NewItem.Event: { } other } replacement)
                 {
                     var at = EventStart(other.Time);
                     return EventFits(at, frame.Start, frame.End) && other.Date == frame.Date ? (other, at, replacement) : (chosen.Event, chosen.Start, null);
                 }
 
-                return (chosen.Event, chosen.Start, null);
+                if (book.Find(day, EditAction.Remove, chosen.Event.Id) is not { } removal)
+                {
+                    return (chosen.Event, chosen.Start, null);
+                }
+
+                // Removed: an event the traveller added that day takes its place.
+                book.Done(removal);
             }
 
             if (book.EventAdd(day) is { NewItem.Event: { } added } addition)

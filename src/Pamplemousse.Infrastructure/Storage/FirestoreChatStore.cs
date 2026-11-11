@@ -77,6 +77,7 @@ public sealed class FirestoreChatStore(FirestoreDb db) : IChatStore
             var batch = db.StartBatch();
             var doc = Chats(chat.Owner).Document(chat.Id);
             batch.Create(doc, ToDocument(chat));
+            batch.Set(Owners.Document(chat.Owner.Value), new Dictionary<string, object>(StringComparer.Ordinal) { ["since"] = Timestamp.FromDateTimeOffset(chat.CreatedAt) }, SetOptions.MergeAll);
             batch.Set(doc.Collection("messages").Document(first.Id), Pack(first));
             await batch.CommitAsync(ct);
         });
@@ -140,27 +141,40 @@ public sealed class FirestoreChatStore(FirestoreDb db) : IChatStore
         {
             await DeleteChatAsync(doc.Reference, ct);
         }
+
+        await Owners.Document(owner.Value).DeleteAsync(cancellationToken: ct);
     });
 
     /// <summary>
-    /// Every traveller's chats with a last message before <paramref name="before"/>. The travellers are listed with
-    /// <c>ListDocumentsAsync</c>, which also finds a traveller with chats and no profile (research R-8).
+    /// Every traveller's chats with a last message before <paramref name="before"/> (research R-8). The travellers with
+    /// chats are listed in <c>chatOwners</c>, written with each new chat, so the sweep needs only ordinary queries: no
+    /// admin listing and no collection-group index. A traveller left with no chat leaves the list.
     /// </summary>
     public Task<int> DeleteExpiredAsync(DateTimeOffset before, CancellationToken ct) => Guard(async () =>
     {
         var deleted = 0;
-        await foreach (var traveller in db.Collection("travellers").ListDocumentsAsync().WithCancellation(ct))
+        var owners = await Owners.Select(FieldPath.DocumentId).GetSnapshotAsync(ct);
+        foreach (var owner in owners.Documents)
         {
-            var old = await traveller.Collection("chats").WhereLessThan("lastMessageAt", Timestamp.FromDateTimeOffset(before)).Select(FieldPath.DocumentId).GetSnapshotAsync(ct);
+            var chats = db.Collection("travellers").Document(owner.Id).Collection("chats");
+            var old = await chats.WhereLessThan("lastMessageAt", Timestamp.FromDateTimeOffset(before)).Select(FieldPath.DocumentId).GetSnapshotAsync(ct);
             foreach (var doc in old.Documents)
             {
                 await DeleteChatAsync(doc.Reference, ct);
                 deleted++;
             }
+
+            if ((await chats.Count().GetSnapshotAsync(ct)).Count == 0)
+            {
+                await owner.Reference.DeleteAsync(cancellationToken: ct);
+            }
         }
 
         return deleted;
     });
+
+    /// <summary>The travellers who have chats: <c>chatOwners/{uid}</c>.</summary>
+    private CollectionReference Owners => db.Collection("chatOwners");
 
     internal static Dictionary<string, object?> ToDocument(Chat chat) => new(StringComparer.Ordinal)
     {
