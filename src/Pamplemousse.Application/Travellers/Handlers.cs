@@ -38,14 +38,16 @@ public sealed record DeleteAccountCommand(SignedInTraveller Traveller);
 /// Deletes everything stored for the traveller, then the sign-in itself (FR-014, research R-4). A failure stops at that
 /// step, and a retry finishes the job since each step treats "already gone" as done.
 /// </summary>
-public sealed class DeleteAccountHandler(ITravelProfileStore store, IPlanStore plans, IAccountDeleter accounts, IDeletedTravellers deleted)
+public sealed class DeleteAccountHandler(ITravelProfileStore store, IPlanStore plans, ISavedStore saved, IChatStore chats, IAccountDeleter accounts, IDeletedTravellers deleted)
     : ICommandHandler<DeleteAccountCommand, bool>
 {
     public async Task<bool> HandleAsync(DeleteAccountCommand command, CancellationToken ct)
     {
         var id = command.Traveller.Id;
 
-        // Plans first (spec 008): a retry after a failure still finds the profile and finishes the job.
+        // Chats, saved items and plans first (specs 010, 008): a retry after a failure still finds the profile and finishes the job.
+        await chats.DeleteAllAsync(id, ct);
+        await saved.DeleteAllAsync(id, ct);
         await plans.DeleteAllAsync(id, ct);
         await store.DeleteAsync(id, ct);
         await accounts.DeleteAsync(id, ct);

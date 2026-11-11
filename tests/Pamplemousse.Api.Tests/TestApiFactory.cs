@@ -78,6 +78,8 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IAccountDeleter>(Accounts);
             services.AddSingleton<ITravelProfileStore, InMemoryTravelProfiles>();
             services.AddSingleton<IPlanStore, InMemoryPlanStore>();
+            services.AddSingleton<ISavedStore, InMemorySavedStore>();
+            services.AddSingleton<IChatStore, InMemoryChatStore>();
             services.AddSingleton<IStartupFilter, FromProxy>();
             services.AddSingleton<IWeatherProvider, FakeWeather>();
             services.AddSingleton<IExchangeRateProvider>(Exchange);

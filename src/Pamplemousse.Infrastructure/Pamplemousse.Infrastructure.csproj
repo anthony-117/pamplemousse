@@ -13,6 +13,7 @@
     <PackageReference Include="FirebaseAdmin" />
     <PackageReference Include="Google.GenAI" />
     <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
   </ItemGroup>
 
   <!-- Reference data (GeoNames cities, mledoze countries, Passport Index visas) ships inside the assembly. -->

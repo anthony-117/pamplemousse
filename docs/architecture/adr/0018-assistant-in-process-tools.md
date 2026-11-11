@@ -1,5 +1,5 @@
 # 0018 — Assistant: Gemini through Google.GenAI, tools in the API, no stored chat
-Date: 2026-11-04 · Status: Accepted · Builds on ADR 0002 and ADR 0005
+Date: 2026-11-04 · Status: Partly superseded by ADR 0021 (stored chats, streaming, tools that change plans) · Builds on ADR 0002 and ADR 0005
 
 ## Context
 The assistant (TG-11) is started before the itinerary (Sprint 4), the MCP server (Sprint 6) and accounts. ADR 0005 chose

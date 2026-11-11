@@ -1,3 +1,4 @@
+using Pamplemousse.Domain.Common;
 using Pamplemousse.Domain.Itinerary;
 using Pamplemousse.Domain.Travellers;
 
@@ -26,7 +27,10 @@ public interface IPlanStore
     Task DeleteAllAsync(TravellerId owner, CancellationToken ct);
 }
 
-/// <summary>A line of the "My plans" list, read without the whole plan.</summary>
+/// <summary>
+/// A line of the "My plans" list, read without the whole plan. The city id, adults, budget, pace and centre are null on
+/// plans saved before spec 010 until they are next saved.
+/// </summary>
 public sealed record PlanSummary(
     string Id,
     string Name,
@@ -38,7 +42,12 @@ public sealed record PlanSummary(
     string Currency,
     int? MatchPercent,
     string? ImageUrl,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    string? DestinationId = null,
+    int? Adults = null,
+    decimal? TripBudget = null,
+    Pace? Pace = null,
+    GeoPoint? Centre = null)
 {
     public static PlanSummary Of(Plan plan)
     {
@@ -54,7 +63,12 @@ public sealed record PlanSummary(
             plan.Built.Total.Currency,
             plan.Built.Match?.Percent,
             ImageOf(plan),
-            plan.UpdatedAt);
+            plan.UpdatedAt,
+            plan.Request.Destination.Id,
+            plan.Request.Adults,
+            plan.Request.TripBudget,
+            plan.Request.Pace,
+            plan.Request.Destination.Centre);
     }
 
     /// <summary>The chosen hotel's first photo, or else the first place with a picture.</summary>

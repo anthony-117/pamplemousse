@@ -52,8 +52,12 @@ public sealed record Plan(
     string? CarId,
     BuiltPlan Built,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<PlanEdit>? DayEdits = null)
 {
+    /// <summary>The traveller's day edits, in the order made, kept through every rebuild (spec 010, research R-5).</summary>
+    public IReadOnlyList<PlanEdit> Edits => DayEdits ?? [];
+
     public const int MaxPlans = 50;
     public const int MaxNameLength = 60;
 
@@ -182,13 +186,179 @@ public sealed record Plan(
 
     public Plan RemoveCar(PlacePools? pools, DateTimeOffset now) => (this with { CarId = null }).Rebuild(pools, now);
 
-    private Plan Rebuild(PlacePools? pools, DateTimeOffset now) => this with
+    private Plan Rebuild(PlacePools? pools, DateTimeOffset now)
     {
-        Built = pools is null
-            ? PlanBuilder.Reprice(Request, Offers, Built, "The places couldn't be loaded, so the days were kept as they were.")
-            : PlanBuilder.Build(Request, Offers, pools),
-        UpdatedAt = now,
-    };
+        if (pools is null)
+        {
+            return this with
+            {
+                Built = PlanBuilder.Reprice(Request, Offers, Built, "The places couldn't be loaded, so the days were kept as they were."),
+                UpdatedAt = now,
+            };
+        }
+
+        var built = PlanBuilder.Build(Request, Offers, pools, Edits);
+        return this with { Built = built, DayEdits = built.Applied, UpdatedAt = now };
+    }
+
+    /// <summary>
+    /// The plan built again in place for a new <paramref name="request"/> and its offers (spec 010 FR-012a): the id, name,
+    /// status and day edits stay, and so do the traveller's choices. A hotel or flight they swapped in (not the best of
+    /// the old list) is kept while the new lists still offer it, a car while the dates are the same (its prices depend on
+    /// them); otherwise the offer is chosen as <c>POST /plans</c> chooses it, with a note when a choice was lost.
+    /// </summary>
+    public Plan Rebuilt(TripRequest request, PlanAlternatives alternatives, PlacePools pools, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(alternatives);
+        ArgumentNullException.ThrowIfNull(pools);
+        var fresh = Create(Id, Owner, request, alternatives, pools, now);
+        var notes = new List<string>();
+        var hotel = KeptHotel(fresh.Alternatives, notes);
+        var flight = KeptFlight(fresh.Alternatives, notes);
+        var keepCar = CarId is not null && Alternatives.Cars is not null && request.Dates == Request.Dates;
+        if (CarId is not null && !keepCar)
+        {
+            notes.Add("Car prices depend on the dates, so your car was removed. Add one again for the new dates.");
+        }
+
+        var chosen = fresh with
+        {
+            HotelId = hotel ?? fresh.HotelId,
+            FlightId = flight ?? fresh.FlightId,
+            CarId = keepCar ? CarId : null,
+            Alternatives = keepCar
+                ? fresh.Alternatives with
+                {
+                    Cars = Alternatives.Cars,
+                    CarsCheckedAt = Alternatives.CarsCheckedAt,
+                    CarSource = Alternatives.CarSource,
+                    CarBookingUrl = Alternatives.CarBookingUrl,
+                }
+                : fresh.Alternatives,
+        };
+        var built = PlanBuilder.Build(request, chosen.Offers, pools, Edits);
+        return chosen with
+        {
+            Name = Name,
+            Status = Status,
+            CreatedAt = CreatedAt,
+            Built = built with { Notes = [.. built.Notes, .. notes] },
+            DayEdits = built.Applied,
+        };
+    }
+
+    /// <summary>The hotel the traveller swapped in, when the new list still has it; null to take the best.</summary>
+    private string? KeptHotel(PlanAlternatives fresh, List<string> notes)
+    {
+        if (HotelId is null || Alternatives.Hotels.Count == 0 || string.Equals(Alternatives.Hotels[0].Offer.Hotel.Id, HotelId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (fresh.Hotels.Any(h => string.Equals(h.Offer.Hotel.Id, HotelId, StringComparison.Ordinal)))
+        {
+            return HotelId;
+        }
+
+        notes.Add("The hotel you chose isn't offered for this trip any more, so the best match was chosen.");
+        return null;
+    }
+
+    /// <summary>
+    /// The flight the traveller swapped in, when the new list still has it: the same fare, or for new dates the same
+    /// airline, flight number and airports. Null to take the best.
+    /// </summary>
+    private string? KeptFlight(PlanAlternatives fresh, List<string> notes)
+    {
+        var old = Alternatives.Flights.FirstOrDefault(f => string.Equals(f.Offer.Id, FlightId, StringComparison.Ordinal))?.Offer;
+        if (old is null || string.Equals(Alternatives.Flights[0].Offer.Id, FlightId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var same = fresh.Flights.Select(f => f.Offer).FirstOrDefault(f => string.Equals(f.Id, old.Id, StringComparison.Ordinal))
+            ?? fresh.Flights.Select(f => f.Offer).FirstOrDefault(f => old.FlightNumber is not null
+                && string.Equals(f.Airline, old.Airline, StringComparison.Ordinal)
+                && string.Equals(f.FlightNumber, old.FlightNumber, StringComparison.Ordinal)
+                && string.Equals(f.OriginAirport, old.OriginAirport, StringComparison.Ordinal)
+                && string.Equals(f.DestinationAirport, old.DestinationAirport, StringComparison.Ordinal));
+        if (same is not null)
+        {
+            return same.Id;
+        }
+
+        notes.Add("The flight you chose isn't offered for this trip any more, so the best match was chosen.");
+        return null;
+    }
+
+    /// <summary>
+    /// Adds a day edit and builds the plan again with it (spec 010 FR-016). An edit on the same item replaces the earlier
+    /// one: replacing an item the traveller added changes that addition, removing it drops the addition. A new edit that
+    /// can't take effect throws: <see cref="DayFullException"/> for an addition, a field error otherwise.
+    /// </summary>
+    public Plan ChangeDay(PlanEdit edit, PlacePools pools, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(edit);
+        ArgumentNullException.ThrowIfNull(pools);
+        if (edit.Day < 1 || edit.Day > Built.Days.Count)
+        {
+            throw new DomainException("Choose a day of the plan.", "day");
+        }
+
+        var (edits, made) = Normalised(edit);
+        var built = PlanBuilder.Build(Request, Offers, pools, edits);
+        if (made is not null && !built.Applied.Contains(made))
+        {
+            throw made.Action == EditAction.Add
+                ? DayFullException.For(edit.Day, Request.Pace)
+                : new DomainException("That item doesn't fit this day any more. Choose another.", "id");
+        }
+
+        return this with { Built = built, DayEdits = built.Applied, UpdatedAt = now };
+    }
+
+    /// <summary>The edits with <paramref name="edit"/> folded in, and the edit that must take effect (none when an
+    /// addition was simply dropped).</summary>
+    private (List<PlanEdit> Edits, PlanEdit? Made) Normalised(PlanEdit edit)
+    {
+        var edits = new List<PlanEdit>(Edits);
+        var target = edit.ItemId;
+        if (target is null)
+        {
+            edits.Add(edit);
+            return (edits, edit);
+        }
+
+        // An item the traveller brought in: change or drop the edit that brought it.
+        var bringer = edits.FindIndex(e => e.Day == edit.Day && string.Equals(e.NewItem?.Id, target, StringComparison.Ordinal));
+        if (bringer >= 0)
+        {
+            var earlier = edits[bringer];
+            edits.RemoveAt(bringer);
+            PlanEdit? changed = null;
+            if (edit.Action == EditAction.Replace)
+            {
+                changed = earlier with { NewItem = edit.NewItem };
+            }
+            else if (earlier.Action == EditAction.Replace)
+            {
+                // The replacement goes; the original item stays removed.
+                changed = PlanEdit.Remove(edit.Day, earlier.ItemId!);
+            }
+
+            if (changed is not null)
+            {
+                edits.Add(changed);
+            }
+
+            return (edits, changed);
+        }
+
+        edits.RemoveAll(e => e.Day == edit.Day && string.Equals(e.ItemId, target, StringComparison.Ordinal));
+        edits.Add(edit);
+        return (edits, edit);
+    }
 
     /// <summary>The fastest known time of the same route among the kept fares (research R-5).</summary>
     private int? FallbackFlightMinutes()

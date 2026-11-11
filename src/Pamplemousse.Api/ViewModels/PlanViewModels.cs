@@ -26,7 +26,13 @@ public sealed record PlanViewModel(
     IReadOnlyList<string> Notes,
     IReadOnlyList<string> Warnings,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<PlanEditViewModel> Edits);
+
+/// <summary>A day edit the traveller made (spec 010), kept through every rebuild.</summary>
+public sealed record PlanEditViewModel(int Day, EditAction Action, string? ItemId, EditItemViewModel? NewItem);
+
+public sealed record EditItemViewModel(RefKind Kind, string Id, string Name);
 
 public sealed record PlanDestinationViewModel(string Id, string Name, string CountryCode);
 
@@ -75,7 +81,19 @@ public sealed record PlanSummaryViewModel(
     string Currency,
     int? MatchPercent,
     string? ImageUrl,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? DestinationId,
+    int? Adults,
+    decimal? TripBudget,
+    string? Pace,
+    double? Lat,
+    double? Lng);
 
 /// <summary>A kept ranked list of a plan (research R-7), each item as its list shows it, with its match.</summary>
 public sealed record PlanAlternativesViewModel<T>(OfferKind Kind, string? ChosenId, DateTimeOffset? CheckedAt, IReadOnlyList<T> Items);
+
+/// <summary>
+/// The alternatives for a day (spec 010 FR-017): place or event cards, each with how far it is from the day's other
+/// items. The cards are the envelope of contracts/chat-api.md, so they are written as JSON (<c>CardJson</c>).
+/// </summary>
+public sealed record DayAlternativesViewModel(int Day, string? ItemId, AlternativeKind Kind, IReadOnlyList<System.Text.Json.Nodes.JsonObject> Items, string? Message);

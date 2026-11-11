@@ -113,6 +113,64 @@ public sealed class PlansController : ControllerBase
         return Ok(plan.ToViewModel());
     }
 
+    [HttpGet("{id}/days/{day:int}/alternatives")]
+    [EndpointName("ListDayAlternatives")]
+    [EndpointSummary("Up to 6 places or events that could replace an item of the day, or fill a new slot, nearest first.")]
+    public async Task<ActionResult<DayAlternativesViewModel>> DayAlternativesAsync(
+        string id,
+        int day,
+        [FromQuery] string? itemId,
+        [FromQuery] string? kind,
+        [FromServices] IQueryHandler<GetDayAlternativesQuery, DayAlternativesAnswer> handler,
+        [FromServices] TimeProvider clock,
+        CancellationToken ct)
+    {
+        var answer = await handler.HandleAsync(new GetDayAlternativesQuery(User.ToTraveller().Id, id, day, itemId, kind), ct);
+        return Ok(answer.ToViewModel(clock.GetUtcNow()));
+    }
+
+    [HttpPost("{id}/days/{day:int}/items")]
+    [EndpointName("AddOrReplaceDayItem")]
+    [EndpointSummary("Adds one of the day's alternatives, or puts it in place of an item, and rebuilds the day, total and match.")]
+    public async Task<ActionResult<PlanViewModel>> ChangeDayAsync(
+        string id,
+        int day,
+        [FromBody] ChangeDayItemRequest request,
+        [FromServices] ICommandHandler<ChangeDayItemCommand, Plan> handler,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var command = new ChangeDayItemCommand(User.ToTraveller().Id, id, day, DayChange.AddOrReplace, request.Kind, request.Id, request.Replaces);
+        return Ok((await handler.HandleAsync(command, ct)).ToViewModel());
+    }
+
+    [HttpDelete("{id}/days/{day:int}/items/{itemId}")]
+    [EndpointName("RemoveDayItem")]
+    [EndpointSummary("Removes an item of the day; its time becomes free time.")]
+    public async Task<ActionResult<PlanViewModel>> RemoveDayItemAsync(
+        string id,
+        int day,
+        string itemId,
+        [FromServices] ICommandHandler<ChangeDayItemCommand, Plan> handler,
+        CancellationToken ct)
+    {
+        var command = new ChangeDayItemCommand(User.ToTraveller().Id, id, day, DayChange.Remove, null, Uri.UnescapeDataString(itemId), null);
+        return Ok((await handler.HandleAsync(command, ct)).ToViewModel());
+    }
+
+    [HttpPost("{id}/rebuild")]
+    [EndpointName("RebuildPlan")]
+    [EndpointSummary("Builds the plan again in place with new values, keeping its name, status, day edits and the hotel, flight and car the traveller chose. On failure the plan is unchanged.")]
+    public async Task<ActionResult<PlanViewModel>> RebuildAsync(
+        string id,
+        [FromBody] RebuildPlanRequest request,
+        [FromServices] ICommandHandler<RebuildPlanCommand, Plan> handler,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return Ok((await handler.HandleAsync(request.ToCommand(User.ToTraveller().Id, id), ct)).ToViewModel());
+    }
+
     private static OfferKind KindOf(string kind) => kind switch
     {
         "hotel" => OfferKind.Hotel,

@@ -53,6 +53,8 @@ At startup the nearest `.env` file fills in variables that are not already set. 
 | `GOOGLE_APPLICATION_CREDENTIALS` | Full path to the Firebase service account JSON, kept outside the repo; also deletes Firebase accounts | Google's default credentials are tried |
 | `GEMINI_API_KEY` | Assistant (Google AI Studio, free tier) | The assistant answers with a warning |
 | `GEMINI_MODEL` | Gemini model for the assistant, default `gemini-2.5-flash` | The default is used |
+| `ASSISTANT_PROVIDER` | `gemini` (default) or `openai`, an OpenAI-compatible provider such as Groq (spec 010, ADR 0021) | Gemini |
+| `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY`, `OPENAI_COMPATIBLE_MODEL` | The OpenAI-compatible provider: default Groq's `https://api.groq.com/openai/v1` and `openai/gpt-oss-20b` | With `openai` and no key, the assistant answers with a warning naming the key |
 | `CORS_ALLOWED_ORIGINS` | Browser origins allowed in production (comma-separated) | Only localhost (Development) |
 
 Weather, exchange rates, holidays, visas, advisories, countries and cities need no key.
@@ -75,11 +77,18 @@ the API reference. A refusal is Problem Details with a `code`: `sign-in-required
 | GET | `/api/v1/destinations/{id}/car-places` | Where a rental car can be picked up: the city centre, then airports within 50 km |
 | GET | `/api/v1/destinations/{id}/cars?from=&to=&place=&driverAge=&currency=&sort=&size=&gearbox=&minSeats=&minBags=&company=&pickUpType=&maxPrice=&freeCancellation=&page=&budget=&culture=&food=&nature=&nightlife=&comfort=&tripBudget=` | Rental cars with the total for the rental, sorted and filtered on one saved search, or ranked by match ([contract](specs/004-cars/contracts/cars-api.md), [weighted search](specs/007-weighted-search/contracts/weighted-search-api.md)) |
 | GET | `/api/v1/places/{id}` | Place details (`otm:…`) |
-| POST | `/api/v1/assistant/messages` | Trip assistant: answers the last message with TravelGenie's data (Gemini + tools), with cards into the screens ([contract](specs/003-assistant/contracts/assistant-api.md)) |
+| POST | `/api/v1/assistant/messages` | Spec 003's stateless assistant, kept until the app no longer calls it ([contract](specs/003-assistant/contracts/assistant-api.md)) |
+| POST | `/api/v1/assistant/chats`, `/api/v1/assistant/chats/{id}/messages` | Assistant v2: a new chat or the next message; the answer streams as Server-Sent Events (`chat`, `step`…, `final`), with 21 tools over every feature ([contract](specs/010-assistant-v2/contracts/chat-api.md)) |
+| GET | `/api/v1/assistant/chats?limit=&before=`, `/api/v1/assistant/chats/{id}`, `/api/v1/assistant/chats/search?q=` | Recents, one chat with its messages, search chats and plans |
+| PATCH, DELETE | `/api/v1/assistant/chats/{id}` | Rename or delete a chat (chats go 90 days after their last message) |
+| GET, POST, DELETE | `/api/v1/plans/{id}/days/{day}/alternatives`, `…/days/{day}/items`, `…/days/{day}/items/{itemId}` | Day alternatives, add or replace an item, remove one ([contract](specs/010-assistant-v2/contracts/plan-edits-api.md)) |
+| POST | `/api/v1/plans/{id}/rebuild` | Build a plan again in place with new dates, adults, departure city, preferences, pace or budget |
+| PUT, DELETE | `/api/v1/saved/{kind}/{id}` | Save or remove a hotel, place or event ([contract](specs/010-assistant-v2/contracts/saved-api.md)) |
+| GET | `/api/v1/saved?kind=&destinationId=`, `/api/v1/saved/ids` | Saved items newest first; the saved ids by kind |
 | GET | `/api/v1/countries` | Countries + currencies for pickers |
 | GET | `/api/v1/me` | The signed-in traveller's travel profile, made on the first call ([contract](specs/009-accounts/contracts/accounts-api.md)) |
 | PUT | `/api/v1/me` | Replace the name, passport, home currency, home city, default preferences and pace |
-| DELETE | `/api/v1/me` | Delete the profile, the plans and the sign-in (needs a sign-in from the last 5 minutes) |
+| DELETE | `/api/v1/me` | Delete the profile, chats, saved items, plans and the sign-in (needs a sign-in from the last 5 minutes) |
 | POST | `/api/v1/plans` | Build a day-by-day plan from the best hotel and flight for the preferences, saved as a draft ([contract](specs/008-itinerary/contracts/itinerary-api.md)) |
 | GET | `/api/v1/plans` | The traveller's plans, newest first (50 at most) |
 | GET | `/api/v1/plans/{id}` | A plan as saved; no source is called |

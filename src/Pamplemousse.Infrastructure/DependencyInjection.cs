@@ -110,9 +110,15 @@ public static class DependencyInjection
     /// </summary>
     private static void AddChatModel(IServiceCollection services, ExternalApiOptions keys)
     {
+        if (string.Equals(keys.AssistantProvider.Trim(), "openai", StringComparison.OrdinalIgnoreCase))
+        {
+            AddOpenAiCompatibleModel(services, keys);
+            return;
+        }
+
         if (keys.GeminiApiKey.Length == 0)
         {
-            services.AddSingleton<IChatClient, NotConfiguredChatClient>();
+            services.AddSingleton<IChatClient>(new NotConfiguredChatClient());
             return;
         }
 
@@ -123,6 +129,30 @@ public static class DependencyInjection
         services.AddChatClient(sp => sp.GetRequiredService<Client>().AsIChatClient(keys.GeminiModel))
             .UseFunctionInvocation(configure: loop => loop.MaximumIterationsPerRequest = keys.AssistantMaxToolRounds)
             .Use(inner => new GeminiErrorTranslator(inner));
+    }
+
+    /// <summary>
+    /// An OpenAI-compatible provider such as Groq (spec 010 FR-034, ADR 0021), behind the same tool loop. One attempt per
+    /// call and the same time limit as Gemini, so a busy provider is a warning at once.
+    /// </summary>
+    private static void AddOpenAiCompatibleModel(IServiceCollection services, ExternalApiOptions keys)
+    {
+        if (keys.OpenAiCompatibleApiKey.Length == 0)
+        {
+            services.AddSingleton<IChatClient>(new NotConfiguredChatClient("OPENAI_COMPATIBLE_API_KEY"));
+            return;
+        }
+
+        var options = new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(keys.OpenAiCompatibleBaseUrl),
+            NetworkTimeout = keys.GeminiTimeout,
+            RetryPolicy = new System.ClientModel.Primitives.ClientRetryPolicy(maxRetries: 0),
+        };
+        var client = new OpenAI.Chat.ChatClient(keys.OpenAiCompatibleModel, new System.ClientModel.ApiKeyCredential(keys.OpenAiCompatibleApiKey), options);
+        services.AddChatClient(_ => client.AsIChatClient())
+            .UseFunctionInvocation(configure: loop => loop.MaximumIterationsPerRequest = keys.AssistantMaxToolRounds)
+            .Use(inner => new OpenAiCompatibleErrorTranslator(inner));
     }
 
     /// <summary>Firestore when a Firebase project is set (ADR 0017); otherwise memory, with a warning in the log.</summary>
@@ -144,6 +174,8 @@ public static class DependencyInjection
             services.AddSingleton<FirestoreCarData>();
             services.AddSingleton<ITravelProfileStore, FirestoreTravelProfiles>();
             services.AddSingleton<IPlanStore, FirestorePlanStore>();
+            services.AddSingleton<ISavedStore, FirestoreSavedStore>();
+            services.AddSingleton<IChatStore, FirestoreChatStore>();
             services.AddSingleton<IAccountDeleter>(_ => new FirebaseAccountDeleter(keys.FirebaseProjectId, keys.GoogleCredentialsPath));
             services.AddHostedService<FirestoreWarmUp>();
         }
@@ -153,10 +185,13 @@ public static class DependencyInjection
             services.AddSingleton<InMemoryCarData>();
             services.AddSingleton<ITravelProfileStore, InMemoryTravelProfiles>();
             services.AddSingleton<IPlanStore, InMemoryPlanStore>();
+            services.AddSingleton<ISavedStore, InMemorySavedStore>();
+            services.AddSingleton<IChatStore, InMemoryChatStore>();
             services.AddSingleton<IAccountDeleter, NotConfiguredAccountDeleter>();
         }
 
         services.AddSingleton<IDeletedTravellers, DeletedTravellers>();
+        services.AddHostedService<ChatSweeper>();
 
         services.AddSingleton(Store<ICityMappingStore>);
         services.AddSingleton(Store<IHotelStore>);

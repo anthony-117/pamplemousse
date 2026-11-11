@@ -24,6 +24,7 @@ builder.Services.AddControllers()
 builder.Services.AddSingleton(builder.Configuration.GetSection("Hotels").Get<HotelSettings>() ?? new HotelSettings());
 builder.Services.AddSingleton(builder.Configuration.GetSection("Cars").Get<CarSettings>() ?? new CarSettings());
 builder.Services.AddApplication();
+builder.Services.AddSingleton<Pamplemousse.Application.Abstractions.ICardJson, Pamplemousse.Api.Mappings.ApiCardJson>();
 builder.AddInfrastructure(keys =>
 {
     keys.OpenTripMapApiKey = Env.OpenTripMapApiKey;
@@ -35,6 +36,10 @@ builder.AddInfrastructure(keys =>
     keys.GoogleCredentialsPath = Env.GoogleApplicationCredentials;
     keys.GeminiApiKey = Env.GeminiApiKey;
     keys.GeminiModel = Env.GeminiModel;
+    keys.AssistantProvider = Env.AssistantProvider;
+    keys.OpenAiCompatibleBaseUrl = Env.OpenAiCompatibleBaseUrl;
+    keys.OpenAiCompatibleApiKey = Env.OpenAiCompatibleApiKey;
+    keys.OpenAiCompatibleModel = Env.OpenAiCompatibleModel;
 });
 
 // Browsers only call the API from the TravelGenie web app: CORS_ALLOWED_ORIGINS (e.g. the Firebase domain)
@@ -52,7 +57,7 @@ builder.Services.AddCors(options => options.AddPolicy(AppCorsPolicy, policy => p
 // Every route needs a Firebase sign-in unless marked [AllowAnonymous] (spec 009, ADR 0019).
 builder.Services.AddFirebaseSignIn(Env.FirebaseProjectId);
 
-// The assistant spends the shared Gemini free tier: limited per client and overall (spec 003, FR-015).
+// The assistant spends the shared model free tier: sending is limited per account and overall (spec 010, FR-031).
 builder.Services.AddAssistantRateLimits(builder.Configuration);
 
 var app = builder.Build();
