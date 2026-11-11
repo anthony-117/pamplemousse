@@ -30,6 +30,7 @@ Date: YYYY-MM-DD · Status: Proposed | Accepted | Superseded by NNNN
 | [0015](0015-factory-mousse-and-oracle-hosting.md) | Backend on an Oracle Always Free server, released from `factory_mousse` | Accepted (database settled by 0017) |
 | [0016](0016-booking-com-api-main-travel-source.md) | Booking COM API (RapidAPI) as the main source for hotels, flights, cars and attractions | Accepted |
 | [0017](0017-redis-and-firestore-data-flow.md) | Searches go Redis → Firestore → API; set cache times; price history in Firestore | Accepted |
-| [0018](0018-assistant-in-process-tools.md) | Assistant: Gemini through Google.GenAI, tools in the API, no stored chat | Accepted |
+| [0018](0018-assistant-in-process-tools.md) | Assistant: Gemini through Google.GenAI, tools in the API, no stored chat | Partly superseded by 0021 |
 | [0019](0019-firebase-sign-in.md) | Sign-in: Firebase ID tokens checked by the JWT bearer handler; Admin SDK only to delete accounts | Accepted |
 | [0020](0020-app-sign-in-with-firebase-auth.md) | The app signs in with Firebase Authentication (email, Google); data still only from the API | Accepted |
+| [0021](0021-assistant-v2.md) | Assistant v2: stored chats, streamed steps, plan tools (partly supersedes 0018) | Accepted |

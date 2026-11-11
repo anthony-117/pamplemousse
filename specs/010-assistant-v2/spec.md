@@ -213,7 +213,7 @@ and check its saved cards match the list.
 - **FR-002**: A step MUST carry the tool's name, a one-line summary written by the server from the tool's result (never by the model), whether it worked, and the cards it produced.
 - **FR-003**: The answer text MUST NOT be streamed word by word; it arrives whole in the final event.
 - **FR-004**: The reply MUST carry cards of seven kinds, built by the server from the tools that ran (spec 003 FR-003): **plan** (id and plan summary), **flight**, **hotel**, **car**, **place** and **event** (the item as its list endpoint returns it, with `match` when ranked) and **travel facts** (the overview's weather, visa, currency, safety and holidays).
-- **FR-005**: Every hotel, place, event, car (pick-up) and plan card MUST carry a latitude and longitude; flight cards MUST carry the arrival city's; an item without its own position MUST carry the city centre's and say it is approximate.
+- **FR-005**: Every hotel, place, event, car (pick-up) and plan card MUST carry a latitude and longitude; flight cards MUST carry the arrival airport's (the city centre's when no airport is known); every card MUST also carry its city's id and name; an item without its own position MUST carry the city centre's and say it is approximate.
 - **FR-006**: Next-step suggestions MUST be 0–3 short messages the traveller could send next, each under 60 characters, about what was just found or built.
 - **FR-007**: The current stateless endpoint of spec 003 MUST keep working unchanged until the app moves to the new route (chocomousse spec 008); its removal is a later change.
 
@@ -227,6 +227,7 @@ and check its saved cards match the list.
 **Plan tools**
 
 - **FR-012**: The assistant MUST have plan tools that call the itinerary's own use cases: `build_plan`, `list_plans`, `get_plan`, `update_plan` (rename, status), `list_plan_alternatives` (hotels, flights, cars), `swap_plan_offer` (hotel, flight, car) and `remove_plan_car`. Results MUST equal the matching spec 008 routes.
+- **FR-012b**: The plan list items and plan cards MUST carry the plan's city id, adults, trip budget, pace and the city centre's position, and a plan MUST list the traveller's day edits.
 - **FR-012a**: The API MUST offer a route that rebuilds an existing plan in place with new dates, adults, departure city, trip budget, preferences or pace (the Trip pane's "Rebuild plan"), also used as the `rebuild_plan` tool. The plan keeps its id, name and status; its offers, days, total and match are built again as `POST /plans` would build them. A rebuild that fails leaves the plan unchanged.
 - **FR-013**: Days, times, walking distances, totals and matches MUST be built by the itinerary's deterministic rules (ADR 0002), never by the model.
 - **FR-014**: The assistant MUST NOT delete plans, chats, saved items or the account; those stay app actions.
@@ -234,7 +235,7 @@ and check its saved cards match the list.
 
 **Day edits**
 
-- **FR-016**: The API MUST offer day-edit routes for a plan, also used as tools: list alternatives for a day item (`suggest_day_alternatives`), and replace, add or remove a day item (`change_day_item`). A change MUST rebuild that day's order, times and walking distances and the plan's total and match, and return the plan.
+- **FR-016**: The API MUST offer day-edit routes for a plan, also used as tools: list alternatives for a day item (`suggest_day_alternatives`), and replace, add or remove a day item (`change_day_item`). A change MUST rebuild that day's order, times and walking distances and the plan's total and match, and return the plan. A removed item's time becomes free time and stays free through later rebuilds.
 - **FR-017**: Alternatives MUST come from the places and events already known for the city (spec 008's kept lists, and events for that date), near the day's other items, ranked by the plan's preferences, excluding items already in the plan; at most 6.
 - **FR-018**: An added item MUST fit in the day's pace; when the day is full the change MUST be refused with a reason, or MUST replace the item the traveller names.
 
@@ -249,11 +250,11 @@ and check its saved cards match the list.
 
 **Chats**
 
-- **FR-022**: The API MUST store chats per account, with routes to list (latest first), get, rename, delete and search them; a chat is created by its first message.
+- **FR-022**: The API MUST store chats per account, with routes to list (latest first), get, rename, delete and search them; a chat is created by its first message. Search matches whole words, not word starts.
 - **FR-022a**: A chat MUST hold at most 200 messages; past that the route answers `409` with "This chat is full. Start a new chat to carry on." An account MUST hold at most 500 chats; starting one more deletes the chat with the oldest last message. Both are settings.
 - **FR-022b**: The chat search route MUST also return the traveller's plans whose name contains the word, in a second group (chocomousse spec 008 FR-025).
 - **FR-023**: A chat MUST keep its title, trip context, created and last-message times, and its messages: role, text, steps, cards, suggestions, warnings and time.
-- **FR-024**: A chat MUST get a short title (under 40 characters) from its first exchange; a rename replaces it.
+- **FR-024**: A chat MUST get a short title (at most 40 characters): the first message's start, cut at a word; a rename replaces it.
 - **FR-025**: The model MUST see the chat's last 20 messages; the server MUST read them from the stored chat, not from the app.
 - **FR-026**: A chat MUST be deleted with its messages 90 days after its last message; plans built in it stay.
 - **FR-027**: Chat text, message text, tool arguments and tool results MUST NOT be written to logs or traces (constitution: personal data). Logs MAY hold ids, tool names, counts and timings.
@@ -263,7 +264,7 @@ and check its saved cards match the list.
 
 **Limits**
 
-- **FR-031**: Assistant messages MUST be limited per account, not per IP: 10 per minute and 100 per day per account, and 15 per minute for all accounts together. Past a limit the route answers `429` with `Retry-After`, as spec 003 FR-015. The limits stay settings (`Assistant:RateLimit`). The model provider's own limit (`429`) still ends the answer with the busy warning.
+- **FR-031**: Sending assistant messages (the two send routes and spec 003's route; not listing, opening or searching chats) MUST be limited per account, not per IP: 10 per minute and 100 per day per account, and 15 per minute for all accounts together. Past a limit the route answers `429` with `Retry-After`, as spec 003 FR-015. The limits stay settings (`Assistant:RateLimit`). The model provider's own limit (`429`) still ends the answer with the busy warning.
 - **FR-032**: Hotel searches from the assistant MUST share the hotels screen's cache and monthly quota (ADR 0017), with no per-account cap. When the quota is used up, the hotels step MUST fail with "Hotels unavailable right now" and the rest of the answer still comes.
 
 **Model**
