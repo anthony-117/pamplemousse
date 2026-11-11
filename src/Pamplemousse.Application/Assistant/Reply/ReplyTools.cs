@@ -29,7 +29,7 @@ public sealed class ReplyTools(SearchTools search, PlanTools plans, ProfileTools
             F(p.ListPlansAsync, "list_plans", "The traveller's saved plans."),
             F(p.GetPlanAsync, "get_plan", "One plan's days, items and their ids, offers and total."),
             F(p.UpdatePlanAsync, "update_plan", "Renames a plan, or marks it draft or planned."),
-            F(p.RebuildPlanAsync, "rebuild_plan", "Builds a plan again in place with new dates, adults, departure city, pace or budget."),
+            F(p.RebuildPlanAsync, "rebuild_plan", "Builds a plan again in place with new dates, adults, departure city, pace or budget, keeping the traveller's day edits and chosen offers."),
             F(p.ListPlanAlternativesAsync, "list_plan_alternatives", "The plan's other hotels, flights or cars to swap in, ranked."),
             F(p.SwapPlanOfferAsync, "swap_plan_offer", "Swaps the plan's hotel, flight or car for one of its alternatives."),
             F(p.RemovePlanCarAsync, "remove_plan_car", "Removes the car from a plan."),

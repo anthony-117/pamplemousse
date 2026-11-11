@@ -160,7 +160,7 @@ public sealed class PlansController : ControllerBase
 
     [HttpPost("{id}/rebuild")]
     [EndpointName("RebuildPlan")]
-    [EndpointSummary("Builds the plan again in place with new values, keeping its name, status and day edits. On failure the plan is unchanged.")]
+    [EndpointSummary("Builds the plan again in place with new values, keeping its name, status, day edits and the hotel, flight and car the traveller chose. On failure the plan is unchanged.")]
     public async Task<ActionResult<PlanViewModel>> RebuildAsync(
         string id,
         [FromBody] RebuildPlanRequest request,

@@ -69,5 +69,7 @@ T029 (chocomousse T096).
 ## Phase 6 · Check
 
 - [x] T027 Docs: README endpoints, sprint log ([sprint 5](../../docs/project/sprints/sprint-05.md)).
+- [x] T027a Rebuild keeps the traveller's chosen hotel, flight and car and its day edits (FR-012a, owner decision after the
+  live check); `PlanRebuildTests`.
 - [ ] T028 The owner's live run of SC-001 on Gemini and Groq; the numbers and the default in ADR 0021 (FR-035).
 - [ ] T029 chocomousse T096 against this branch.

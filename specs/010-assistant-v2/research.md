@@ -45,7 +45,11 @@
 - **Decision**: a plan keeps a list of edits (`replace`, `add`, `remove`, each with a day and the items). `PlanBuilder`
   applies them while it builds: a replacement takes the replaced item's slot, an addition takes the day's next free
   slot (none: `422 day-full`), a removal leaves free time. A rebuild or a swap builds again with the same edits, so
-  they last; an edit whose day no longer exists (shorter dates) is dropped with a note.
+  they last; an edit whose day no longer exists (shorter dates) is dropped with a note. When a rebuild groups places
+  differently, an edited item is brought back to its day (trading with that day's lowest-ranked pick), and a
+  replacement whose item isn't chosen any more still brings its place; a removal holds. A rebuild also keeps the
+  hotel, flight and car the traveller swapped in while they are still offered (owner decision, 2026-11-11, after the
+  live check undid a swap).
 - **Rationale**: times, walks, totals and the match stay the builder's (FR-013, ADR 0002); the same input gives the
   same plan (spec 008 SC-005).
 - **Alternatives considered**: patching the built day (a second set of timing rules, lost on the next rebuild).

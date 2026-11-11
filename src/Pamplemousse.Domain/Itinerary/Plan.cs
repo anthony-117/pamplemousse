@@ -203,8 +203,9 @@ public sealed record Plan(
 
     /// <summary>
     /// The plan built again in place for a new <paramref name="request"/> and its offers (spec 010 FR-012a): the id, name,
-    /// status and edits stay; edits that no longer fit are dropped with a note. The offers are chosen as
-    /// <c>POST /plans</c> chooses them: the best hotel and flight, and no car (car prices depend on the dates).
+    /// status and day edits stay, and so do the traveller's choices. A hotel or flight they swapped in (not the best of
+    /// the old list) is kept while the new lists still offer it, a car while the dates are the same (its prices depend on
+    /// them); otherwise the offer is chosen as <c>POST /plans</c> chooses it, with a note when a choice was lost.
     /// </summary>
     public Plan Rebuilt(TripRequest request, PlanAlternatives alternatives, PlacePools pools, DateTimeOffset now)
     {
@@ -212,8 +213,83 @@ public sealed record Plan(
         ArgumentNullException.ThrowIfNull(alternatives);
         ArgumentNullException.ThrowIfNull(pools);
         var fresh = Create(Id, Owner, request, alternatives, pools, now);
-        var built = PlanBuilder.Build(request, fresh.Offers, pools, Edits);
-        return fresh with { Name = Name, Status = Status, CreatedAt = CreatedAt, Built = built, DayEdits = built.Applied };
+        var notes = new List<string>();
+        var hotel = KeptHotel(fresh.Alternatives, notes);
+        var flight = KeptFlight(fresh.Alternatives, notes);
+        var keepCar = CarId is not null && Alternatives.Cars is not null && request.Dates == Request.Dates;
+        if (CarId is not null && !keepCar)
+        {
+            notes.Add("Car prices depend on the dates, so your car was removed. Add one again for the new dates.");
+        }
+
+        var chosen = fresh with
+        {
+            HotelId = hotel ?? fresh.HotelId,
+            FlightId = flight ?? fresh.FlightId,
+            CarId = keepCar ? CarId : null,
+            Alternatives = keepCar
+                ? fresh.Alternatives with
+                {
+                    Cars = Alternatives.Cars,
+                    CarsCheckedAt = Alternatives.CarsCheckedAt,
+                    CarSource = Alternatives.CarSource,
+                    CarBookingUrl = Alternatives.CarBookingUrl,
+                }
+                : fresh.Alternatives,
+        };
+        var built = PlanBuilder.Build(request, chosen.Offers, pools, Edits);
+        return chosen with
+        {
+            Name = Name,
+            Status = Status,
+            CreatedAt = CreatedAt,
+            Built = built with { Notes = [.. built.Notes, .. notes] },
+            DayEdits = built.Applied,
+        };
+    }
+
+    /// <summary>The hotel the traveller swapped in, when the new list still has it; null to take the best.</summary>
+    private string? KeptHotel(PlanAlternatives fresh, List<string> notes)
+    {
+        if (HotelId is null || Alternatives.Hotels.Count == 0 || string.Equals(Alternatives.Hotels[0].Offer.Hotel.Id, HotelId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (fresh.Hotels.Any(h => string.Equals(h.Offer.Hotel.Id, HotelId, StringComparison.Ordinal)))
+        {
+            return HotelId;
+        }
+
+        notes.Add("The hotel you chose isn't offered for this trip any more, so the best match was chosen.");
+        return null;
+    }
+
+    /// <summary>
+    /// The flight the traveller swapped in, when the new list still has it: the same fare, or for new dates the same
+    /// airline, flight number and airports. Null to take the best.
+    /// </summary>
+    private string? KeptFlight(PlanAlternatives fresh, List<string> notes)
+    {
+        var old = Alternatives.Flights.FirstOrDefault(f => string.Equals(f.Offer.Id, FlightId, StringComparison.Ordinal))?.Offer;
+        if (old is null || string.Equals(Alternatives.Flights[0].Offer.Id, FlightId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var same = fresh.Flights.Select(f => f.Offer).FirstOrDefault(f => string.Equals(f.Id, old.Id, StringComparison.Ordinal))
+            ?? fresh.Flights.Select(f => f.Offer).FirstOrDefault(f => old.FlightNumber is not null
+                && string.Equals(f.Airline, old.Airline, StringComparison.Ordinal)
+                && string.Equals(f.FlightNumber, old.FlightNumber, StringComparison.Ordinal)
+                && string.Equals(f.OriginAirport, old.OriginAirport, StringComparison.Ordinal)
+                && string.Equals(f.DestinationAirport, old.DestinationAirport, StringComparison.Ordinal));
+        if (same is not null)
+        {
+            return same.Id;
+        }
+
+        notes.Add("The flight you chose isn't offered for this trip any more, so the best match was chosen.");
+        return null;
     }
 
     /// <summary>

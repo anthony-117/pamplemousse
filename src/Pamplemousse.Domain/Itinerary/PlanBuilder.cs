@@ -90,6 +90,7 @@ public static class PlanBuilder
         var slots = frames.Sum(f => f.Slots);
         var (picks, sightsAsked, natureAsked) = Choose(trip, pools, slots);
         var (groups, seeds) = Group(picks, frames, context.Hotel);
+        PinEdits(book, frames, groups, seeds, context.Hotel);
         AddPlaces(book, frames, groups, context.Hotel);
         var nightlifeDays = NightlifeDays(trip.Days, trip.Weights.Nightlife);
 
@@ -126,6 +127,63 @@ public static class PlanBuilder
         {
             Applied = book.Applied,
         };
+    }
+
+    /// <summary>
+    /// Keeps each replacement and removal on its day when a rebuild groups the places differently (research R-5: edits
+    /// last through rebuilds). An item grouped on another day comes back to the edit's day, trading places with its
+    /// lowest-ranked pick; a sight or nature place replacing an item the build didn't choose at all takes that pick's
+    /// slot instead. A removal of an item the build didn't choose holds as it is.
+    /// </summary>
+    private static void PinEdits(EditBook book, List<Frame> frames, List<Pick>[] groups, Place?[] seeds, GeoPoint hotel)
+    {
+        foreach (var edit in book.All.Where(e => e.Action != EditAction.Add && e.ItemId is not null && e.Day >= 1 && e.Day <= groups.Length))
+        {
+            var day = edit.Day - 1;
+            if (groups[day].Exists(p => string.Equals(p.Place.Id, edit.ItemId, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            var from = Array.FindIndex(groups, g => g.Exists(p => string.Equals(p.Place.Id, edit.ItemId, StringComparison.Ordinal)));
+            var lowest = groups[day]
+                .Where(p => p.Edit is null && !ReferenceEquals(p.Place, seeds[day])
+                    && !book.All.Any(e => e.Day == edit.Day && string.Equals(e.ItemId, p.Place.Id, StringComparison.Ordinal)))
+                .MaxBy(p => p.RankKey);
+            var room = groups[day].Count < frames.First(f => f.Index == day).Slots;
+            if (from >= 0)
+            {
+                var pick = groups[from].First(p => string.Equals(p.Place.Id, edit.ItemId, StringComparison.Ordinal));
+                if (lowest is null && !room)
+                {
+                    continue;
+                }
+
+                groups[from].Remove(pick);
+                if (lowest is not null)
+                {
+                    groups[day].Remove(lowest);
+                    groups[from].Add(lowest);
+                }
+
+                groups[day].Add(pick);
+                groups[from] = NearestFirst(groups[from], hotel);
+                groups[day] = NearestFirst(groups[day], hotel);
+            }
+            else if (edit.Action == EditAction.Remove)
+            {
+                book.Done(edit);
+            }
+            else if (edit.NewItem?.Place is { } place && KindOf(place) is ItemKind.Sight or ItemKind.Nature && (room || lowest is not null))
+            {
+                if (!room)
+                {
+                    groups[day].Remove(lowest!);
+                }
+
+                groups[day] = NearestFirst([.. groups[day], new Pick(place, KindOf(place), 0, edit)], hotel);
+            }
+        }
     }
 
     /// <summary>Places the traveller added go in their day's free slots: a removed place frees its slot (research R-5).</summary>
@@ -174,6 +232,18 @@ public static class PlanBuilder
             All.FirstOrDefault(e => e.Day == day && e.Action == action && string.Equals(e.ItemId, itemId, StringComparison.Ordinal));
 
         public PlanEdit? EventAdd(int day) => All.FirstOrDefault(e => e.Day == day && e.Action == EditAction.Add && e.NewItem?.Event is not null);
+
+        public bool IsDone(PlanEdit edit) => _applied.Contains(edit);
+
+        /// <summary>
+        /// A replacement of this day by a place of <paramref name="kind"/> that hasn't found its item yet: the rebuild
+        /// chose another restaurant or evening out, and the traveller's choice takes the last one of the day instead.
+        /// </summary>
+        public PlanEdit? Loose(int day, ItemKind kind) => All.FirstOrDefault(e => e.Day == day
+            && e.Action == EditAction.Replace
+            && e.NewItem?.Place is { } place
+            && KindOf(place) == kind
+            && !_applied.Contains(e));
 
         public void Done(PlanEdit edit)
         {
@@ -581,9 +651,11 @@ public static class PlanBuilder
 
         /// <summary>
         /// The place an edit puts instead of <paramref name="place"/> (a replacement), or null when an edit removes it.
-        /// <paramref name="edit"/> is the replacement, marked done once the new place is in the day.
+        /// <paramref name="edit"/> is the replacement, marked done once the new place is in the day. With
+        /// <paramref name="loose"/>, the day's last place of that kind, a replacement whose item the build didn't choose
+        /// takes it (research R-5: edits last through rebuilds).
         /// </summary>
-        private Place? Edited(Place place, out PlanEdit? edit)
+        private Place? Edited(Place place, out PlanEdit? edit, ItemKind? loose = null)
         {
             edit = null;
             var book = context.Book;
@@ -594,11 +666,18 @@ public static class PlanBuilder
                 return null;
             }
 
-            if (book.Find(_day, EditAction.Replace, place.Id) is { NewItem.Place: { } other } replacement)
+            if (book.Find(_day, EditAction.Replace, place.Id) is { NewItem.Place: { } other } replacement && !book.IsDone(replacement))
             {
                 context.Use(place);
                 edit = replacement;
                 return other;
+            }
+
+            if (loose is { } kind && book.Loose(_day, kind) is { NewItem.Place: { } chosen } orphan)
+            {
+                context.Use(place);
+                edit = orphan;
+                return chosen;
             }
 
             return place;
@@ -657,10 +736,10 @@ public static class PlanBuilder
         }
 
         /// <summary>The meal's restaurant after the day's edits; null when an edit removed the meal.</summary>
-        private (Place Place, bool WellKnown, PlanEdit? Edit)? EditedMeal((Place Place, bool WellKnown) choice, out bool removed)
+        private (Place Place, bool WellKnown, PlanEdit? Edit)? EditedMeal((Place Place, bool WellKnown) choice, out bool removed, bool last = false)
         {
             removed = false;
-            if (Edited(choice.Place, out var edit) is not { } place)
+            if (Edited(choice.Place, out var edit, last ? ItemKind.Restaurant : null) is not { } place)
             {
                 removed = true;
                 return null;
@@ -706,7 +785,7 @@ public static class PlanBuilder
         {
             var pending = _dayEvent is { } e && !_eventDone ? e.Start : (int?)null;
             var dinnerRemoved = false;
-            var choice = context.Restaurant(_here) is { } found ? EditedMeal(found, out dinnerRemoved) : null;
+            var choice = context.Restaurant(_here) is { } found ? EditedMeal(found, out dinnerRemoved, last: true) : null;
             var km = choice is { } c ? PlanRules.WalkKm(_here, c.Place.Location) : 0;
             var earliest = _cursor + PlanRules.WalkMinutes(km);
             int? dinnerAt = Math.Max(earliest, PlanRules.DinnerAt);
@@ -766,7 +845,7 @@ public static class PlanBuilder
 
         private void NightOut()
         {
-            if (context.NightlifePlace(_here) is not { } found || Edited(found, out var edit) is not { } place)
+            if (context.NightlifePlace(_here) is not { } found || Edited(found, out var edit, ItemKind.Nightlife) is not { } place)
             {
                 return;
             }

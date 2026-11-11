@@ -44,6 +44,7 @@ accounts (spec 009) have been built, but only the screens use them.
 - Q: Can the assistant save items itself? → A: Yes: `save_item` and `list_saved`; removing stays an app action (FR-020).
 - Q: Caps on chat storage? → A: 200 messages per chat and 500 chats per account, both settings (FR-022a).
 - Q: Which model? The owner asked to switch to Groq's free `openai/gpt-oss-20b`. → A: The provider becomes a setting (Gemini or OpenAI-compatible such as Groq); the default is chosen after measuring tokens per message on both, recorded in ADR 0021 (FR-034, FR-035).
+- Q: Should a rebuild keep the hotel and flight the traveller swapped in, and the day edits, or choose the best again? (The live check, 2026-11-11: a rebuild undid a hotel swap and lost a day edit.) → A: Keep the traveller's choices and edits; take the best only for what they left as built or what is no longer offered, with a note (FR-012a, research R-5).
 
 ### Owner decisions already taken (2026-11-10, chocomousse spec 008)
 
@@ -228,7 +229,7 @@ and check its saved cards match the list.
 
 - **FR-012**: The assistant MUST have plan tools that call the itinerary's own use cases: `build_plan`, `list_plans`, `get_plan`, `update_plan` (rename, status), `list_plan_alternatives` (hotels, flights, cars), `swap_plan_offer` (hotel, flight, car) and `remove_plan_car`. Results MUST equal the matching spec 008 routes.
 - **FR-012b**: The plan list items and plan cards MUST carry the plan's city id, adults, trip budget, pace and the city centre's position, and a plan MUST list the traveller's day edits.
-- **FR-012a**: The API MUST offer a route that rebuilds an existing plan in place with new dates, adults, departure city, trip budget, preferences or pace (the Trip pane's "Rebuild plan"), also used as the `rebuild_plan` tool. The plan keeps its id, name and status; its offers, days, total and match are built again as `POST /plans` would build them. A rebuild that fails leaves the plan unchanged.
+- **FR-012a**: The API MUST offer a route that rebuilds an existing plan in place with new dates, adults, departure city, trip budget, preferences or pace (the Trip pane's "Rebuild plan"), also used as the `rebuild_plan` tool. The plan keeps its id, name, status and day edits, and the traveller's choices: a hotel or flight they swapped in stays while the new offers still include it (for new dates, the same flight number), and a car stays while the dates are the same (its prices depend on them). Offers the traveller left as built, and a choice that is no longer offered, are chosen again as `POST /plans` chooses them, with a note for a lost choice. The days, total and match are built again. A rebuild that fails leaves the plan unchanged.
 - **FR-013**: Days, times, walking distances, totals and matches MUST be built by the itinerary's deterministic rules (ADR 0002), never by the model.
 - **FR-014**: The assistant MUST NOT delete plans, chats, saved items or the account; those stay app actions.
 - **FR-015**: The assistant MUST make a change to a plan, the preferences or the saved items as soon as the traveller clearly asks for it, without a confirmation step, and the reply MUST say what changed. When the request is unclear (which plan, which day, which hotel), it MUST ask first and change nothing.

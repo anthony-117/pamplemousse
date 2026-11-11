@@ -58,4 +58,12 @@ through later rebuilds.
 `from`, `to`, `adults`, `originId`, `preferences`, `pace`, `tripBudget` (a missing field keeps the plan's):
 
 - Builds the plan again in place, as `POST /plans` would, keeping its id, name, status and edits (FR-012a).
+- Keeps the traveller's choices: a hotel or flight swapped in stays while the new offers include it (for new dates,
+  the same airline, flight number and airports), a car while the dates are the same. Otherwise the best offer is
+  taken, and `notes` says when a choice was lost ("The hotel you chose isn't offered for this trip any more, so the
+  best match was chosen."; "Car prices depend on the dates, so your car was removed. Add one again for the new
+  dates.").
+- Edits stay on their day when the rebuild chooses or groups places differently: an edited item placed on another day
+  comes back to its day, and a replacement whose item isn't chosen any more still brings its place (a restaurant or
+  evening out takes the day's dinner or night out). Only the edits of days that are gone are dropped, with a note.
 - Same `400` and `422 no-places` as `POST /plans`. On any failure the saved plan is unchanged.
