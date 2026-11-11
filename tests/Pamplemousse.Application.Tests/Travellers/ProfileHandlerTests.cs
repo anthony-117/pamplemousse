@@ -1,6 +1,8 @@
 using Pamplemousse.Application.Abstractions;
+using Pamplemousse.Application.Tests.Assistant;
 using Pamplemousse.Application.Tests.Destinations;
 using Pamplemousse.Application.Tests.Itinerary;
+using Pamplemousse.Application.Tests.Saved;
 using Pamplemousse.Application.Travellers;
 using Pamplemousse.Domain.Exceptions;
 using Pamplemousse.Domain.Itinerary;
@@ -16,6 +18,8 @@ public class ProfileHandlerTests
 
     private readonly ProfileStore _store = new();
     private readonly FakePlanStore _plans = new();
+    private readonly FakeSavedStore _saved = new();
+    private readonly FakeChatStore _chats = new();
     private readonly Fakes _data = new();
     private readonly FixedClock _clock = new();
 
@@ -78,24 +82,36 @@ public class ProfileHandlerTests
         var deleted = new Deleted(accounts);
         await Profiles.GetOrCreateAsync(Fares, CancellationToken.None);
 
-        await new DeleteAccountHandler(_store, _plans, accounts, deleted).HandleAsync(new DeleteAccountCommand(Fares), CancellationToken.None);
+        await new DeleteAccountHandler(_store, _plans, _saved, _chats, accounts, deleted).HandleAsync(new DeleteAccountCommand(Fares), CancellationToken.None);
 
         Assert.Null(await _store.GetAsync(Fares.Id, CancellationToken.None));
         Assert.Equal(["profile gone, account deleted", "remembered"], deleted.Log);
     }
 
     [Fact]
-    public async Task Deleting_the_account_deletes_the_travellers_plans_only()
+    public async Task Deleting_the_account_deletes_the_travellers_chats_plans_and_saved_items_only()
     {
         var maya = new TravellerId("uid-maya");
         await _plans.AddAsync(Plan.Create("p1", Fares.Id, PlanFixtures.Trip(), new([], [], null, null, null, null), PlanFixtures.Pools(), _clock.GetUtcNow()), CancellationToken.None);
+        await _saved.PutAsync(Domain.Saved.SavedItem.Create(Fares.Id, Domain.Saved.SavedKind.Hotel, "bk:1", "3169070", "Rome", "H", null, 1, 1, _clock.GetUtcNow(), null), CancellationToken.None);
+        await _saved.PutAsync(Domain.Saved.SavedItem.Create(maya, Domain.Saved.SavedKind.Hotel, "bk:1", "3169070", "Rome", "H", null, 1, 1, _clock.GetUtcNow(), null), CancellationToken.None);
+        foreach (var owner in new[] { Fares.Id, maya })
+        {
+            var first = Domain.Assistant.ChatEntry.FromTraveller(1, "Hi", null, _clock.GetUtcNow());
+            await _chats.CreateAsync(Domain.Assistant.Chat.Start("c-" + owner.Value, owner, "Hi", _clock.GetUtcNow()).With(first), first, CancellationToken.None);
+        }
+
         await _plans.AddAsync(Plan.Create("p2", maya, PlanFixtures.Trip(), new([], [], null, null, null, null), PlanFixtures.Pools(), _clock.GetUtcNow()), CancellationToken.None);
         var accounts = new Accounts(_store);
 
-        await new DeleteAccountHandler(_store, _plans, accounts, new Deleted(accounts)).HandleAsync(new DeleteAccountCommand(Fares), CancellationToken.None);
+        await new DeleteAccountHandler(_store, _plans, _saved, _chats, accounts, new Deleted(accounts)).HandleAsync(new DeleteAccountCommand(Fares), CancellationToken.None);
 
         Assert.Equal(0, await _plans.CountAsync(Fares.Id, CancellationToken.None));
         Assert.Equal(1, await _plans.CountAsync(maya, CancellationToken.None));
+        Assert.Equal(0, await _saved.CountAsync(Fares.Id, CancellationToken.None));
+        Assert.Equal(0, await _chats.CountAsync(Fares.Id, CancellationToken.None));
+        Assert.Equal(1, await _chats.CountAsync(maya, CancellationToken.None));
+        Assert.Equal(1, await _saved.CountAsync(maya, CancellationToken.None));
     }
 
     [Fact]
@@ -115,7 +131,7 @@ public class ProfileHandlerTests
     {
         var accounts = new Accounts(_store) { Fail = true };
         var deleted = new Deleted(accounts);
-        var handler = new DeleteAccountHandler(_store, _plans, accounts, deleted);
+        var handler = new DeleteAccountHandler(_store, _plans, _saved, _chats, accounts, deleted);
 
         await Assert.ThrowsAsync<ServiceUnavailableException>(() => handler.HandleAsync(new DeleteAccountCommand(Fares), CancellationToken.None));
         Assert.Empty(deleted.Log);

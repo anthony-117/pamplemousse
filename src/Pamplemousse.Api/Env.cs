@@ -23,6 +23,12 @@ public static class Env
     public static string GeminiApiKey => Get("GEMINI_API_KEY", "");
     public static string GeminiModel => Get("GEMINI_MODEL", "gemini-2.5-flash");
 
+    // Which model provider answers (spec 010 FR-034, ADR 0021): "gemini" or "openai" (any OpenAI-compatible API, e.g. Groq).
+    public static string AssistantProvider => Get("ASSISTANT_PROVIDER", "gemini");
+    public static string OpenAiCompatibleBaseUrl => Get("OPENAI_COMPATIBLE_BASE_URL", "https://api.groq.com/openai/v1");
+    public static string OpenAiCompatibleApiKey => Get("OPENAI_COMPATIBLE_API_KEY", "");
+    public static string OpenAiCompatibleModel => Get("OPENAI_COMPATIBLE_MODEL", "openai/gpt-oss-20b");
+
     // Comma-separated browser origins allowed to call the API (e.g. the Firebase Hosting domain).
     public static IReadOnlyList<string> CorsAllowedOrigins =>
         Get("CORS_ALLOWED_ORIGINS", "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

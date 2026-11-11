@@ -8,22 +8,22 @@ using Microsoft.Extensions.Options;
 namespace Pamplemousse.Api.RateLimiting;
 
 /// <summary>
-/// How many assistant messages are allowed (spec 003, FR-015), from the "Assistant:RateLimit" section of appsettings.
-/// Each message can make several Gemini calls on the shared free tier, so the assistant is the only limited endpoint.
-/// Counts live in memory: a restart of the API starts them again.
+/// How many assistant messages are allowed (spec 010 FR-031, replacing spec 003 FR-015), from the "Assistant:RateLimit"
+/// section of appsettings. Each message can make several model calls on the shared free tier, so sending is the only
+/// limited action. Counts live in memory: a restart of the API starts them again.
 /// </summary>
 public sealed class AssistantRateLimitSettings
 {
     public const string Section = "Assistant:RateLimit";
 
-    /// <summary>Messages one client (IP address) may send per minute.</summary>
-    public int PerClientPerMinute { get; set; } = 5;
+    /// <summary>Messages one account may send per minute.</summary>
+    public int PerClientPerMinute { get; set; } = 10;
 
-    /// <summary>Messages one client may send per day.</summary>
-    public int PerClientPerDay { get; set; } = 40;
+    /// <summary>Messages one account may send per day.</summary>
+    public int PerClientPerDay { get; set; } = 100;
 
-    /// <summary>Messages all clients together may send per minute.</summary>
-    public int AllClientsPerMinute { get; set; } = 10;
+    /// <summary>Messages all accounts together may send per minute.</summary>
+    public int AllClientsPerMinute { get; set; } = 15;
 }
 
 public static class AssistantRateLimits
@@ -61,13 +61,25 @@ public static class AssistantRateLimits
         return services;
     }
 
-    private static string ClientKey(HttpContext context) => context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    /// <summary>The signed-in account (every send needs one, spec 009); the address only for a refused, anonymous call.</summary>
+    private static string ClientKey(HttpContext context) =>
+        context.User.FindFirst("sub")?.Value is { Length: > 0 } sub ? "uid:" + sub : "ip:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+
+    /// <summary>The three sends: spec 003's message, a new chat, and a chat's next message. Reading chats is not limited.</summary>
+    internal static bool IsSend(HttpRequest request) =>
+        HttpMethods.IsPost(request.Method)
+        && request.Path.StartsWithSegments(AssistantPath, StringComparison.OrdinalIgnoreCase, out var rest)
+        && (rest.Equals("/messages", StringComparison.OrdinalIgnoreCase)
+            || rest.Equals("/chats", StringComparison.OrdinalIgnoreCase)
+            || (rest.StartsWithSegments("/chats", StringComparison.OrdinalIgnoreCase, out var chat)
+                && chat.Value?.EndsWith("/messages", StringComparison.OrdinalIgnoreCase) == true
+                && chat.Value.Count(c => c == '/') == 2));
 
     private static PartitionedRateLimiter<HttpContext> Limiter(
         Func<AssistantRateLimitSettings, int> permits, TimeSpan window, Func<HttpContext, string> key) =>
         PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
-            if (!context.Request.Path.StartsWithSegments(AssistantPath, StringComparison.OrdinalIgnoreCase))
+            if (!IsSend(context.Request))
             {
                 return RateLimitPartition.GetNoLimiter("unlimited");
             }
@@ -89,16 +101,13 @@ public static class AssistantRateLimits
             response.Headers.RetryAfter = Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         }
 
-        var problems = context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
-        await problems.WriteAsync(new ProblemDetailsContext
+        // As JSON whatever the Accept header: a send asks for text/event-stream.
+        var problem = new ProblemDetails
         {
-            HttpContext = context.HttpContext,
-            ProblemDetails = new ProblemDetails
-            {
-                Status = StatusCodes.Status429TooManyRequests,
-                Title = "Too many messages",
-                Detail = "Too many messages to the assistant. Wait a minute and try again.",
-            },
-        });
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many messages",
+            Detail = "Too many messages to the assistant. Wait a minute and try again.",
+        };
+        await response.WriteAsJsonAsync(problem, (System.Text.Json.JsonSerializerOptions?)null, "application/problem+json", ct);
     }
 }

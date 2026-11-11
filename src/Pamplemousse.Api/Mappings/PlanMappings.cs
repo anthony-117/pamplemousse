@@ -66,7 +66,44 @@ internal static class PlanMappings
             built.Notes,
             built.Warnings,
             plan.CreatedAt,
-            plan.UpdatedAt);
+            plan.UpdatedAt,
+            [.. plan.Edits.Select(e => new PlanEditViewModel(
+                e.Day,
+                e.Action,
+                e.ItemId,
+                e.NewItem is { } n ? new EditItemViewModel(n.Kind, n.Id, n.Name) : null))]);
+    }
+
+    public static RebuildPlanCommand ToCommand(this RebuildPlanRequest r, TravellerId owner, string id)
+    {
+        var p = r.Preferences;
+        return new RebuildPlanCommand(
+            owner,
+            id,
+            r.From,
+            r.To,
+            r.Adults,
+            r.OriginId,
+            p is null ? null : new RankingInput(p.Budget, p.Culture, p.Food, p.Nature, p.Nightlife, p.Comfort, r.TripBudget),
+            r.Pace,
+            r.TripBudget);
+    }
+
+    public static DayAlternativesViewModel ToViewModel(this DayAlternativesAnswer answer, DateTimeOffset now)
+    {
+        var a = answer.Alternatives;
+        var city = answer.Plan.Request.Destination;
+        return new DayAlternativesViewModel(
+            a.Day,
+            a.ItemId,
+            a.Kind,
+            [.. a.Items.Select(x =>
+            {
+                var card = CardJson.Of(x.Item, city, now);
+                card["walkKmFromDay"] = x.WalkKmFromDay;
+                return card;
+            })],
+            a.Message);
     }
 
     public static PlanListViewModel ToViewModel(this PlanList list) => new(
@@ -85,8 +122,24 @@ internal static class PlanMappings
         };
     }
 
-    private static PlanSummaryViewModel ToViewModel(this PlanSummary s) =>
-        new(s.Id, s.Name, s.Status, s.DestinationName, s.From, s.To, s.Total, s.Currency, s.MatchPercent, s.ImageUrl, s.UpdatedAt);
+    internal static PlanSummaryViewModel ToViewModel(this PlanSummary s) => new(
+        s.Id,
+        s.Name,
+        s.Status,
+        s.DestinationName,
+        s.From,
+        s.To,
+        s.Total,
+        s.Currency,
+        s.MatchPercent,
+        s.ImageUrl,
+        s.UpdatedAt,
+        s.DestinationId,
+        s.Adults,
+        s.TripBudget,
+        s.Pace?.ToText(),
+        s.Centre?.Lat,
+        s.Centre?.Lng);
 
     private static PlanDayViewModel ToViewModel(PlanDay d) => new(
         d.Number,

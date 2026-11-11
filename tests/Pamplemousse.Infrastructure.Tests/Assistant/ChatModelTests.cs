@@ -67,13 +67,55 @@ public sealed class ChatModelTests
         Assert.Equal("gemini-test", chat.GetService<ChatClientMetadata>()?.DefaultModelId);
     }
 
-    private static ServiceProvider Build(string apiKey)
+    [Fact]
+    public async Task An_openai_compatible_provider_without_its_key_names_its_own_variable()
+    {
+        using var services = Build(apiKey: "gemini-key", provider: "openai", openAiKey: "");
+
+        var ex = await Assert.ThrowsAsync<ProviderNotConfiguredException>(() => services.GetRequiredService<IChatClient>().GetResponseAsync(Question));
+
+        Assert.Equal("OPENAI_COMPATIBLE_API_KEY", ex.EnvironmentVariable);
+    }
+
+    [Fact]
+    public void An_openai_compatible_provider_runs_inside_the_same_tool_loop_and_its_error_translation()
+    {
+        using var services = Build(apiKey: "", provider: "OpenAI", openAiKey: "gsk-test");
+        var chat = services.GetRequiredService<IChatClient>();
+
+        var loop = Assert.IsType<FunctionInvokingChatClient>(chat);
+        Assert.Equal(6, loop.MaximumIterationsPerRequest);
+        Assert.NotNull(chat.GetService<OpenAiCompatibleErrorTranslator>());
+        Assert.Equal("openai/gpt-oss-20b", chat.GetService<ChatClientMetadata>()?.DefaultModelId);
+    }
+
+    public static TheoryData<string, Exception> OpenAiFailures => new()
+    {
+        { "API error (429, 503)", new System.ClientModel.ClientResultException("429 rate limited") },
+        { "network", new HttpRequestException("no route") },
+        { "time-out", new TaskCanceledException("deadline") },
+    };
+
+    [Theory]
+    [MemberData(nameof(OpenAiFailures))]
+    public async Task Openai_compatible_failures_become_assistant_unavailable(string why, Exception failure)
+    {
+        using var client = new OpenAiCompatibleErrorTranslator(new ThrowingChatClient(failure));
+
+        var ex = await Assert.ThrowsAsync<AssistantUnavailableException>(() => client.GetResponseAsync(Question));
+
+        Assert.True(ReferenceEquals(failure, ex.InnerException), why);
+    }
+
+    private static ServiceProvider Build(string apiKey, string provider = "gemini", string openAiKey = "")
     {
         var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings());
         builder.AddInfrastructure(keys =>
         {
             keys.GeminiApiKey = apiKey;
             keys.GeminiModel = "gemini-test";
+            keys.AssistantProvider = provider;
+            keys.OpenAiCompatibleApiKey = openAiKey;
         });
         return builder.Services.BuildServiceProvider();
     }

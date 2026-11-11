@@ -20,7 +20,8 @@ namespace Pamplemousse.Infrastructure.Storage;
 public sealed class FirestorePlanStore(FirestoreDb db) : IPlanStore
 {
     private static readonly string[] ListFields =
-        ["name", "status", "destinationName", "from", "to", "total", "currency", "matchPercent", "imageUrl", "updatedAt"];
+        ["name", "status", "destinationName", "from", "to", "total", "currency", "matchPercent", "imageUrl", "updatedAt",
+            "destinationId", "adults", "tripBudget", "pace", "lat", "lng"];
 
     public Task<int> CountAsync(TravellerId owner, CancellationToken ct) => Guard(async () =>
     {
@@ -96,6 +97,12 @@ public sealed class FirestorePlanStore(FirestoreDb db) : IPlanStore
             ["currency"] = summary.Currency,
             ["matchPercent"] = summary.MatchPercent,
             ["imageUrl"] = summary.ImageUrl,
+            ["destinationId"] = summary.DestinationId,
+            ["adults"] = summary.Adults,
+            ["tripBudget"] = summary.TripBudget is { } budget ? (double)budget : null,
+            ["pace"] = summary.Pace?.ToString().ToLowerInvariant(),
+            ["lat"] = summary.Centre?.Lat,
+            ["lng"] = summary.Centre?.Lng,
             ["createdAt"] = Timestamp.FromDateTimeOffset(plan.CreatedAt),
             ["updatedAt"] = Timestamp.FromDateTimeOffset(plan.UpdatedAt),
             ["body"] = Blob.CopyFrom(PlanJson.Pack(plan)),
@@ -113,7 +120,12 @@ public sealed class FirestorePlanStore(FirestoreDb db) : IPlanStore
         Str(d, "currency") ?? "",
         d.TryGetValue("matchPercent", out var match) && match is long percent ? (int)percent : null,
         Str(d, "imageUrl"),
-        d.TryGetValue("updatedAt", out var t) && t is Timestamp time ? time.ToDateTimeOffset() : DateTimeOffset.MinValue);
+        d.TryGetValue("updatedAt", out var t) && t is Timestamp time ? time.ToDateTimeOffset() : DateTimeOffset.MinValue,
+        Str(d, "destinationId"),
+        d.TryGetValue("adults", out var adults) && adults is long a ? (int)a : null,
+        d.TryGetValue("tripBudget", out var budget) && budget is double b ? (decimal)b : null,
+        Enum.TryParse<Pace>(Str(d, "pace"), ignoreCase: true, out var pace) ? pace : null,
+        d.TryGetValue("lat", out var lat) && lat is double la && d.TryGetValue("lng", out var lng) && lng is double ln ? new Domain.Common.GeoPoint(la, ln) : null);
 
     private CollectionReference Plans(TravellerId owner) => db.Collection("travellers").Document(owner.Value).Collection("plans");
 

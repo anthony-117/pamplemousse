@@ -10,6 +10,9 @@ public sealed class FakeHotels : IHotelProvider
 {
     public Exception? Error { get; set; }
 
+    /// <summary>Where the hotels are: central Rome unless a test moves them near its city.</summary>
+    public GeoPoint Location { get; set; } = new(41.9, 12.49);
+
     public int Searches { get; private set; }
 
     public string Source => "Booking.com";
@@ -58,14 +61,14 @@ public sealed class FakeHotels : IHotelProvider
     public string BookingUrl(Hotel hotel, HotelSearch search) =>
         $"{hotel.BookingPageUrl ?? "https://www.booking.com/searchresults.html"}?checkin={search.Dates.From:yyyy-MM-dd}&group_adults={search.Adults}";
 
-    private static FoundHotel Found(string id, string name, decimal total, int? stars, double review, HotelSearch search, DateTimeOffset now)
+    private FoundHotel Found(string id, string name, decimal total, int? stars, double review, HotelSearch search, DateTimeOffset now)
     {
         var price = HotelPrice.ForStay(total, search, now)!;
         var hotel = new Hotel
         {
             Id = id,
             Name = name,
-            Location = new GeoPoint(41.9, 12.49),
+            Location = Location,
             Stars = stars,
             ReviewScore = review,
             ReviewCount = 100,

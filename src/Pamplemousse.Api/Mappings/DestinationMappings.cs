@@ -53,7 +53,7 @@ internal static class DestinationMappings
 
     public static EventsViewModel ToViewModel(this EventsResponse r) => new(r.Dates.ToViewModel(), [.. r.Items.Select(ToViewModel)], r.Warnings);
 
-    private static EventViewModel ToViewModel(this TravelEvent e) => new(
+    public static EventViewModel ToViewModel(this TravelEvent e) => new(
         e.Id,
         e.Name,
         e.Date,

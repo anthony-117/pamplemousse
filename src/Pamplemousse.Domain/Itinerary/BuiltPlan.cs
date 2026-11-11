@@ -120,4 +120,8 @@ public sealed record BuiltPlan(
     PlanTotal Total,
     PlanMatch? Match,
     IReadOnlyList<string> Notes,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings)
+{
+    /// <summary>The day edits that took effect in this build (spec 010, research R-5).</summary>
+    public IReadOnlyList<PlanEdit> Applied { get; init; } = [];
+}
