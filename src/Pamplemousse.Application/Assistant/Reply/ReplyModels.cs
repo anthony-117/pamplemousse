@@ -128,16 +128,20 @@ internal sealed class ReplyRun(ReplyJob job, ChannelWriter<ReplyEvent> events, T
         }
     }
 
-    /// <summary>The reply's cards, grouped by kind (plan, flight, hotel, car, place, event, facts), at most 6 of a kind, no repeats.</summary>
+    /// <summary>The reply's cards, grouped by kind (plan, flight, hotel, car, place, event, facts), at most 6 of a kind, each item once in its latest version.</summary>
     public IReadOnlyList<string> Cards
     {
         get
         {
             lock (_lock)
             {
+                // One card per item, in the place it first came, with its latest version: a plan built, then
+                // changed in the same answer, shows as changed.
                 return [.. _cards
-                    .Select(c => (Json: c, Card: CardInfo.Read(c)))
-                    .DistinctBy(c => (c.Card.Kind, c.Card.Id))
+                    .Select((c, i) => (Json: c, Card: CardInfo.Read(c), Index: i))
+                    .GroupBy(c => (c.Card.Kind, c.Card.Id))
+                    .Select(g => (g.Last().Json, g.First().Card, g.First().Index))
+                    .OrderBy(c => c.Index)
                     .GroupBy(c => c.Card.Kind, StringComparer.Ordinal)
                     .OrderBy(g => Array.IndexOf(KindOrder, g.Key) is var i && i >= 0 ? i : KindOrder.Length)
                     .SelectMany(g => g.Take(AssistantTools.MaxItems).Select(c => c.Json))];

@@ -6,38 +6,49 @@ using Pamplemousse.Domain.Ranking;
 
 namespace Pamplemousse.Api.ViewModels;
 
-/// <summary>The chat's trip as the traveller set it (contracts/chat-api.md); every value optional.</summary>
+/// <summary>
+/// The chat's trip as the traveller set it (contracts/chat-api.md); every value optional. The city names come from the
+/// bundled cities, so the app's trip chip can show them for a reopened chat.
+/// </summary>
 public sealed record ChatTripViewModel(
     string? DestinationId,
+    string? DestinationName,
     DateOnly? From,
     DateOnly? To,
     int? Adults,
     string? OriginId,
+    string? OriginName,
     string? Passport,
     string? Currency,
     decimal? TripBudget)
 {
-    public static ChatTripViewModel? Of(TripContext? t) =>
-        t is null || t.IsEmpty ? null : new(t.DestinationId, t.From, t.To, t.Adults, t.OriginId, t.Passport, t.Currency, t.TripBudget);
+    public static ChatTripViewModel? Of(TripContext? t, IReferenceData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        string? Name(string? id) => id is null ? null : data.FindDestination(id)?.Name;
+        return t is null || t.IsEmpty
+            ? null
+            : new(t.DestinationId, Name(t.DestinationId), t.From, t.To, t.Adults, t.OriginId, Name(t.OriginId), t.Passport, t.Currency, t.TripBudget);
+    }
 }
 
 /// <summary>A line of Recents.</summary>
 public sealed record ChatListItemViewModel(string Id, string Title, ChatTripViewModel? Trip, DateTimeOffset CreatedAt, DateTimeOffset LastMessageAt, int MessageCount)
 {
-    public static ChatListItemViewModel Of(Chat c)
+    public static ChatListItemViewModel Of(Chat c, IReferenceData data)
     {
         ArgumentNullException.ThrowIfNull(c);
-        return new(c.Id, c.Title, ChatTripViewModel.Of(c.Trip), c.CreatedAt, c.LastMessageAt, c.MessageCount);
+        return new(c.Id, c.Title, ChatTripViewModel.Of(c.Trip, data), c.CreatedAt, c.LastMessageAt, c.MessageCount);
     }
 }
 
 /// <summary>A page of Recents; <see cref="Next"/> is the cursor of the next page.</summary>
 public sealed record ChatPageViewModel(IReadOnlyList<ChatListItemViewModel> Items, string? Next, int KeepDays)
 {
-    public static ChatPageViewModel Of(ChatList list)
+    public static ChatPageViewModel Of(ChatList list, IReferenceData data)
     {
         ArgumentNullException.ThrowIfNull(list);
-        return new([.. list.Items.Select(ChatListItemViewModel.Of)], list.Next, list.KeepDays);
+        return new([.. list.Items.Select(c => ChatListItemViewModel.Of(c, data))], list.Next, list.KeepDays);
     }
 }
 
@@ -95,14 +106,14 @@ public sealed record ChatViewModel(
     bool Busy,
     IReadOnlyList<ChatMessageViewModel> Messages)
 {
-    public static ChatViewModel Of(ChatWithMessages c)
+    public static ChatViewModel Of(ChatWithMessages c, IReferenceData data)
     {
         ArgumentNullException.ThrowIfNull(c);
         var chat = c.Chat;
         return new(
             chat.Id,
             chat.Title,
-            ChatTripViewModel.Of(chat.Trip),
+            ChatTripViewModel.Of(chat.Trip, data),
             ChatJson.Weights(chat.Preferences),
             chat.Pace?.ToString().ToLowerInvariant(),
             chat.CreatedAt,

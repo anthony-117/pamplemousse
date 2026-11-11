@@ -130,6 +130,9 @@ Every card has the same envelope:
 Messages oldest first, all of them (the model only sees the last 20). `busy` is true while another device's answer
 runs.
 
+In Recents, a chat and search results, `trip` also carries `destinationName` and `originName`, read from the bundled
+cities, so a reopened chat's trip chip can name them.
+
 ## Rename, delete
 
 - `PATCH /api/v1/assistant/chats/{chatId}` with `{ "title": "Rome with Maya" }` (1–40 characters) → the Recents item.

@@ -24,8 +24,9 @@ public sealed class ChatsController : ControllerBase
         [FromQuery] int? limit,
         [FromQuery] string? before,
         [FromServices] IQueryHandler<ListChatsQuery, ChatList> handler,
+        [FromServices] IReferenceData data,
         CancellationToken ct) =>
-        Ok(ChatPageViewModel.Of(await handler.HandleAsync(new ListChatsQuery(User.ToTraveller().Id, limit, before), ct)));
+        Ok(ChatPageViewModel.Of(await handler.HandleAsync(new ListChatsQuery(User.ToTraveller().Id, limit, before), ct), data));
 
     [HttpGet("search")]
     [EndpointName("SearchChats")]
@@ -33,10 +34,11 @@ public sealed class ChatsController : ControllerBase
     public async Task<ActionResult<ChatSearchViewModel>> SearchAsync(
         [FromQuery] string? q,
         [FromServices] IQueryHandler<SearchChatsQuery, ChatSearch> handler,
+        [FromServices] IReferenceData data,
         CancellationToken ct)
     {
         var found = await handler.HandleAsync(new SearchChatsQuery(User.ToTraveller().Id, q), ct);
-        return Ok(new ChatSearchViewModel([.. found.Chats.Select(ChatListItemViewModel.Of)], [.. found.Plans.Select(ChatJson.Plan)]));
+        return Ok(new ChatSearchViewModel([.. found.Chats.Select(c => ChatListItemViewModel.Of(c, data))], [.. found.Plans.Select(ChatJson.Plan)]));
     }
 
     [HttpGet("{chatId}")]
@@ -45,8 +47,9 @@ public sealed class ChatsController : ControllerBase
     public async Task<ActionResult<ChatViewModel>> GetAsync(
         string chatId,
         [FromServices] IQueryHandler<GetChatQuery, ChatWithMessages> handler,
+        [FromServices] IReferenceData data,
         CancellationToken ct) =>
-        Ok(ChatViewModel.Of(await handler.HandleAsync(new GetChatQuery(User.ToTraveller().Id, chatId), ct)));
+        Ok(ChatViewModel.Of(await handler.HandleAsync(new GetChatQuery(User.ToTraveller().Id, chatId), ct), data));
 
     [HttpPatch("{chatId}")]
     [EndpointName("RenameChat")]
@@ -55,10 +58,11 @@ public sealed class ChatsController : ControllerBase
         string chatId,
         [FromBody] RenameChatRequest request,
         [FromServices] ICommandHandler<RenameChatCommand, Chat> handler,
+        [FromServices] IReferenceData data,
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return Ok(ChatListItemViewModel.Of(await handler.HandleAsync(new RenameChatCommand(User.ToTraveller().Id, chatId, request.Title), ct)));
+        return Ok(ChatListItemViewModel.Of(await handler.HandleAsync(new RenameChatCommand(User.ToTraveller().Id, chatId, request.Title), ct), data));
     }
 
     [HttpDelete("{chatId}")]

@@ -138,6 +138,40 @@ public sealed class ChatEndpointsTests : IClassFixture<TestApiFactory>, IDisposa
     }
 
     [Fact]
+    public async Task A_chat_s_trip_comes_back_with_its_city_names()
+    {
+        using var client = As();
+        var events = await StreamAsync(client, Chats, new { text = "Hi", trip = new { destinationId = Paris, originId = Rome, adults = 2 } });
+        var chatId = events[0].Data.GetProperty("chatId").GetString();
+
+        var trip = (await client.GetFromJsonAsync<JsonElement>($"/api/v1/assistant/chats/{chatId}")).GetProperty("trip");
+        var listed = (await client.GetFromJsonAsync<JsonElement>("/api/v1/assistant/chats")).GetProperty("items")[0].GetProperty("trip");
+
+        Assert.Equal(("Paris", "Rome"), (trip.GetProperty("destinationName").GetString(), trip.GetProperty("originName").GetString()));
+        Assert.Equal("Paris", listed.GetProperty("destinationName").GetString());
+    }
+
+    [Fact]
+    public async Task A_plan_changed_in_the_same_answer_shows_once_as_changed()
+    {
+        using var client = As();
+        _factory.Chat.Script.Add(("build_plan", Args(("cityId", Paris), ("from", "2027-04-10"), ("to", "2027-04-14"), ("originCityId", Rome))));
+        var built = await StreamAsync(client, Chats, Message("Plan Paris"));
+        var planId = built.Single(e => string.Equals(e.Name, "final", StringComparison.Ordinal)).Data.GetProperty("planChanged").GetString();
+        var chatId = built[0].Data.GetProperty("chatId").GetString();
+        _factory.Chat.Script.Clear();
+        _factory.Chat.Script.Add(("get_plan", Args(("planId", planId))));
+        _factory.Chat.Script.Add(("swap_plan_offer", Args(("planId", planId), ("kind", "hotel"), ("offerId", "bk:2"))));
+
+        var events = await StreamAsync(client, At($"/api/v1/assistant/chats/{chatId}/messages"), new { text = "Cheaper hotel please" });
+
+        var plans = events.Single(e => string.Equals(e.Name, "final", StringComparison.Ordinal)).Data.GetProperty("cards").EnumerateArray()
+            .Where(c => string.Equals(c.GetProperty("kind").GetString(), "plan", StringComparison.Ordinal)).ToList();
+        var swapped = events.Last(e => string.Equals(e.Name, "step", StringComparison.Ordinal)).Data.GetProperty("cards")[0];
+        Assert.Equal(swapped.GetRawText(), Assert.Single(plans).GetRawText());
+    }
+
+    [Fact]
     public async Task Hotel_cards_are_the_hotels_list_items_ranked_with_their_match()
     {
         using var client = As();
